@@ -8,6 +8,7 @@
 define Profile/DWB4054
   NAME:=DWB4054 Profile
   PACKAGES:=avahi-nodbus-daemon
+  FILES:=files/DWB4054
 endef
 
 define Profile/DWB4054/Description

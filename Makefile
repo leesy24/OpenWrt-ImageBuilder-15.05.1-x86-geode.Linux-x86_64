@@ -78,15 +78,19 @@ define Profile
   endif
   $(1)_NAME:=$(NAME)
   $(1)_PACKAGES:=$(PACKAGES)
+  $(1)_FILES:=$(FILES)
   PROFILE_NAMES += $(1)
   PROFILE_LIST += \
-  	echo '$(1):'; [ -z '$(NAME)' ] || echo '	$(NAME)'; echo '	Packages: $(PACKAGES)';
+	echo '$(1):'; [ -z '$(NAME)' ] || \
+	echo '	Name: $(NAME)'; \
+	echo '	Packages: $(PACKAGES)'; \
+	echo '	Files: $(FILES)';
 endef
 
 include $(INCLUDE_DIR)/target.mk
 
 _call_info: FORCE
-	echo 'Current Target: "$(BOARD)$(if $(SUBTARGET), ($(BOARDNAME)))"'
+	echo 'Current Target: "$(BOARD) $(CPU_TYPE)$(if $(SUBTARGET), ($(BOARDNAME)))"'
 	echo 'Default Packages: $(DEFAULT_PACKAGES)'
 	echo 'Available Profiles:'
 	echo; $(PROFILE_LIST)
@@ -97,13 +101,14 @@ BUILD_PACKAGES:=$(filter-out $(filter -%,$(BUILD_PACKAGES)) $(patsubst -%,%,$(fi
 PACKAGES:=
 
 _call_image:
-	echo 'Building images for $(BOARD)$(if $($(USER_PROFILE)_NAME), - $($(USER_PROFILE)_NAME))'
-	echo 'Packages: $(BUILD_PACKAGES)'
-	echo
+	@echo 'Building images for $(BOARD) $(CPU_TYPE)$(if $($(USER_PROFILE)_NAME), - $($(USER_PROFILE)_NAME))'
+	@echo 'Packages: $(BUILD_PACKAGES)'
+	@echo 'Files: $(USER_FILES)'
+	@echo
 	rm -rf $(TARGET_DIR)
 	mkdir -p $(TARGET_DIR) $(BIN_DIR) $(TMP_DIR) $(DL_DIR)
 	if [ ! -f "$(PACKAGE_DIR)/Packages" ] || [ ! -f "$(PACKAGE_DIR)/Packages.gz" ] || [ "`find $(PACKAGE_DIR) -cnewer $(PACKAGE_DIR)/Packages.gz`" ]; then \
-		echo "Package list missing or not up-to-date, generating it.";\
+		@echo "Package list missing or not up-to-date, generating it.";\
 		$(MAKE) package_index; \
 	else \
 		mkdir -p $(TARGET_DIR)/tmp; \
@@ -135,7 +140,7 @@ package_install: FORCE
 
 copy_files: FORCE
 	@echo
-	@echo Copying extra files
+	@echo 'Copying extra files$(if $($(USER_PROFILE)_FILES), of profile $(USER_PROFILE))'
 	@$(call file_copy,$(USER_FILES)/*,$(TARGET_DIR)/)
 
 package_postinst: FORCE

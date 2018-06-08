@@ -8,6 +8,7 @@
 define Profile/DWS4000
   NAME:=DWS4000 Profile
   PACKAGES:=avahi-nodbus-daemon
+  FILES:=files/DWS4000
 endef
 
 define Profile/DWS4000/Description
