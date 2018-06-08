@@ -1,0 +1,12 @@
+/etc/rc.d/S19firewall
+/etc/rc.d/S60dnsmasq
+/etc/rc.d/S98sysntpd
+/etc/uci-defaults/00_uhttpd_ubus
+/etc/uci-defaults/10_migrate-shadow
+/etc/uci-defaults/11_migrate-sysctl
+/etc/uci-defaults/12_network-generate-ula
+/etc/uci-defaults/20_migrate-feeds
+/etc/uci-defaults/luci-theme-bootstrap
+/etc/uci-defaults/odhcpd.defaults
+/home/ftp/.keep
+/init

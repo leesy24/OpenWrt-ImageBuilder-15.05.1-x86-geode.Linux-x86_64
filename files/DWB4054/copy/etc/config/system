@@ -23,3 +23,4 @@ config led
 	option sysfs 'alix:3'
 	option default '1'
 	option trigger 'phy0tx'
+

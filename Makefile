@@ -79,12 +79,14 @@ define Profile
   $(1)_NAME:=$(NAME)
   $(1)_PACKAGES:=$(PACKAGES)
   $(1)_FILES:=$(FILES)
+  $(1)_FILES_REMOVE:=$(FILES_REMOVE)
   PROFILE_NAMES += $(1)
   PROFILE_LIST += \
 	echo '$(1):'; [ -z '$(NAME)' ] || \
 	echo '	Name: $(NAME)'; \
 	echo '	Packages: $(PACKAGES)'; \
-	echo '	Files: $(FILES)';
+	echo '	Files copy: $(FILES)'; \
+	echo '	Files remove: $(FILES_REMOVE)';
 endef
 
 include $(INCLUDE_DIR)/target.mk
@@ -103,7 +105,8 @@ PACKAGES:=
 _call_image:
 	@echo 'Building images for $(BOARD) $(CPU_TYPE)$(if $($(USER_PROFILE)_NAME), - $($(USER_PROFILE)_NAME))'
 	@echo 'Packages: $(BUILD_PACKAGES)'
-	@echo 'Files: $(USER_FILES)'
+	@echo 'Files copy: $(USER_FILES)'
+	@echo 'Files remove: $(FILES_REMOVE)'
 	@echo
 	rm -rf $(TARGET_DIR)
 	mkdir -p $(TARGET_DIR) $(BIN_DIR) $(TMP_DIR) $(DL_DIR)
@@ -119,6 +122,14 @@ ifneq ($(USER_FILES),)
 	$(MAKE) copy_files
 endif
 	$(MAKE) package_postinst
+ifneq ($(FILES_REMOVE),)
+	@echo
+	@echo Remove useless files
+	while IFS='' read -r filename; do \
+		echo "Removing $$filename"; \
+		rm -rfv "$(TARGET_DIR)$$filename"; \
+	done < <(tr -d '\r' < $(FILES_REMOVE));
+endif
 	$(MAKE) build_image
 
 package_index: FORCE

@@ -48,7 +48,8 @@ define Profile/DWB4054
 	usbreset usbutils \
 	vsftpd \
 	wireless-tools
-  FILES:=files/DWB4054
+  FILES:=files/DWB4054/copy
+  FILES_REMOVE:=files/DWB4054/remove.lst
 endef
 
 define Profile/DWB4054/Description

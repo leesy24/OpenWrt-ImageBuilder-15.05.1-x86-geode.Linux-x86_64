@@ -18,3 +18,4 @@ config interface 'lan'
 
 config globals 'globals'
 	option ula_prefix 'fd6b:8c7b:76ed::/48'
+
