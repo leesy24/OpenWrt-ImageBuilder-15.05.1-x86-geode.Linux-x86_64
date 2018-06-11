@@ -8,7 +8,8 @@
 define Profile/DWS5000
   NAME:=DWS5000 Profile
   PACKAGES:=avahi-nodbus-daemon
-  FILES:=files/DWS5000
+  FILES_COPY:=files/DWS5000
+  FILES_REMOVE:=files/DWS5000/remove.lst
 endef
 
 define Profile/DWS5000/Description

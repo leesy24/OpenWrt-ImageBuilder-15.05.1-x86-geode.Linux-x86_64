@@ -41,7 +41,6 @@ Building images:
 
 	make image PROFILE="<profilename>" # override the default target profile
 	make image PACKAGES="<pkg1> [<pkg2> [<pkg3> ...]]" # include extra packages
-	make image FILES="<path>" # include extra files from <path>
 	make image BIN_DIR="<path>" # alternative output directory for the images
 
 endef
@@ -77,15 +76,17 @@ define Profile
     USER_PROFILE:=$(1)
   endif
   $(1)_NAME:=$(NAME)
+  $(1)_VERSION:=$(VERSION)
   $(1)_PACKAGES:=$(PACKAGES)
-  $(1)_FILES:=$(FILES)
+  $(1)_FILES_COPY:=$(FILES_COPY)
   $(1)_FILES_REMOVE:=$(FILES_REMOVE)
   PROFILE_NAMES += $(1)
   PROFILE_LIST += \
 	echo '$(1):'; [ -z '$(NAME)' ] || \
 	echo '	Name: $(NAME)'; \
+	echo '	Version: $(VERSION)'; \
 	echo '	Packages: $(PACKAGES)'; \
-	echo '	Files copy: $(FILES)'; \
+	echo '	Files copy: $(FILES_COPY)'; \
 	echo '	Files remove: $(FILES_REMOVE)';
 endef
 
@@ -97,6 +98,10 @@ _call_info: FORCE
 	echo 'Available Profiles:'
 	echo; $(PROFILE_LIST)
 
+BUILD_VERSION:=$($(USER_PROFILE)_VERSION)
+BUILD_FILES_COPY:=$($(USER_PROFILE)_FILES_COPY)
+BUILD_FILES_REMOVE:=$($(USER_PROFILE)_FILES_REMOVE)
+
 BUILD_PACKAGES:=$(sort $(DEFAULT_PACKAGES) $(USER_PACKAGES) $($(USER_PROFILE)_PACKAGES) kernel)
 # "-pkgname" in the package list means remove "pkgname" from the package list
 BUILD_PACKAGES:=$(filter-out $(filter -%,$(BUILD_PACKAGES)) $(patsubst -%,%,$(filter -%,$(BUILD_PACKAGES))),$(BUILD_PACKAGES))
@@ -104,31 +109,34 @@ PACKAGES:=
 
 _call_image:
 	@echo 'Building images for $(BOARD) $(CPU_TYPE)$(if $($(USER_PROFILE)_NAME), - $($(USER_PROFILE)_NAME))'
+	@echo 'Version: $(BUILD_VERSION)'
 	@echo 'Packages: $(BUILD_PACKAGES)'
-	@echo 'Files copy: $(USER_FILES)'
-	@echo 'Files remove: $(FILES_REMOVE)'
+	@echo 'Files copy: $(BUILD_FILES_COPY)'
+	@echo 'Files remove: $(BUILD_FILES_REMOVE)'
 	@echo
 	rm -rf $(TARGET_DIR)
 	mkdir -p $(TARGET_DIR) $(BIN_DIR) $(TMP_DIR) $(DL_DIR)
 	if [ ! -f "$(PACKAGE_DIR)/Packages" ] || [ ! -f "$(PACKAGE_DIR)/Packages.gz" ] || [ "`find $(PACKAGE_DIR) -cnewer $(PACKAGE_DIR)/Packages.gz`" ]; then \
-		@echo "Package list missing or not up-to-date, generating it.";\
+		echo "Package list missing or not up-to-date, generating it.";\
 		$(MAKE) package_index; \
 	else \
 		mkdir -p $(TARGET_DIR)/tmp; \
 		$(OPKG) update || true; \
 	fi
 	$(MAKE) package_install
-ifneq ($(USER_FILES),)
+ifneq ($(BUILD_FILES_COPY),)
 	$(MAKE) copy_files
 endif
 	$(MAKE) package_postinst
-ifneq ($(FILES_REMOVE),)
+ifneq ($(BUILD_FILES_REMOVE),)
+ifneq ($(wildcard $(BUILD_FILES_REMOVE)),)
 	@echo
 	@echo Remove useless files
 	while IFS='' read -r filename; do \
 		echo "Removing $$filename"; \
 		rm -rfv "$(TARGET_DIR)$$filename"; \
-	done < <(tr -d '\r' < $(FILES_REMOVE));
+	done < <(tr -d '\r' < $(BUILD_FILES_REMOVE));
+endif
 endif
 	$(MAKE) build_image
 
@@ -151,8 +159,8 @@ package_install: FORCE
 
 copy_files: FORCE
 	@echo
-	@echo 'Copying extra files$(if $($(USER_PROFILE)_FILES), of profile $(USER_PROFILE))'
-	@$(call file_copy,$(USER_FILES)/*,$(TARGET_DIR)/)
+	@echo 'Copying extra files$(if $($(USER_PROFILE)_FILES_COPY), of profile $(USER_PROFILE))'
+	@$(call file_copy,$($(USER_PROFILE)_FILES_COPY)/*,$(TARGET_DIR)/)
 
 package_postinst: FORCE
 	@echo
@@ -174,14 +182,15 @@ build_image: FORCE
 	@echo
 	@echo Building images...
 	$(NO_TRACE_MAKE) -C target/linux/$(BOARD)/image install TARGET_BUILD=1 IB=1 \
-		$(if $(USER_PROFILE),PROFILE="$(USER_PROFILE)")
+		$(if $(USER_PROFILE),PROFILE="$(USER_PROFILE)") \
+		VERSION="$(BUILD_VERSION)"
 
 clean:
 	rm -rf $(TMP_DIR) $(DL_DIR) $(TARGET_DIR) $(BIN_DIR)
 
 
 info:
-	(unset PROFILE FILES PACKAGES MAKEFLAGS; $(MAKE) -s _call_info)
+	(unset PROFILE PACKAGES MAKEFLAGS; $(MAKE) -s _call_info)
 
 image:
 ifneq ($(PROFILE),)
@@ -191,10 +200,9 @@ ifneq ($(PROFILE),)
 	@exit 1
   endif
 endif
-	(unset PROFILE FILES PACKAGES MAKEFLAGS; \
+	(unset PROFILE PACKAGES MAKEFLAGS; \
 	$(MAKE) _call_image \
 		$(if $(PROFILE),USER_PROFILE="$(PROFILE)") \
-		$(if $(FILES),USER_FILES="$(FILES)") \
 		$(if $(PACKAGES),USER_PACKAGES="$(PACKAGES)") \
 		$(if $(BIN_DIR),BIN_DIR="$(BIN_DIR)"))
 

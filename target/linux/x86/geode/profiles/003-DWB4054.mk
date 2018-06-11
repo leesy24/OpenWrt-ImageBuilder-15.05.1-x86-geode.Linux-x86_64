@@ -7,6 +7,7 @@
 
 define Profile/DWB4054
   NAME:=DWB4054 Profile
+  VERSION:=v6
   PACKAGES:= \
 	-wpad-mini wpad \
 	collectd-mod-iwinfo \
@@ -48,7 +49,7 @@ define Profile/DWB4054
 	usbreset usbutils \
 	vsftpd \
 	wireless-tools
-  FILES:=files/DWB4054/copy
+  FILES_COPY:=files/DWB4054/copy
   FILES_REMOVE:=files/DWB4054/remove.lst
 endef
 
