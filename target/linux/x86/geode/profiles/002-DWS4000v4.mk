@@ -9,7 +9,7 @@ define Profile/DWS4000v4
   NAME:=DWS4000v4 Profile
   VERSION:=.21
   PACKAGES:=
-  FILES_COPY:=files/DWS4000v4
+  FILES_COPY:=files/DWS4000v4/copy
   FILES_REMOVE:=files/DWS4000v4/remove.lst
 endef
 
