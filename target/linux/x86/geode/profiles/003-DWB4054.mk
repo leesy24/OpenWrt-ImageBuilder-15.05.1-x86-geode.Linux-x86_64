@@ -7,9 +7,9 @@
 
 define Profile/DWB4054
   NAME:=DWB4054 Profile
-  VERSION:=v6
+  VERSION:=v6.1
   PACKAGES:= \
-	-wpad-mini wpad \
+	avahi-nodbus-daemon \
 	collectd-mod-iwinfo \
 	coreutils-stty \
 	dosfsck dosfslabel \
@@ -48,7 +48,8 @@ define Profile/DWB4054
 	swconfig \
 	usbreset usbutils \
 	vsftpd \
-	wireless-tools
+	wireless-tools \
+	-wpad-mini wpad
   FILES_COPY:=files/DWB4054/copy
   FILES_REMOVE:=files/DWB4054/remove.lst
 endef

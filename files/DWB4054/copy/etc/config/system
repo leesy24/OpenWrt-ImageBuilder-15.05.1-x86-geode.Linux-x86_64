@@ -1,6 +1,6 @@
 
 config system
-	option hostname 'DWB4054v6'
+	option hostname 'DWB4054v61'
 	option zonename 'Asia/Seoul'
 	option timezone 'KST-9'
 	option conloglevel '8'
