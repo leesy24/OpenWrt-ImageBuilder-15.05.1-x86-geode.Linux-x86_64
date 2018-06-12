@@ -1,0 +1,18 @@
+
+config wifi-device radio0
+	option type	mac80211
+	option path	pci0000:00/0000:00:0c.0
+	option country	KR
+	option txpower	20
+	option hwmode	11a
+	option channel	149
+
+config wifi-iface
+	option device	radio0
+	option network	wlan
+	option mode	sta
+	option ssid	wdsAP
+	option key	1
+	option encryption	none
+	option key1	s:string13chars
+
