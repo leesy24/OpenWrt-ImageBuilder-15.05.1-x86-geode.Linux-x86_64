@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+
+##---------------------------------------------------------------------#
+## Convert dos text files to unix, and vice versa: dos2unix file.txt
+## unix2dos file.txt
+## tr -d \\r < win.txt > unix.txt  # if you can't find dos2unix
+## sed -e 's/$/\r/' < unix.txt > win.txt  # if you can't find unix2dos
+##---------------------------------------------------------------------#
+
+if [ "$1" == "" ] ; then
+  echo "Usage: #DOS2u filename or #DOS2u fileSRC fileDIS"
+  exit
+else
+  if [ "$2" == "" ] ; then
+      fileSRC="/tmp/DOS2_srcFILE"
+      cp $1 $fileSRC
+      fileDST="$1"
+  else
+      fileSRC="$1"
+      fileDST="$2"
+  fi
+fi
+
+tr -d \\r < $fileSRC > $fileDST
+
+if [ "$2" == "" ] ; then
+  rm "/tmp/DOS2_srcFILE"
+fi
+
+

@@ -1,0 +1,133 @@
+#!/bin/sh
+# (C) 2019 DASAN InfoTek,
+#           leesy@DSI
+##
+. wCommon
+
+DIALOG=${DIALOG=dialog}
+
+tempfile="/tmp/DSWconfig_wifi$$"
+trap "rm -f $tempfile; exit" 0 1 2 5 15
+
+textinput() {
+	$DIALOG \
+	--ascii-lines --title "INPUT BOX" --clear \
+	--inputbox "$1" 20 76 "$2" 2> $tempfile
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=`cat $tempfile`;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+menuinput() {
+
+	menucmd=`cat <<END    
+$DIALOG --ascii-lines --clear --cr-wrap --title "[[ Wireless LAN Configurations ]]" \
+	--menu "$3\nStat=[ SNR:$rSNR Freq:$rFreq AP=$rAP ] \
+	\n$rDATE >> Please menu select: \n" 22 76 12 \
+	$1 \
+	2> $tempfile
+END
+`
+eval $menucmd
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=`cat $tempfile`
+		;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+
+########################## begin
+
+rm -f $tempfile
+
+mchoice="";
+
+
+while : ; do
+
+inputvar=""
+
+readCFG
+#######
+
+readWIFI
+#######
+
+readDATE
+#######
+
+menuinput '"ReviewSNR_AP"  "Status Review .... Enter!"
+	"1Wlan_eSSID"   "WLAN eSSID/Wireless-Name ____($cWssid)"
+	"2Wlan_EncUSE"  "WLAN Encription [none/wep] __($cWencr)"
+	"3Wlan_EncKEY"  "WLAN Encription [Key Code] __($cWkey)"
+	"DWSroaming"    ">> DWS4000 Frequency & Roaming Configure <<"
+	"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+
+case $inputvar in
+
+ReviewSNR_AP)
+	;;
+
+1Wlan_eSSID)
+        textinput "Please enter Wireless LAN ESSID/Name ... \n\n \
+Examples: \n ex1)WLAN001  ex2)SR-123 \n" \
+	"$cWssid"
+	uci set wireless.@wifi-iface[0].ssid="$inputvar"
+	;;
+
+2Wlan_EncUSE)
+        textinput "Please enter Wireless LAN Encription Type [none/wep] \n\n \
+Examples: \n ex1)none  ex2)wep-open \n" \
+	"$cWencr"
+	if [ "$inputvar" = "wep-open" ] ; then
+	  uci set wireless.@wifi-iface[0].encryption="wep-open"
+	else
+	  uci set wireless.@wifi-iface[0].encryption="none"
+	fi
+	;;
+
+3Wlan_EncKEY)
+	textinput "Please enter Wireless LAN Encription-Key-Code... \n\n \
+Examples: \n ex1)s:1234567890123 ex2)s:string13chars \n" \
+	"$cWkey"
+	uci set wireless.@wifi-iface[0].key="1"
+	uci set wireless.@wifi-iface[0].key1="$inputvar"
+	;;
+
+DWSroaming)
+	/etc/dws4000/wrsetup
+	;;
+
+X_ExitCancel | *)
+	rm $tempfile >/dev/null 2>/dev/null
+	exit 0
+	;;
+
+esac
+
+done
+

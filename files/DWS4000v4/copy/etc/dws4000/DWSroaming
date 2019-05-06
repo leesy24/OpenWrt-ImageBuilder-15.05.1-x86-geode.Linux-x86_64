@@ -1,0 +1,263 @@
+#!/bin/sh
+#
+#####################################################################
+##
+##      DWS4000 SNR_Roaming for Chaos Calmer 15.05.1 @linux3.18
+##
+##                Copyright 2019, by Dasan InfoTek Co., 
+##
+##                         ...leesy...
+##
+#####################################################################
+
+#-----------------------------#
+cp /etc/dws4000/wroaming.config /tmp/wr.config
+. /tmp/wr.config
+#-----------------------------#
+
+pSleep() {
+	fping -q -c1 -t$1 255.255.255.255 2> /dev/null
+}
+
+get_actSSID() {
+	iw dev wlan0 link 2> /dev/null | grep "SSID:" | awk '{ print $2 }'
+}
+
+get_curSSID() {
+	uci -q get wireless.@wifi-iface[0].ssid
+}
+
+get_actFreqMHz() {
+	iw dev wlan0 link 2> /dev/null | grep "freq:" | awk '{ print $2 }'
+}
+
+get_curFreqMHz() {
+	local ch
+	ch=$(uci -q get wireless.radio0.channel)
+	iw phy0 info | \
+		grep -E -m1 "(\* .... MHz \[$ch\])" | \
+		awk '{print $2}'
+}
+
+# $1 = frequency in MHz
+get_MHz2GHz() {
+	echo $1 | sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/"
+}
+
+get_actSNR() {
+	local SNR
+	SNR=$(iwinfo wlan0 info 2> /dev/null | grep Link | awk '{print $6}' | cut -d'/' -f1)
+	[ -z "$SNR" ] && SNR="unknown"
+	if [ $SNR = "unknown" ] ; then
+		#echo -n "N"   ## echo ; echo "Access Point: Not-Associated "
+		echo 0
+	else
+		echo $SNR
+	fi
+}
+
+get_RXpkts() {
+	ifconfig wlan0 | grep "RX packets" | awk '{ print $2 }' | cut -c9-
+}
+
+# $1 = frequency in MHz
+get_channel() {
+	iw phy0 info | \
+		grep -E -m1 "(\* $1 MHz \[[0-9]*\])" | \
+		cut -d'[' -f2 | cut -d']' -f1
+}
+
+# $1: new channel
+change_channel() {
+	#echo "change_channel $1"
+	uci set wireless.radio0.channel=$1
+	uci commit
+	/etc/init.d/network reload
+}
+
+# $1: new frequency in MHz
+change_freq() {
+	#echo "change_freq $1"
+	local ch
+	ch=$(get_channel $1)
+	[ -n "$ch" ] && {
+		change_channel $ch
+		local timeout=0
+		local actSSID
+		while : ; do
+			pSleep 100
+
+			actSSID=$(get_actSSID)
+			if [ "$actSSID" = "$curSSID" ] ; then
+				break
+			fi
+
+			timeout=$((timeout+1))
+			if [ $timeout -ge 30 ] ; then
+				break
+			fi
+		done
+	}
+}
+
+### Start of main script
+
+rm -f /tmp/.force_Roaming
+
+sleep 1
+
+StartLoopTimeout=0
+StartLoopTimeoutMax=5
+while : ; do
+	[ "$(get_actFreqMHz)" = "$(get_curFreqMHz)"] && break
+
+	StartLoopTimeout=$((StartLoopTimeout+1))
+	[ $StartLoopTimeout -ge $StartLoopTimeoutMax ] && break
+
+	sleep 1
+done
+
+snrMin=$wlan0_RunSNR
+runFreqGHz1=$wlan0_RunFreq1 # in GHz
+runFreqGHz2=$wlan0_RunFreq2 # in GHz
+##
+runFreqMHz1=$(echo "$runFreqGHz1*1000/1" | bc) # to MHz
+runFreqMHz2=$(echo "$runFreqGHz2*1000/1" | bc) # to MHz
+
+curSSID=$(get_curSSID)
+
+curFreqMHz=$(get_curFreqMHz) # to MHz
+curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
+
+actSNR=0
+
+#iwpriv wlan0 mode auto
+#iwconfig wlan0 essid $curSSID
+#####################
+
+echo "SNR=$snrMin F1=$runFreqGHz1 F2=$runFreqGHz2 curF=$curFreqGHz SSID=$curSSID"
+
+#snrMin=`expr $snrMin \* 1`
+
+cLOOP=0
+
+cntMax=10  ##.............15
+#cntMax=`expr $cntMax \* 1`
+
+RXpkts=$(get_RXpkts)
+##TXpkts=`ifconfig wlan0 | grep "TX packets" | awk '{ print $2 }' | cut -c9-`
+
+while : ; do
+	#echo -n "."  ##".$snr1"
+
+	# pSleep 100
+
+	actSNR=$(get_actSNR)  ##!!
+	
+	if [ $snrMin -gt $actSNR ] || [ -e /tmp/.force_Roaming ] ; then
+
+		# echo -n "L"
+
+		pSleep 20
+
+		actSNR=$(get_actSNR)  ##!!
+		
+		if [ $snrMin -gt $actSNR ] || [ -e /tmp/.force_Roaming ] ; then
+
+			#echo -n " actSNR:$actSNR"
+
+			##curFreqGHz=`iwconfig wlan0 | grep  Freq  | awk '{ print $2 }' | cut -c11-`
+			echo -n " $curFreqGHz->"
+			
+			if [ $curFreqMHz -eq $runFreqMHz1 ] ; then
+				# changeF $runFreqGHz2  ##; 
+				echo -n "$runFreqGHz2 "
+				change_freq $runFreqMHz2 
+				tg=0
+			elif [ $curFreqMHz -eq $runFreqMHz2 ] ; then
+				# changeF $runFreqGHz1  ##; 
+				echo -n "$runFreqGHz1 "
+				change_freq $runFreqMHz1
+				tg=1
+			else
+				echo -n "Freq_Unknown! "
+				# changeF $runFreqGHz1
+				change_freq $runFreqMHz1
+				tg=1
+			fi
+
+			cnt=1
+			#cnt=`expr $cnt \* 1`
+			while : ; do
+				actSNR=$(get_actSNR)  ##!!
+				if [ $snrMin -gt $actSNR ] ; then
+					echo -n "@"
+					if [ $tg -eq 0 ] ; then
+						change_freq $runFreqMHz1
+						tg=1
+					else
+						change_freq $runFreqMHz2	
+						tg=0
+					fi
+				else
+					echo -n "_($cnt)OK!"
+					break  ##--->
+				fi
+				
+				cnt=$((cnt+1))
+				if [ $cnt -ge $cntMax ] ; then
+					echo -n "_($cnt)Fail!"
+					##/etc/dws4000/FreqChange $oldFreq	
+					###/etc/dws4000/nfreq
+					##==============================!!
+				    ###(V403)###
+					#iwpriv wlan0 mode auto  ##11a
+					#pSleep 400
+				    ############
+					break  ##--->
+				fi
+			done
+			
+			actSNR=$(get_actSNR)  ##!!
+			curFreqMHz=$(get_curFreqMHz) # to MHz
+			curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
+			echo " (F=$curFreqGHz($curFreqMHz) S=$actSNR)"
+
+			[ -e /tmp/.force_Roaming ] && rm -f /tmp/.force_Roaming
+		fi
+	#else
+		#curFreqMHz=$(get_curFreqMHz) # to MHz
+		#curFreqGHz=$(echo $curFreqMHz | sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/") # in GHz
+		
+		## exec 1>/dev/null
+		## ## echo "LED-LED-LED-LED-LED-LED" > /dev/ttyS1
+		## echo "LED-LED-LED-LED-LED-LED" > /dev/ttyUSB0 2> /dev/null
+		## exec 1>&1
+	fi
+
+	pSleep 100 ##2
+
+	cLOOP=$((cLOOP+1))
+	if [ $cLOOP -gt 10 ] ; then
+		cLOOP=0
+		RXpkts2=$(get_RXpkts)
+		##TXpkts2=`ifconfig wlan0 | grep "TX packets" | awk '{ print $2 }' | cut -c9-`
+
+		##    echo "RxP=$RXpkts2-$RXpkts"  ##echo "RxP=$RXpkts2-$RXpkts TxP=$TXpkts2-$TXpkts"
+
+		if [ $RXpkts -eq $RXpkts2 ] ; then
+			###(V403)###		
+			#iwpriv wlan0 mode auto
+			#pSleep 400
+			############
+			#iwconfig wlan0 essid $curSSID
+			echo " __NONE_RxPackets_?? " $RXpkts2
+			#pSleep 400
+		fi
+
+		RXpkts=$(get_RXpkts)
+	fi
+
+done
+
+### End of main script

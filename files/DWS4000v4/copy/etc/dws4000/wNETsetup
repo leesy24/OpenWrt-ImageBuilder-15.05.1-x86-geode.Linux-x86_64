@@ -1,0 +1,150 @@
+#!/bin/sh
+# (C) 2019 DASAN InfoTek,
+#           leesy@DSI
+##
+. wCommon
+
+DIALOG=${DIALOG=dialog}
+
+tempfile="/tmp/DSWconfig_NET$$"
+trap "rm -f $tempfile; exit" 0 1 2 5 15
+
+textinput() {
+	$DIALOG \
+	--ascii-lines --title "INPUT BOX" --clear \
+	--inputbox "$1" 20 76 "$2" 2> $tempfile
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=`cat $tempfile`;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+menuinput() {
+
+	menucmd=`cat <<END    
+$DIALOG --ascii-lines --clear --cr-wrap --title "[[ Network IP Configurations ]]" \
+	--menu "$3\nStat=[ SNR:$rSNR Freq:$rFreq AP=$rAP ]  Please menu select: \n" 22 76 13 \
+	$1 \
+	2> $tempfile
+END
+`
+eval $menucmd
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=`cat $tempfile`
+		;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+
+########################## begin
+
+rm -f $tempfile
+
+mchoice="";
+
+
+while : ; do
+
+inputvar=""
+
+readCFG
+#######
+
+readNET
+#######
+
+menuinput '"1Wlan_IPaddr"  "WLAN IP Address _____________($cWip)"
+	"2Wlan_IPmask"  "WLAN IP Subnet Mask _________($cWmask)"
+	"3Wlan_Gateway" "Gateway/Router IP Address ___($cWgway)"
+	"4eLAN_IPaddr"  "Wired-LAN IP Address ________($cLip)"
+	"5eLAN_IPmask"  "Wired-LAN IP Subnet Mask ____($cLmask)"
+	"6Wlan_IPdns"   "DNS Server IP Address _______($cWdns)"
+	"7Wlan_IPslog"  "Syslog Server IP Address ____($cSlogip)"'
+
+case $inputvar in
+
+1Wlan_IPaddr)
+	textinput "Please enter Wireless LAN IP Address ... \n\n \
+Examples: \n 192.168.0.127  10.1.1.127 \n" \
+	"$cWip"
+	uci set network.wlan.ipaddr="$inputvar"
+	;;
+
+2Wlan_IPmask)
+	textinput "Please enter Wireless LAN IP Subnet Mask ... \n\n \
+Examples: \n 255.255.0.0  255.255.255.0 \n" \
+	"$cWmask"
+	uci set network.wlan.netmask="$inputvar"
+	;;
+
+3Wlan_Gateway)
+        textinput "Please enter Network Gateway/Router IP Address \n\n \
+Examples: \n 10.1.1.1  192.168.0.1 \n" \
+	"$cWgway"
+	uci set network.wlan.gateway="$inputvar"
+	;;
+
+6Wlan_IPdns)
+	textinput "Please enter Network DNS Server IP Address ... \n\n \
+Examples: \n 168.126.63.1  168.126.63.1 \n" \
+	"$cWdns"
+	uci set network.wlan.dns="$inputvar"
+	;;
+
+7Wlan_IPslog)
+	textinput "Please enter Network Syslog Server IP Address \n\n \
+Examples: \n 10.1.1.13  168.126.0.111 \n" \
+	"$cSlogip"
+	uci set system.@system[0].log_ip="$inputvar"
+	;;
+
+4eLAN_IPaddr)
+	textinput "Please enter Wired Ethernet IP Address ... \n\n \
+Examples: \n 10.1.123.1  168.126.0.129 \n" \
+	"$cLip"
+	uci set network.lan.ipaddr="$inputvar"
+	###
+	eMAC=`/sbin/ifconfig | grep "eth0" | tr -s " " | cut -d " " -f5`
+	echo "$eMAC $inputvar" > /etc/ethers
+	###
+	;;
+
+5eLAN_IPmask)
+	textinput "Please enter Wired Ethernet IP Subnet Mask ... \n\n \
+Examples: \n 255.255.255.0 255.255.255.128 \n" \
+	"$cLmask"
+	uci set network.lan.netmask="$inputvar"
+	;;
+
+*)
+	rm $tempfile >/dev/null 2>/dev/null
+	exit 0
+	;;
+
+esac
+
+done
+

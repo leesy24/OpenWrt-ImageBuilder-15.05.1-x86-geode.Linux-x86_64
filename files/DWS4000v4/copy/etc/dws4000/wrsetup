@@ -1,0 +1,184 @@
+#!/bin/sh
+# (C) 2010 DASAN Infonet Inc.,
+#           jsLee@DSI
+##
+DIALOG=${DIALOG=dialog}
+
+cp /etc/dws4000/wroaming.config /tmp/Rwroaming.config
+
+CONFIGPATH_org="/etc/dws4000/wroaming.config"
+CONFIGPATH="/tmp/Rwroaming.config"
+
+tempfile="/tmp/TMPwroamingconfig$$"
+trap "rm -f $tempfile; exit" 0 1 2 5 15
+
+iface="wlan0"
+############
+
+
+FreqTBL="\
+2.4G = 2.412(1) 2.417(2) 2.422(3) 2.427(4) 2.432(5) \n \
+       2.437(6) 2.442(7) 2.447(8) 2.452(9) 2.457(10) \n \
+       2.462(11) 2.467(12) 2.472(13) \n \
+5.xG = 5.745(149) 5.765(153) 5.785(157) 5.805(161)"
+
+
+save_value() {
+	egrep -v '^$' $CONFIGPATH | egrep -v "^"$1 > $CONFIGPATH.new
+	echo $1"=\"$inputvar\"" >> $CONFIGPATH.new
+	echo >> $CONFIGPATH.new
+	rm -f $CONFIGPATH
+	mv $CONFIGPATH.new $CONFIGPATH
+
+	cp $CONFIGPATH $CONFIGPATH_org
+	sync
+	sleep 1
+	sync
+}
+
+get_retval() {
+	retval=$?
+
+	choice=`cat $tempfile`
+
+	case $retval in
+	1)
+		choice="__NULL"
+		;;
+	255)
+		choice="__NULL"
+		;;
+	esac
+}
+
+textinput() {
+	$DIALOG \
+	--ascii-lines --title "INPUT BOX" --clear \
+	--inputbox "$1" 16 76 "$2" 2> $tempfile
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=`cat $tempfile`;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+menuinput() {
+
+	menucmd=`cat <<END    
+$DIALOG --ascii-lines --clear --cr-wrap --title "[ DWS4000 Roaming Configuration ]" \
+	--menu "\n$3\nPlease select:\n\n" 20 71 8 \
+	$1 \
+	2> $tempfile
+END
+`
+eval $menucmd
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=`cat $tempfile`
+		;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+
+# begin
+
+rm -f $tempfile
+
+mchoice="";
+
+while : ; do
+
+inputvar=""
+
+CUR_RunFreq1=`egrep $iface"_RunFreq1" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/'`    
+CUR_RunFreq2=`egrep $iface"_RunFreq2" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/'`    
+CUR_RunSNR=`egrep $iface"_RunSNR" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/'`    
+##
+CUR_2Gmode=`egrep $iface"_2Gmode" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/'`
+
+
+
+echo "($CUR_RunFreq1) ($CUR_RunFreq2) ($CUR_RunSNR)"
+
+menuinput '"1_runfreq1" "Configure running frequency1 ($CUR_RunFreq1)"
+	"2_runfreq2" 	"Configure running frequency2 ($CUR_RunFreq2)"
+	"3_runsnr" 	"Configure Minimum SNR for Roaming ($CUR_RunSNR)"
+	"4_run2Gmode" 	"Configure 2.4GHz Operation Mode ($CUR_2Gmode)"
+	"X_ExitCancel"	"Exit or Cancel to upper Menu"'
+
+##echo "menu...?"
+
+case $inputvar in
+
+1_runfreq1)
+	textinput \
+	"Please enter Running-Frequency... with N.NNN GHz \n\n \
+Examples: \n $FreqTBL \n" \
+	"$CUR_RunFreq1"
+
+	save_value $iface"_RunFreq1"
+	;;
+
+2_runfreq2)
+	textinput \
+	"Please enter Running-Frequency... with N.NNN GHz \n\n \
+Examples: \n $FreqTBL \n" \
+	"$CUR_RunFreq2"
+
+	save_value $iface"_RunFreq2"
+	;;
+
+3_runsnr)
+	textinput \
+	"Please enter Running Minimum-SNR... with NN dBm \n" \
+	"$CUR_RunSNR"
+
+	save_value $iface"_RunSNR"
+	;;
+
+4_run2Gmode)
+	textinput \
+	"Please enter 2.4GHz Operation Mode (11b/11g) \n\n \
+Examples: \n ex1)11b ex2)11g \n" \
+	"$CUR_2Gmode"
+
+	save_value $iface"_2Gmode"	
+	;;
+
+X_ExitCancel | *)
+	rm $tempfile >/dev/null 2>/dev/null
+
+	## cp $CONFIGPATH $CONFIGPATH_org
+	
+	sync
+	sleep 1
+	sync
+	####
+
+	exit 0
+	;;
+esac
+
+done
+

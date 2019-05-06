@@ -1,0 +1,84 @@
+#!/bin/sh
+#
+#####################################################################
+##
+##      DWS4000 LCD_Mon for Chaos Calmer 15.05.1 @linux3.18
+##
+##            Copyright 2019, by Dasan InfoTek Co.,
+##
+##                         ...leesy...
+##
+#####################################################################
+
+iface=wlan0
+
+readCFG() {
+	cWssid=$(uci -q get wireless.@wifi-iface[0].ssid)
+	cWencr=$(uci -q get wireless.@wifi-iface[0].encryption)
+	cWkey=$(uci -q get wireless.@wifi-iface[0].key)
+
+	cWip=$(uci -q get network.wlan.ipaddr)
+	cWmask=$(uci -q get network.wlan.netmask)
+	cWgway=$(uci -q get network.wlan.gateway)
+	cWdns=$(uci -q get network.wlan.dns)
+
+	iwinfo $iface info 2> /dev/null > /tmp/$iface
+	##
+	rSNR=$(cat /tmp/$iface | grep Link | awk '{print $6}' | cut -d'/' -f1)
+	[ "$rSNR" = "unknown" ] && rSNR=0
+
+	rFreq=$(iw phy0 info | \
+			grep -E -m1 "(\* .... MHz \[$(uci -q get wireless.radio0.channel)\])" | \
+			awk '{print $2}' | \
+			sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
+
+	rAP=$(cat /tmp/$iface | grep Access | awk '{ print $3 }')
+	if [ "$rAP" = "00:00:00:00:00:00" ] ; then
+		rAP="Not-AP"
+	else
+		rAP=$(echo $rAP | cut -c12-)
+	fi
+
+	##
+	rSSID=$(cat /tmp/$iface | grep SSID | awk '{print $3" "$4}')
+
+	upTime=$(uptime | cut -d',' -f1 | sed 's/^ *//g')
+	upTime=$(echo "$upTime        " | cut -c -20)
+
+	rDATE=$(date +%Y%m%e)
+	rDATE="$rDATE $upTime"
+	rDATE=$(echo "$rDATE" | sed 's/^ *//g' | cut -c -20)
+}
+
+
+### Start of main script
+
+stty -F /dev/ttyUSB0 115200
+sleep 1
+##
+echo -n -e '\x1B\x43' > /dev/ttyUSB0
+sleep 1
+
+while : ; do
+	sleep 1
+
+	readCFG
+	###
+
+	echo -n -e '\x1B\x4C\x00\x00' > /dev/ttyUSB0   ### Locate 0,0
+	echo -n "IP:$cWip" > /dev/ttyUSB0
+
+	echo -n -e '\x1B\x4C\x00\x01' > /dev/ttyUSB0   ### Locate 0,1
+	echo -n "ID:$cWssid " > /dev/ttyUSB0
+
+	echo -n -e '\x1B\x4C\x0E\x01' > /dev/ttyUSB0   ### Locate 14,1
+	echo -n "$rAP" > /dev/ttyUSB0
+
+	echo -n -e '\x1B\x4C\x00\x02' > /dev/ttyUSB0   ### Locate 0,2
+	echo -n "FQ:$rFreq SNR:$rSNR " > /dev/ttyUSB0
+
+	echo -n -e '\x1B\x4C\x00\x03' > /dev/ttyUSB0
+	echo -n "$upTime" > /dev/ttyUSB0
+done
+
+### END ###

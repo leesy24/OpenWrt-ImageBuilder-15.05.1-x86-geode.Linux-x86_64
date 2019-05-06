@@ -1,0 +1,207 @@
+#!/bin/sh
+# (C) 2019 DASAN InfoTek,
+#           leesy@DSI
+##
+. wCommon
+
+DIALOG=${DIALOG=dialog}
+
+tempfile="/tmp/DSWconfig_main$$"
+trap "rm -f $tempfile; exit" 0 1 2 5 15
+
+textinput() {
+	$DIALOG \
+	--ascii-lines --title "INPUT BOX" --clear \
+	--inputbox "$1" 20 76 "$2" 2> $tempfile
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=`cat $tempfile`;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+menuinput() {
+
+	menucmd=`cat <<END    
+$DIALOG --ascii-lines --clear --cr-wrap --title "[ DWS4000 V4.21 Configurations 2012@DSi ]" \
+	--menu "$3\nWLAN=[ $rHWMODE ESSID:$rSSID ] \nStat=[ SNR:$rSNR Freq:$rFreq AP=$rAP ] \
+	\n$rDATE >> Please menu select: \n" 22 76 11 \
+	$1 \
+	2> $tempfile
+END
+`
+eval $menucmd
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=`cat $tempfile`
+		;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+
+########################## begin
+
+rm -f $tempfile
+
+mchoice="";
+
+
+while : ; do
+
+sync
+####
+
+inputvar=""
+
+readCFG
+#######
+
+readDATE
+#######
+
+menuinput '"ReviewSTATs"  "Status Review .... Enter!"
+	"1TestRoaming"   "** DWS4000 Redundant-Roaming TEST! **"
+	"2NetIPconfig"   ">> Network TCP/IP Address _____Configure <<"
+	"3WLAN_config"   ">> Wireless LAN SSID & Secure _Configure <<"
+	"4DWSroaming"    ">> DWS4000 Frequency & Roaming Configure <<"
+	"5SaveCommit"    "Commit All Configure Save!"
+	"6SaveReboot"    "Save(commit) & ReBOOT....!"
+	"7JustREBOOT"	 "==============>ReBOOT....!"'
+
+case $inputvar in
+
+ReviewSTATs)
+	;;
+
+1TestRoaming)
+	textinput "DWS4000 Redundant/Roaming TEST... Now?? [Yes/No]\n\n \
+Please Enter: \n [Y]=Roaming/[N]=Review \n" \
+	"N"
+	if [ "$inputvar" = "Y" ] ; then
+		clear
+		echo ; echo "[DWS4000]... Roaming New-Frequency Now!!"
+		touch /tmp/.force_Roaming
+		sleep 1
+		while [ -e /tmp/.force_Roaming ] ; do
+			sleep 1
+		done
+		#/etc/dws4000/nfreq
+		#sleep 2  ###5
+		#iwinfo $iface info
+		sleep 2
+	fi
+	;;
+
+2NetIPconfig)
+	/etc/dws4000/wNETsetup
+	;;
+
+3WLAN_config)
+	/etc/dws4000/wWIFIsetup
+	;;
+
+4DWSroaming)
+	/etc/dws4000/wrsetup
+	;;
+
+5SaveCommit)
+	textinput     "Commit All Configures & Save Now?? [Yes/No]\n\n \
+Please Enter: \n [YES]/[no] \n" \
+	"NO"
+	if [ "$inputvar" = "YES" ] ; then
+		clear
+		echo ; echo "[DWS4000].... Commit All Configures Save Now!!"
+		###################################################################
+		if [ `uci -q get wireless.wifi0.txpower` ] ; then
+			uci delete wireless.wifi0.txpower
+			echo ; echo "[DWS4000].... Wlan-TxPower Option Deleted!!"
+			sleep 3
+		fi
+		###################################################################
+		uci commit
+		sleep 2
+	fi	
+	;;
+
+6SaveReboot)
+	textinput     "Commit All Configures & ReBOOT Now?? [Yes/No]\n\n \
+Please Enter: \n [YES]/[no] \n" \
+	"NO"
+	if [ "$inputvar" = "YES" ] ; then
+	  clear
+	  echo ; echo "[DWS4000].... Commit All Configures Now!!"
+		###################################################################
+		if [ `uci -q get wireless.wifi0.txpower` ] ; then
+			uci delete wireless.wifi0.txpower
+			echo ; echo "[DWS4000].... Wlan-TxPower Option Deleted!!"
+			sleep 3
+		fi
+		###################################################################
+	  uci commit
+	  sleep 2
+	  /etc/init.d/collectd stop
+	  sync
+	  echo ; echo "[DWS4000].... All Interface Restart...!!"
+	  sleep 2
+	  sync
+	  ##clear
+	  echo ; echo "[DWS4000].... System Reboot Now!!"
+	  reboot
+	  while : ; do
+		sleep 1
+		sync
+		echo -n "."
+	  done
+	fi	
+	;;
+
+7JustREBOOT)
+	textinput     "===============> ReBOOT Now?? [Yes/No]\n\n \
+Please Enter: \n [YES]/[no] \n" \
+	"NO"
+	if [ "$inputvar" = "YES" ] ; then
+	  clear
+	  echo ; echo "[DWS4000].... System Reboot Now!!"
+	  reboot -f
+	  while : ; do
+		sleep 1
+		echo -n "."
+	  done
+	fi
+	;;
+
+# *)
+#	rm $tempfile >/dev/null 2>/dev/null
+#	exit 0
+#	;;
+
+esac
+
+done
+
+sync
+
+rm $tempfile >/dev/null 2>/dev/null
+exit 0
+

@@ -1,0 +1,26 @@
+
+config 'RoamingCNT' 'CNT'
+	option 'UseCNT' '3'
+	option '2GHz_Mode' '11g'
+	option '5GHz_Mode' '11a'
+
+config 'RoamingCFG'
+	option 'FREQ' '2.452'
+	option 'SNR' '25'
+	option 'ID' 'WLAN-1'
+
+config 'RoamingCFG'
+	option 'FREQ' '5.745'
+	option 'SNR' '15'
+	option 'ID' 'WLAN-1'
+
+config 'RoamingCFG'
+	option 'FREQ' '5.745'
+	option 'SNR' '15'
+	option 'ID' 'WLAN-1'
+
+config 'RoamingCFG'
+	option 'FREQ' '2.452'
+	option 'SNR' '25'
+	option 'ID' 'WLAN-1'
+

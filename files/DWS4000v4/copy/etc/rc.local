@@ -1,0 +1,20 @@
+# Put your custom commands here that should be executed once
+# the system init finished. By default this file does nothing.
+
+hwclock -s
+
+if [ -e /dev/sdb1 ] ; then
+   mkdir /tmp/Udisk
+   mount -t vfat /dev/sdb1 /tmp/Udisk
+   chmod 777 /tmp/Udisk
+fi
+
+########################## ##(move to /etc/init.d/network)##
+/etc/dws4000/DWSroaming &
+##########################
+
+########################## ##(LCD-2016-11)##
+/etc/dws4000/dwsLCD &
+##########################
+
+exit 0

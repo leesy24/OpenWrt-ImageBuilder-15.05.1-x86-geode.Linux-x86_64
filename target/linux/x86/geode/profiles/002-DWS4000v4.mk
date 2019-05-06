@@ -9,25 +9,25 @@ define Profile/DWS4000v4
   NAME:=DWS4000v4 Profile
   VERSION:=.21
   PACKAGES:= \
-	collectd-mod-iwinfo \
-	coreutils-stty \
+  	bc \
+  	coreutils-stty \
 	dosfsck dosfslabel \
 	ethtool \
 	fdisk \
-	iperf \
-	iwinfo \
-	kamailio3-mod-dialog \
+	-firewall \
+	ip \
+	-ip6tables \
+	-iptables \
+	iw iwinfo \
 	kmod-fs-msdos \
 	kmod-hwmon-lm90 \
 	kmod-i2c-algo-pca kmod-i2c-algo-pcf kmod-i2c-gpio \
-	kmod-ide-generic kmod-ide-generic-old \
 	kmod-leds-gpio \
 	kmod-nls-cp1250 kmod-nls-cp1251 kmod-nls-cp437 kmod-nls-cp775 \
 	kmod-nls-cp850 kmod-nls-cp852 kmod-nls-cp862 kmod-nls-cp864 \
 	kmod-nls-cp866 kmod-nls-cp932 kmod-nls-iso8859-1 kmod-nls-iso8859-13 \
 	kmod-nls-iso8859-15 kmod-nls-iso8859-2 kmod-nls-iso8859-6 \
 	kmod-nls-iso8859-8 kmod-nls-koi8r kmod-nls-utf8 \
-	kmod-scsi-generic \
 	kmod-stp \
 	kmod-usb-core kmod-usb-hid \
 	kmod-usb-ohci-pci \
@@ -40,14 +40,15 @@ define Profile/DWS4000v4
 	kmod-usb-serial-ti-usb kmod-usb-serial-wwan \
 	kmod-usb-storage-extras \
 	kmod-usb-uhci \
-	kmod-usb2-pci \
-	kmod-usbip-client kmod-usbip-server \
+	kmod-usb2 \
+	lftp \
+	libncurses \
 	luci \
 	mkdosfs \
+	-odhcp6c -odhcpd \
+	-ppp -ppp-mod-pppoe \
 	swconfig \
 	usbreset usbutils \
-	vsftpd \
-	wireless-tools \
 	-wpad-mini wpad
   FILES_COPY:=files/DWS4000v4/copy
   FILES_REMOVE:=files/DWS4000v4/remove.lst
