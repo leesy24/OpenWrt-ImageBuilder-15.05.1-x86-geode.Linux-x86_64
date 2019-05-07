@@ -30,22 +30,26 @@ readCFG() {
 }
 
 readWIFI() {
-        cWssid=$(uci -q get wireless.@wifi-iface[0].ssid)      
-        cWencr=$(uci -q get wireless.@wifi-iface[0].encryption)                  
-        cWkey=$(uci -q get wireless.@wifi-iface[0].key1)                         
+	cWssid=$(uci -q get wireless.@wifi-iface[0].ssid)
+	cWencr=$(uci -q get wireless.@wifi-iface[0].encryption)
+	if [ "$cWencr" = "psk2+ccmp" ] ; then        
+		cWkey=$(uci -q get wireless.@wifi-iface[0].key)
+	else
+		cWkey=$(uci -q get wireless.@wifi-iface[0].key1)
+	fi
 }
 
 readNET() {
-        cWip=$(uci -q get network.wlan.ipaddr)
-        cWmask=$(uci -q get network.wlan.netmask)
-        cWgway=$(uci -q get network.wlan.gateway)
+	cWip=$(uci -q get network.wlan.ipaddr)
+	cWmask=$(uci -q get network.wlan.netmask)
+	cWgway=$(uci -q get network.wlan.gateway)
 
-        cWdns=$(uci -q get network.wlan.dns)
+	cWdns=$(uci -q get network.wlan.dns)
 
-        cLip=$(uci -q get network.lan.ipaddr)
-        cLmask=$(uci -q get network.lan.netmask)
+	cLip=$(uci -q get network.lan.ipaddr)
+	cLmask=$(uci -q get network.lan.netmask)
 
-        cSlogip=$(uci -q get system.@system[0].log_ip)
+	cSlogip=$(uci -q get system.@system[0].log_ip)
 }
 
 readDATE() {
