@@ -11,7 +11,7 @@ define Profile/DWS4000v4
   PACKAGES:= \
   	bc \
   	coreutils-stty \
-	dosfsck dosfslabel \
+	-dosfsck -dosfslabel \
 	ethtool \
 	fdisk \
 	-firewall \
@@ -19,7 +19,7 @@ define Profile/DWS4000v4
 	-ip6tables \
 	-iptables \
 	iw iwinfo \
-	kmod-fs-msdos \
+	-kmod-fs-msdos kmod-fs-vfat \
 	kmod-hwmon-lm90 \
 	kmod-i2c-algo-pca kmod-i2c-algo-pcf kmod-i2c-gpio \
 	kmod-leds-gpio \
@@ -37,14 +37,14 @@ define Profile/DWS4000v4
 	kmod-usb-serial-mos7720 kmod-usb-serial-option kmod-usb-serial-oti6858 \
 	kmod-usb-serial-pl2303 kmod-usb-serial-qualcomm \
 	kmod-usb-serial-sierrawireless kmod-usb-serial-simple \
-	kmod-usb-serial-ti-usb kmod-usb-serial-wwan \
+	kmod-usb-serial-ti-usb -kmod-usb-serial-wwan \
 	kmod-usb-storage-extras \
 	kmod-usb-uhci \
 	kmod-usb2 \
 	lftp \
 	libncurses \
 	luci \
-	mkdosfs \
+	-mkdosfs \
 	-odhcp6c -odhcpd \
 	-ppp -ppp-mod-pppoe \
 	swconfig \
