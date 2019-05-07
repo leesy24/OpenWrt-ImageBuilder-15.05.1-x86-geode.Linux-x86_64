@@ -6,6 +6,9 @@
 
 DIALOG=${DIALOG=dialog}
 
+CONFIGPATH_org="/etc/dws4000/wroaming.config"
+CONFIG_UPDATED="/tmp/.wroaming.config.updated"
+
 tempfile="/tmp/DSWconfig_main$$"
 trap "rm -f $tempfile; exit" 0 1 2 5 15
 
@@ -133,10 +136,22 @@ Please Enter: \n [YES]/[no] \n" \
 		clear
 		echo ; echo "[DWS4000].... Commit All Configures Save Now!!"
 		###################################################################
-		if [ `uci -q get wireless.wifi0.txpower` ] ; then
-			uci delete wireless.wifi0.txpower
+		if [ `uci -q get wireless.radio0.txpower` ] ; then
+			uci delete wireless.radio0.txpower
 			echo ; echo "[DWS4000].... Wlan-TxPower Option Deleted!!"
-			sleep 3
+			sleep 1
+		fi
+		###################################################################
+		if [ -f $CONFIG_UPDATED ] ;  then
+			runFreqGHz1=$(grep $iface"_RunFreq1" $CONFIGPATH_org | sed 's/.*="\(.*\)"/\1/')
+			runFreqMHz1=$(echo "$runFreqGHz1*1000/1" | bc) # to MHz
+			#echo "Freq1 = $runFreqGHz1($runFreqMHz1)"
+			channel=$(getChannel $runFreqMHz1)
+			#echo "channel = $channel"
+			uci set wireless.radio0.channel=$channel
+			rm -f $CONFIG_UPDATED
+			echo ; echo "[DWS4000].... Wlan-Frequency Updated!!"
+			sleep 1
 		fi
 		###################################################################
 		uci commit
@@ -149,30 +164,42 @@ Please Enter: \n [YES]/[no] \n" \
 Please Enter: \n [YES]/[no] \n" \
 	"NO"
 	if [ "$inputvar" = "YES" ] ; then
-	  clear
-	  echo ; echo "[DWS4000].... Commit All Configures Now!!"
+		clear
+		echo ; echo "[DWS4000].... Commit All Configures Now!!"
 		###################################################################
-		if [ `uci -q get wireless.wifi0.txpower` ] ; then
-			uci delete wireless.wifi0.txpower
+		if [ `uci -q get wireless.radio0.txpower` ] ; then
+			uci delete wireless.radio0.txpower
 			echo ; echo "[DWS4000].... Wlan-TxPower Option Deleted!!"
-			sleep 3
+			sleep 1
 		fi
 		###################################################################
-	  uci commit
-	  sleep 2
-	  #/etc/init.d/collectd stop
-	  #sync
-	  echo ; echo "[DWS4000].... All Interface Restart...!!"
-	  sleep 2
-	  sync
-	  ##clear
-	  echo ; echo "[DWS4000].... System Reboot Now!!"
-	  reboot
-	  while : ; do
-		sleep 1
+		if [ -f $CONFIG_UPDATED ] ;  then
+			runFreqGHz1=$(grep $iface"_RunFreq1" $CONFIGPATH_org | sed 's/.*="\(.*\)"/\1/')
+			runFreqMHz1=$(echo "$runFreqGHz1*1000/1" | bc) # to MHz
+			#echo "Freq1 = $runFreqGHz1($runFreqMHz1)"
+			channel=$(getChannel $runFreqMHz1)
+			#echo "channel = $channel"
+			uci set wireless.radio0.channel=$channel
+			rm -f $CONFIG_UPDATED
+			echo ; echo "[DWS4000].... Wlan-Frequency Updated!!"
+			sleep 1
+		fi
+		###################################################################
+		uci commit
+		sleep 2
+		#/etc/init.d/collectd stop
+		#sync
+		echo ; echo "[DWS4000].... All Interface Restart...!!"
+		sleep 2
 		sync
-		echo -n "."
-	  done
+		##clear
+		echo ; echo "[DWS4000].... System Reboot Now!!"
+		reboot
+		while : ; do
+			sleep 1
+			sync
+			echo -n "."
+		done
 	fi	
 	;;
 

@@ -8,6 +8,7 @@ cp /etc/dws4000/wroaming.config /tmp/Rwroaming.config
 
 CONFIGPATH_org="/etc/dws4000/wroaming.config"
 CONFIGPATH="/tmp/Rwroaming.config"
+CONFIG_UPDATED="/tmp/.wroaming.config.updated"
 
 tempfile="/tmp/TMPwroamingconfig$$"
 trap "rm -f $tempfile; exit" 0 1 2 5 15
@@ -138,6 +139,7 @@ Examples: \n $FreqTBL \n" \
 	"$CUR_RunFreq1"
 
 	save_value $iface"_RunFreq1"
+	touch $CONFIG_UPDATED
 	;;
 
 2_runfreq2)
@@ -147,6 +149,7 @@ Examples: \n $FreqTBL \n" \
 	"$CUR_RunFreq2"
 
 	save_value $iface"_RunFreq2"
+	touch $CONFIG_UPDATED
 	;;
 
 3_runsnr)

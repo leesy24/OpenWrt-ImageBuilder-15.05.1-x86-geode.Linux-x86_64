@@ -54,3 +54,9 @@ readDATE() {
 	rDATE="$rDATE $upTime"
 }
 
+# $1 = frequency in MHz
+getChannel() {
+	iw phy0 info | \
+		grep -E -m1 "(\* $1 MHz \[[0-9]*\])" | \
+		cut -d'[' -f2 | cut -d']' -f1
+}
