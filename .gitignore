@@ -1,5 +1,5 @@
-build_dir/
-packages/
-bin/
-dl/
-tmp/
+/build_dir/
+/packages/
+/bin/
+/dl/
+/tmp/
