@@ -547,6 +547,7 @@ wpa_supplicant_add_network() {
 
 	local wpa_key_mgmt="WPA-PSK"
 	local freq_list
+	local ignore_old_scan_res
 	local scan_ssid="scan_ssid=1"
 	local freq
 
@@ -556,6 +557,7 @@ wpa_supplicant_add_network() {
 			freq="$(get_freq "$phy" "$channel")"
 			[ -n "$freq" ] && {
 				freq_list="freq_list=$freq"
+				ignore_old_scan_res="ignore_old_scan_res=1"
 				append network_data "scan_freq=$freq" "$N$T"
 				#append network_data "freq_list=$freq" "$N$T"
 			}
@@ -676,6 +678,7 @@ wpa_supplicant_add_network() {
 
 	cat >> "$_config" <<EOF
 $freq_list
+$ignore_old_scan_res
 network={
 	$scan_ssid
 	ssid="$ssid"

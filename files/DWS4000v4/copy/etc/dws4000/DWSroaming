@@ -77,20 +77,30 @@ change_channel() {
 
 # $1: new frequency in MHz
 change_freq() {
-	#echo "change_freq $1"
+	local targetFreq=$1
 	local ch
-	ch=$(get_channel $1)
+	#echo "change_freq targetFreq=$targetFreq"
+	ch=$(get_channel $targetFreq)
 	[ -n "$ch" ] && {
 		change_channel $ch
 		local timer=0
 		local timeout=30 # 3secs <- 100msec x 30
 		#local timeout=50 # 5secs <- 100msec x 50
 		local actSSID
+		local actFreq
 		while : ; do
 			pSleep 100
 
 			actSSID=$(get_actSSID)
-			[ "$actSSID" = "$curSSID" ] && break
+			[ "$actSSID" = "$curSSID" ] && {
+				actFreq=$(get_actFreqMHz)
+				echo -n "$actFreq "
+				[ "$actFreq" = "$targetFreq" ] && break
+				[ ! -z "$actFreq" ] && {
+					/etc/init.d/network restart
+					sleep 1
+				}
+			}
 
 			timer=$((timer+1))
 			[ $timer -ge $timeout ] && break
@@ -122,13 +132,20 @@ actSNR=0
 #iwconfig wlan0 essid $curSSID
 #####################
 
-StartLoopTimeout=0
-StartLoopTimeoutMax=5
+StartLoopTimer=0
+StartLoopTimeout=5 # 5secs
 while : ; do
-	[ "$(get_actFreqMHz)" = "$curFreqMHz" ] && break
+	local actFreqMHz
+	actFreqMHz=$(get_actFreqMHz)
 
-	StartLoopTimeout=$((StartLoopTimeout+1))
-	[ $StartLoopTimeout -ge $StartLoopTimeoutMax ] && break
+	[ "$actFreqMHz" = "$curFreqMHz" ] && break
+	[ ! -z "$actFreqMHz" ] && /etc/init.d/network restart
+
+	StartLoopTimer=$((StartLoopTimer+1))
+	[ $StartLoopTimer -ge $StartLoopTimeout ] && {
+		echo "Error! curF=$curFreqMHz actF=$actFreqMHz"
+		break
+	}
 
 	sleep 1
 done
