@@ -82,20 +82,18 @@ change_freq() {
 	ch=$(get_channel $1)
 	[ -n "$ch" ] && {
 		change_channel $ch
-		local timeout=0
+		local timer=0
+		local timeout=30 # 3secs <- 100msec x 30
+		#local timeout=50 # 5secs <- 100msec x 50
 		local actSSID
 		while : ; do
 			pSleep 100
 
 			actSSID=$(get_actSSID)
-			if [ "$actSSID" = "$curSSID" ] ; then
-				break
-			fi
+			[ "$actSSID" = "$curSSID" ] && break
 
-			timeout=$((timeout+1))
-			if [ $timeout -ge 30 ] ; then
-				break
-			fi
+			timer=$((timer+1))
+			[ $timer -ge $timeout ] && break
 		done
 	}
 }
