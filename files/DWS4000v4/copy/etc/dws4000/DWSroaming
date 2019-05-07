@@ -106,17 +106,6 @@ rm -f /tmp/.force_Roaming
 
 sleep 1
 
-StartLoopTimeout=0
-StartLoopTimeoutMax=5
-while : ; do
-	[ "$(get_actFreqMHz)" = "$(get_curFreqMHz)" ] && break
-
-	StartLoopTimeout=$((StartLoopTimeout+1))
-	[ $StartLoopTimeout -ge $StartLoopTimeoutMax ] && break
-
-	sleep 1
-done
-
 snrMin=$wlan0_RunSNR
 runFreqGHz1=$wlan0_RunFreq1 # in GHz
 runFreqGHz2=$wlan0_RunFreq2 # in GHz
@@ -134,6 +123,17 @@ actSNR=0
 #iwpriv wlan0 mode auto
 #iwconfig wlan0 essid $curSSID
 #####################
+
+StartLoopTimeout=0
+StartLoopTimeoutMax=5
+while : ; do
+	[ "$(get_actFreqMHz)" = "$curFreqMHz" ] && break
+
+	StartLoopTimeout=$((StartLoopTimeout+1))
+	[ $StartLoopTimeout -ge $StartLoopTimeoutMax ] && break
+
+	sleep 1
+done
 
 echo "SNR=$snrMin F1=$runFreqGHz1 F2=$runFreqGHz2 curF=$curFreqGHz SSID=$curSSID"
 
