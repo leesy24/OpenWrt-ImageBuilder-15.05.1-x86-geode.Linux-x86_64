@@ -106,13 +106,26 @@ Please Enter: \n [Y]=Roaming/[N]=Review \n" \
 		echo ; echo "[DWS4000]... Roaming New-Frequency Now!!"
 		touch /tmp/.force_Roaming
 		sleep 1
+
+		local TestRoamingTimer=0
+		local TestRoamingTimeout=30 # 30secs
 		while [ -e /tmp/.force_Roaming ] ; do
 			sleep 1
+			TestRoamingTimer=$((TestRoamingTimer+1))
+			[ $TestRoamingTimer -ge $TestRoamingTimeout ] && break
 		done
+
+		if [ -e /tmp/.force_Roaming ] ; then
+			rm -f /tmp/.force_Roaming
+			echo ; echo "[DWS4000]... Error! Roaming New-Frequency!"
+		else
+			echo ; echo "[DWS4000]... Success! roam New-Frequency."
+		fi
+
 		#/etc/dws4000/nfreq
 		#sleep 2  ###5
 		#iwinfo $iface info
-		sleep 2
+		sleep 1
 	fi
 	;;
 
