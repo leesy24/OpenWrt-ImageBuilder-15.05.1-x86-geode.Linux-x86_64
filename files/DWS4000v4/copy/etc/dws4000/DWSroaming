@@ -109,7 +109,7 @@ sleep 1
 StartLoopTimeout=0
 StartLoopTimeoutMax=5
 while : ; do
-	[ "$(get_actFreqMHz)" = "$(get_curFreqMHz)"] && break
+	[ "$(get_actFreqMHz)" = "$(get_curFreqMHz)" ] && break
 
 	StartLoopTimeout=$((StartLoopTimeout+1))
 	[ $StartLoopTimeout -ge $StartLoopTimeoutMax ] && break
