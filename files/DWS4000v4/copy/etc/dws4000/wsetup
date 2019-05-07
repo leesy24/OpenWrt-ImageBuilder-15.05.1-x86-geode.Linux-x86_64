@@ -33,7 +33,7 @@ textinput() {
 menuinput() {
 
 	menucmd=`cat <<END    
-$DIALOG --ascii-lines --clear --cr-wrap --title "[ DWS4000 V4.31 Configurations 2012@DSi ]" \
+$DIALOG --ascii-lines --clear --cr-wrap --title "[ DWS4000 V4.32 Configurations 2012@DSi ]" \
 	--menu "$3\nWLAN=[ $rHWMODE ESSID:$rSSID ] \nStat=[ SNR:$rSNR Freq:$rFreq AP=$rAP ] \
 	\n$rDATE >> Please menu select: \n" 22 76 11 \
 	$1 \
@@ -160,8 +160,8 @@ Please Enter: \n [YES]/[no] \n" \
 		###################################################################
 	  uci commit
 	  sleep 2
-	  /etc/init.d/collectd stop
-	  sync
+	  #/etc/init.d/collectd stop
+	  #sync
 	  echo ; echo "[DWS4000].... All Interface Restart...!!"
 	  sleep 2
 	  sync
