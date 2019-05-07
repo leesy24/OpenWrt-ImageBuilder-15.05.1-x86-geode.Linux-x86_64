@@ -55,32 +55,121 @@ readCFG() {
 
 ### Start of main script
 
-stty -F /dev/ttyUSB0 115200
-sleep 1
-##
-echo -n -e '\x1B\x43' > /dev/ttyUSB0
-sleep 1
+### Check and wait USB serial character device file exists
+USB_SERIAL_DEV_EXIST=0
+while [ ! -c /dev/ttyUSB0 ]
+do
+	sleep 1 # wait 1sec
+	echo Check USB serial device exist!
+done
+USB_SERIAL_DEV_EXIST=1
+sleep 1 # wait 1sec
 
+### Check CFA LCD
+## Ping LCD
+cfa_send /dev/ttyUSB0 "\x00\d000"
+if [ $? -eq 0 ] ; then
+	CFA_DETECTED=1
+else
+	CFA_DETECTED=0
+fi
+# echo "CFA_DETECTED=$CFA_DETECTED"
+
+# Init LCD
+if [ $CFA_DETECTED -eq 1 ] ; then
+	### Init CFA LCD
+	## Set keypad backlight off
+	cfa_send /dev/ttyUSB0 "\x0e\d002\d100\d000"
+	## Display splash strings
+	cfa_send /dev/ttyUSB0 "\x1f\d022\d000\d000DASAN InfoTek       "
+	cfa_send /dev/ttyUSB0 "\x1f\d022\d000\d001                    "
+	cfa_send /dev/ttyUSB0 "\x1f\d022\d000\d002                    "
+	cfa_send /dev/ttyUSB0 "\x1f\d022\d000\d003     www.dsintek.com"
+	## Store current state as boot state
+	cfa_send /dev/ttyUSB0 "\x04\d000"
+else
+	stty -F /dev/ttyUSB0 115200
+	sleep 1 # wait 1sec
+	##
+	echo -n -e '\x1B\x43' > /dev/ttyUSB0
+	sleep 1 # wait 1sec
+fi
+
+# infinite while loop
 while : ; do
 	sleep 1
 
 	readCFG
 	###
 
-	echo -n -e '\x1B\x4C\x00\x00' > /dev/ttyUSB0   ### Locate 0,0
-	echo -n "IP:$cWip" > /dev/ttyUSB0
+	if [ $CFA_DETECTED -eq 1 ] ; then
+		cfa_send /dev/ttyUSB0 "\x1f\d022\d000\d000IP:$cWip                    "   ### Locate 0,0
 
-	echo -n -e '\x1B\x4C\x00\x01' > /dev/ttyUSB0   ### Locate 0,1
-	echo -n "ID:$cWssid " > /dev/ttyUSB0
+		cfa_send /dev/ttyUSB0 "\x1f\d016\d000\d001ID:$cWssid              "   ### Locate 0,1
 
-	echo -n -e '\x1B\x4C\x0E\x01' > /dev/ttyUSB0   ### Locate 14,1
-	echo -n "$rAP" > /dev/ttyUSB0
+		cfa_send /dev/ttyUSB0 "\x1f\d008\d014\d001$rAP      "   ### Locate 14,1
 
-	echo -n -e '\x1B\x4C\x00\x02' > /dev/ttyUSB0   ### Locate 0,2
-	echo -n "FQ:$rFreq SNR:$rSNR " > /dev/ttyUSB0
+		cfa_send /dev/ttyUSB0 "\x1f\d022\d000\d002FQ:$rFreq SNR:$rSNR                    "   ### Locate 0,2
 
-	echo -n -e '\x1B\x4C\x00\x03' > /dev/ttyUSB0
-	echo -n "$upTime" > /dev/ttyUSB0
+		cfa_send /dev/ttyUSB0 "\x1f\d022\d000\d003$upTime                    "   ### Locate 0,3
+	else
+		echo -n -e '\x1B\x4C\x00\x00' > /dev/ttyUSB0   ### Locate 0,0
+		echo -n "IP:$cWip" > /dev/ttyUSB0
+
+		echo -n -e '\x1B\x4C\x00\x01' > /dev/ttyUSB0   ### Locate 0,1
+		echo -n "ID:$cWssid " > /dev/ttyUSB0
+
+		echo -n -e '\x1B\x4C\x0E\x01' > /dev/ttyUSB0   ### Locate 14,1
+		echo -n "$rAP" > /dev/ttyUSB0
+
+		echo -n -e '\x1B\x4C\x00\x02' > /dev/ttyUSB0   ### Locate 0,2
+		echo -n "FQ:$rFreq SNR:$rSNR " > /dev/ttyUSB0
+
+		echo -n -e '\x1B\x4C\x00\x03' > /dev/ttyUSB0   ### Locate 0,3
+		echo -n "$upTime" > /dev/ttyUSB0
+	fi
+
+	### Check and wait USB serial character device file exists
+	while [ ! -c /dev/ttyUSB0 ]
+	do
+		USB_SERIAL_DEV_EXIST=0
+		sleep 1 # wait 1sec
+		echo Check USB serial device exist!
+	done
+
+	if [ $USB_SERIAL_DEV_EXIST -eq 0 ] ; then
+		sleep 1 # wait 1sec
+		USB_SERIAL_DEV_EXIST=1
+		### Check CFA LCD
+		## Ping LCD
+		cfa_send /dev/ttyUSB0 "\x00\d000"
+		if [ $? -eq 0 ] ; then
+			CFA_DETECTED=1
+		else
+			CFA_DETECTED=0
+		fi
+		# echo "CFA_DETECTED=$CFA_DETECTED"
+
+		# Init LCS
+		if [ $CFA_DETECTED -eq 1 ] ; then
+			### Init CFA LCD
+			## Set keypad backlight off
+			cfa_send /dev/ttyUSB0 "\x0e\d002\d100\d000"
+			## Display splash strings
+			cfa_send /dev/ttyUSB0 "\x1f\d022\d000\d000DASAN InfoTek       "
+			cfa_send /dev/ttyUSB0 "\x1f\d022\d000\d001                    "
+			cfa_send /dev/ttyUSB0 "\x1f\d022\d000\d002                    "
+			cfa_send /dev/ttyUSB0 "\x1f\d022\d000\d003     www.dsintek.com"
+			## Store current state as boot state
+			cfa_send /dev/ttyUSB0 "\x04\d000"
+		else
+			stty -F /dev/ttyUSB0 115200
+			sleep 1
+			##
+			echo -n -e '\x1B\x43' > /dev/ttyUSB0
+			sleep 1
+		fi
+	fi
 done
 
-### END ###
+### END of Main script ###
