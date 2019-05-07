@@ -93,16 +93,20 @@ while : ; do
 		;;
 
 	1Wlan_eSSID)
-	        textinput "Please enter Wireless LAN ESSID/Name ... \n\n \
-	Examples: \n ex1)WLAN001  ex2)SR-123 \n" \
-		"$cWssid"
+		textinput \
+"Please enter Wireless LAN ESSID/Name ... \n\n\
+Examples: \n\
+ ex1)WLAN001  ex2)SR-123 \n" \
+			"$cWssid"
 		uci set wireless.@wifi-iface[0].ssid="$inputvar"
 		;;
 
 	2Wlan_EncUSE)
-	        textinput "Please enter Wireless LAN Encription Type [none/wep] \n\n \
-	Examples: \n ex1)none  ex2)wep-open ex3)psk2+ccmp\n" \
-		"$cWencr"
+		textinput \
+"Please enter Wireless LAN Encription Type [none/wep] \n\n\
+Examples: \n\
+ ex1)none  ex2)wep-open  ex3)psk2+ccmp\n" \
+			"$cWencr"
 		if [ "$inputvar" = "psk2+ccmp" ] ; then
 			uci set wireless.@wifi-iface[0].encryption="psk2+ccmp"
 		elif [ "$inputvar" = "wep-open" ] ; then
@@ -114,14 +118,18 @@ while : ; do
 
 	3Wlan_EncKEY)
 		if [ "$cWencr" = "psk2+ccmp" ] ; then
-			textinput "Please enter Wireless LAN Encription-Key-Code... \n\n \
-		Examples: must input more and equal than 8 chars \n ex1)12345678 ex2)1234567890123 \n" \
-			"$cWkey"
+			textinput \
+"Please enter Wireless LAN Encription-Key-Code...\n\n\
+Examples: must input more and equal than 8 chars\n\
+ ex1)12345678 ex2)1234567890123\n" \
+				"$cWkey"
 			uci set wireless.@wifi-iface[0].key="$inputvar"
 		else
-			textinput "Please enter Wireless LAN Encription-Key-Code... \n\n \
-		Examples: \n ex1)s:1234567890123 ex2)s:string13chars \n" \
-			"$cWkey"
+			textinput \
+"Please enter Wireless LAN Encription-Key-Code...\n\n\
+Examples: must input 5 chars or 13 chars\n\
+ ex1)s:12345 ex2)s:1234567890123 ex3)s:string13chars\n" \
+				"$cWkey"
 			uci set wireless.@wifi-iface[0].key="1"
 			uci set wireless.@wifi-iface[0].key1="$inputvar"
 		fi
