@@ -10,7 +10,7 @@
 ##
 #####################################################################
 
-iw phy0 info > /tmp/phy0
+iw phy0 info > /tmp/dwsLCD_phy0
 
 iface=wlan0
 
@@ -24,25 +24,24 @@ readCFG() {
 	#cWgway=$(uci -q get network.wlan.gateway)
 	#cWdns=$(uci -q get network.wlan.dns)
 
-	rFreq=$(cat /tmp/phy0 | \
-			grep -E -m1 "(\* .... MHz \[$(uci -q get wireless.radio0.channel)\])" | \
+	rFreq=$(grep -E -m1 "(\* .... MHz \[$(uci -q get wireless.radio0.channel)\])" /tmp/dwsLCD_phy0 | \
 			awk '{print $2}' | \
 			sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
 
-	iwinfo $iface info 2> /dev/null > /tmp/$iface
+	iwinfo $iface info 2> /dev/null > /tmp/dwsLCD_$iface
 	##
-	rSNR=$(cat /tmp/$iface | grep Link | awk '{print $6}' | cut -d'/' -f1)
-	([ -z $rSNR ] || [ "$rSNR" = "unknown" ]) && rSNR=0
+	rSNR=$(grep Link /tmp/dwsLCD_$iface | awk '{print $6}' | cut -d'/' -f1)
+	([ -z "$rSNR" ] || [ "$rSNR" = "unknown" ]) && rSNR=0
 
-	rAP=$(cat /tmp/$iface | grep Access | awk '{ print $3 }')
-	if [ -z $rAP ] || [ "$rAP" = "00:00:00:00:00:00" ] ; then
+	rAP=$(grep Access /tmp/dwsLCD_$iface | awk '{ print $3 }')
+	if [ -z "$rAP" ] || [ "$rAP" = "00:00:00:00:00:00" ] ; then
 		rAP="Not-AP"
 	else
 		rAP=$(echo $rAP | cut -c12-)
 	fi
 
 	##
-	#rSSID=$(cat /tmp/$iface | grep SSID | awk '{print $3" "$4}')
+	#rSSID=$(grep SSID /tmp/dwsLCD_$iface | awk '{print $3" "$4}')
 
 	upTime=$(uptime | cut -c2- | cut -d',' -f1)
 	upTime=$(echo "$upTime        " | cut -c -20)

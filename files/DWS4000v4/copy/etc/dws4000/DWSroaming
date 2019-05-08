@@ -47,13 +47,9 @@ get_MHz2GHz() {
 get_actSNR() {
 	local SNR
 	SNR=$(iwinfo wlan0 info 2> /dev/null | grep Link | awk '{print $6}' | cut -d'/' -f1)
-	[ -z "$SNR" ] && SNR="unknown"
-	if [ "$SNR" = "unknown" ] ; then
-		#echo -n "N"   ## echo ; echo "Access Point: Not-Associated "
-		echo 0
-	else
-		echo $SNR
-	fi
+	[ -z "$SNR" ] && SNR=-2
+	[ "$SNR" = "unknown" ] && SNR=-1
+	echo $SNR
 }
 
 get_RXpkts() {
@@ -181,7 +177,11 @@ while : ; do
 		actSNR=$(get_actSNR)  ##!!
 		
 		if [ $snrMin -gt $actSNR ] || [ -e /tmp/.force_Roaming ] ; then
-
+			if [ -e /tmp/.force_Roaming ] ; then
+				echo -n "FORCED:"
+			else
+				echo -n "SNR($actSNR):"
+			fi
 			#echo -n " actSNR:$actSNR"
 
 			##curFreqGHz=`iwconfig wlan0 | grep  Freq  | awk '{ print $2 }' | cut -c11-`

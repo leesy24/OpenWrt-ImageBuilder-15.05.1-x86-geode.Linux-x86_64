@@ -155,7 +155,7 @@ Please Enter: \n [YES]/[no] \n" \
 			sleep 1
 		fi
 		###################################################################
-		if [ -f $CONFIG_UPDATED ] ;  then
+		if [ -e $CONFIG_UPDATED ] ;  then
 			runFreqGHz1=$(grep $iface"_RunFreq1" $CONFIGPATH_org | sed 's/.*="\(.*\)"/\1/')
 			runFreqMHz1=$(echo "$runFreqGHz1*1000/1" | bc) # to MHz
 			#echo "Freq1 = $runFreqGHz1($runFreqMHz1)"
@@ -186,7 +186,7 @@ Please Enter: \n [YES]/[no] \n" \
 			sleep 1
 		fi
 		###################################################################
-		if [ -f $CONFIG_UPDATED ] ;  then
+		if [ -e $CONFIG_UPDATED ] ;  then
 			runFreqGHz1=$(grep $iface"_RunFreq1" $CONFIGPATH_org | sed 's/.*="\(.*\)"/\1/')
 			runFreqMHz1=$(echo "$runFreqGHz1*1000/1" | bc) # to MHz
 			#echo "Freq1 = $runFreqGHz1($runFreqMHz1)"
