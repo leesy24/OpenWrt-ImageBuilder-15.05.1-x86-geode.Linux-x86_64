@@ -48,7 +48,7 @@ get_actSNR() {
 	local SNR
 	SNR=$(iwinfo wlan0 info 2> /dev/null | grep Link | awk '{print $6}' | cut -d'/' -f1)
 	[ -z "$SNR" ] && SNR="unknown"
-	if [ $SNR = "unknown" ] ; then
+	if [ "$SNR" = "unknown" ] ; then
 		#echo -n "N"   ## echo ; echo "Access Point: Not-Associated "
 		echo 0
 	else
@@ -94,7 +94,7 @@ change_freq() {
 			actSSID=$(get_actSSID)
 			[ "$actSSID" = "$curSSID" ] && {
 				actFreq=$(get_actFreqMHz)
-				echo -n "$actFreq "
+				#echo -n "$actFreq "
 				[ "$actFreq" = "$targetFreq" ] && break
 				[ ! -z "$actFreq" ] && {
 					/etc/init.d/network restart
@@ -139,7 +139,10 @@ while : ; do
 	actFreqMHz=$(get_actFreqMHz)
 
 	[ "$actFreqMHz" = "$curFreqMHz" ] && break
-	[ ! -z "$actFreqMHz" ] && /etc/init.d/network restart
+	[ ! -z "$actFreqMHz" ] && {
+		/etc/init.d/network restart
+		sleep 1
+	}
 
 	StartLoopTimer=$((StartLoopTimer+1))
 	[ $StartLoopTimer -ge $StartLoopTimeout ] && {
