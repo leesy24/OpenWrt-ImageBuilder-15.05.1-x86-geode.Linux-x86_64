@@ -232,7 +232,8 @@ while : ; do
 			curFreqMHz=$(get_curFreqMHz) # to MHz
 			curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
 			actFreqMHz=$(get_actFreqMHz)
-			echo " (F=$curFreqGHz=$(get_MHz2GHz $actFreqMHz) S=$actSNR)"
+			actSNR=$(get_actSNR)  ##!!
+			echo " ($curFreqGHz=$(get_MHz2GHz $actFreqMHz) $actSNR)"
 
 			cLOOP=0
 			RXpkts=$(get_RXpkts)
