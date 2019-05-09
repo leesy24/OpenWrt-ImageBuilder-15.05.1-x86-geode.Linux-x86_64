@@ -11,13 +11,11 @@
 #####################################################################
 
 #-----------------------------#
-cp /etc/dws4000/wroaming.config /tmp/wr.config
-. /tmp/wr.config
+cp /etc/dws4000/wroaming.config /tmp/wroaming.config
+. /tmp/wroaming.config
 #-----------------------------#
 
-pSleep() {
-	fping -q -c1 -t$1 255.255.255.255 2> /dev/null
-}
+iw phy0 info > /tmp/DWSroaming_phy0
 
 get_actSSID() {
 	iw dev wlan0 link 2> /dev/null | grep "SSID:" | awk '{ print $2 }'
@@ -34,9 +32,8 @@ get_actFreqMHz() {
 get_curFreqMHz() {
 	local ch
 	ch=$(uci -q get wireless.radio0.channel)
-	iw phy0 info | \
-		grep -E -m1 "(\* .... MHz \[$ch\])" | \
-		awk '{print $2}'
+	grep -E -m1 "(\* .... MHz \[$ch\])" /tmp/DWSroaming_phy0 | \
+	awk '{print $2}'
 }
 
 # $1 = frequency in MHz
@@ -58,9 +55,8 @@ get_RXpkts() {
 
 # $1 = frequency in MHz
 get_channel() {
-	iw phy0 info | \
-		grep -E -m1 "(\* $1 MHz \[[0-9]*\])" | \
-		cut -d'[' -f2 | cut -d']' -f1
+	grep -E -m1 "(\* $1 MHz \[[0-9]*\])" /tmp/DWSroaming_phy0 | \
+	cut -d'[' -f2 | cut -d']' -f1
 }
 
 # $1: new channel
@@ -76,32 +72,36 @@ change_freq() {
 	local targetFreq=$1
 	local ch
 	#echo "change_freq targetFreq=$targetFreq"
+
 	ch=$(get_channel $targetFreq)
-	[ -n "$ch" ] && {
-		change_channel $ch
-		local timer=0
-		local timeout=30 # 3secs <- 100msec x 30
-		#local timeout=50 # 5secs <- 100msec x 50
-		local actSSID
-		local actFreq
-		while : ; do
-			pSleep 100
+	# check string is null
+	[ -z "$ch" ] && exit -1 
 
-			actSSID=$(get_actSSID)
-			[ "$actSSID" = "$curSSID" ] && {
-				actFreq=$(get_actFreqMHz)
-				#echo -n "$actFreq "
-				[ "$actFreq" = "$targetFreq" ] && break
-				[ ! -z "$actFreq" ] && {
-					/etc/init.d/network restart
-					sleep 1
-				}
+	change_channel $ch
+
+	local timer=0
+	local timeout=30 # 3secs <- 100msec x 30
+	#local timeout=50 # 5secs <- 100msec x 50
+	local actSSID
+	local actFreq
+	while : ; do
+		msleep 100
+
+		actSSID=$(get_actSSID)
+		[ "$actSSID" = "$curSSID" ] && {
+			actFreq=$(get_actFreqMHz)
+			#echo -n "$actFreq "
+			[ "$actFreq" = "$targetFreq" ] && break
+			# check string is not null
+			[ -n "$actFreq" ] && {
+				/etc/init.d/network restart
+				sleep 1
 			}
+		}
 
-			timer=$((timer+1))
-			[ $timer -ge $timeout ] && break
-		done
-	}
+		timer=$((timer+1))
+		[ $timer -ge $timeout ] && break
+	done
 }
 
 ### Start of main script
@@ -131,11 +131,11 @@ actSNR=0
 StartLoopTimer=0
 StartLoopTimeout=5 # 5secs
 while : ; do
-	local actFreqMHz
 	actFreqMHz=$(get_actFreqMHz)
 
 	[ "$actFreqMHz" = "$curFreqMHz" ] && break
-	[ ! -z "$actFreqMHz" ] && {
+	# check string is not null
+	[ -n "$actFreqMHz" ] && {
 		/etc/init.d/network restart
 		sleep 1
 	}
@@ -149,22 +149,18 @@ while : ; do
 	sleep 1
 done
 
-echo "SNR=$snrMin F1=$runFreqGHz1 F2=$runFreqGHz2 curF=$curFreqGHz SSID=$curSSID"
+echo "SNR=$snrMin F1=$runFreqGHz1 F2=$runFreqGHz2 curF=$curFreqGHz=$(get_MHz2GHz $actFreqMHz) SSID=$curSSID"
 
 #snrMin=`expr $snrMin \* 1`
 
 cLOOP=0
-
-cntMax=10  ##.............15
-#cntMax=`expr $cntMax \* 1`
-
 RXpkts=$(get_RXpkts)
 ##TXpkts=`ifconfig wlan0 | grep "TX packets" | awk '{ print $2 }' | cut -c9-`
 
 while : ; do
 	#echo -n "."  ##".$snr1"
 
-	# pSleep 100
+	# msleep 100
 
 	actSNR=$(get_actSNR)  ##!!
 	
@@ -172,7 +168,7 @@ while : ; do
 
 		# echo -n "L"
 
-		pSleep 20
+		msleep 20
 
 		actSNR=$(get_actSNR)  ##!!
 		
@@ -206,6 +202,8 @@ while : ; do
 
 			cnt=1
 			#cnt=`expr $cnt \* 1`
+			cntMax=4 # must be even value instead odd
+			#cntMax=`expr $cntMax \* 1`
 			while : ; do
 				actSNR=$(get_actSNR)  ##!!
 				if [ $snrMin -gt $actSNR ] ; then
@@ -225,21 +223,19 @@ while : ; do
 				cnt=$((cnt+1))
 				if [ $cnt -ge $cntMax ] ; then
 					echo -n "_($cnt)Fail!"
-					##/etc/dws4000/FreqChange $oldFreq	
-					###/etc/dws4000/nfreq
-					##==============================!!
-				    ###(V403)###
-					#iwpriv wlan0 mode auto  ##11a
-					#pSleep 400
-				    ############
+					/etc/init.d/network restart
+					sleep 10
 					break  ##--->
 				fi
 			done
-			
-			actSNR=$(get_actSNR)  ##!!
+
 			curFreqMHz=$(get_curFreqMHz) # to MHz
 			curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
-			echo " (F=$curFreqGHz($curFreqMHz) S=$actSNR)"
+			actFreqMHz=$(get_actFreqMHz)
+			echo " (F=$curFreqGHz=$(get_MHz2GHz $actFreqMHz) S=$actSNR)"
+
+			cLOOP=0
+			RXpkts=$(get_RXpkts)
 
 			[ -e /tmp/.force_Roaming ] && rm -f /tmp/.force_Roaming
 		fi
@@ -253,7 +249,7 @@ while : ; do
 		## exec 1>&1
 	fi
 
-	pSleep 100 ##2
+	msleep 100 ##2
 
 	cLOOP=$((cLOOP+1))
 	if [ $cLOOP -gt 10 ] ; then
@@ -266,11 +262,11 @@ while : ; do
 		if [ $RXpkts -eq $RXpkts2 ] ; then
 			###(V403)###		
 			#iwpriv wlan0 mode auto
-			#pSleep 400
+			#msleep 400
 			############
 			#iwconfig wlan0 essid $curSSID
 			echo " __NONE_RxPackets_?? " $RXpkts2
-			#pSleep 400
+			#msleep 400
 		fi
 
 		RXpkts=$(get_RXpkts)
