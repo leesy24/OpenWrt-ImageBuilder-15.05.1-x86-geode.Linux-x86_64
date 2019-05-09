@@ -5,7 +5,6 @@ config wifi-device 'radio0'
         option path 'pci0000:00/0000:00:0c.0'
         option country 'KR'
         option htmode 'HT40'
-        option txpower '30'
         option channel '1'
 
 config wifi-iface
@@ -13,6 +12,6 @@ config wifi-iface
         option network 'wlan'
         option mode 'sta'
         option ssid 'SR-001'
-        option key '1'
         option encryption 'none'
+        option key '1'
         option key1 's:string13chars'
