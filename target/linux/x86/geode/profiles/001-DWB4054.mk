@@ -9,7 +9,7 @@ define Profile/DWB4054
   NAME:=DWB4054 Profile
   VERSION:=v6.1
   PACKAGES:= \
-	avahi-nodbus-daemon \
+	avahi-daemon-service-http avahi-daemon-service-ssh avahi-nodbus-daemon \
 	collectd-mod-iwinfo \
 	coreutils-stty \
 	dosfsck dosfslabel \
