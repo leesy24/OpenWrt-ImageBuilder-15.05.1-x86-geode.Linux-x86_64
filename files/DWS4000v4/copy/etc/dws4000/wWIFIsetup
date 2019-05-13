@@ -18,7 +18,8 @@ textinput() {
 
 	case $retval in
 	0)
-		inputvar=`cat $tempfile`;;
+		inputvar=$(cat $tempfile)
+		;;
 	1)
 		inputvar=$2
 		;;
@@ -28,25 +29,28 @@ textinput() {
 	esac
 
 	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+
+	return $retval
 }
 
 menuinput() {
 
-	menucmd=`cat <<END    
+	menucmd=$(cat <<END    
 $DIALOG --ascii-lines --clear --cr-wrap --title "[[ Wireless LAN Configurations ]]" \
 	--menu "$3\nStat=[ SNR:$rSNR Freq:$rFreq AP=$rAP ] \
 	\n$rDATE >> Please menu select: \n" 22 76 12 \
 	$1 \
 	2> $tempfile
 END
-`
+)
+
 eval $menucmd
 
 	retval=$?
 
 	case $retval in
 	0)
-		inputvar=`cat $tempfile`
+		inputvar=$(cat $tempfile)
 		;;
 	1)
 		inputvar=$2
@@ -80,12 +84,20 @@ while : ; do
 	readDATE
 	#######
 
-	menuinput '"ReviewSNR_AP"  "Status Review .... Enter!"
-		"1Wlan_eSSID"   "WLAN eSSID/Wireless-Name ________($cWssid)"
-		"2Wlan_EncUSE"  "WLAN Encription [none/wep/psk2] _($cWencr)"
-		"3Wlan_EncKEY"  "WLAN Encription [Key Code] ______($cWkey)"
-		"DWSroaming"    ">> DWS4000 Frequency & Roaming Configure <<"
-		"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+	if [ "$cWencr" = "none" ] ; then
+		menuinput '"ReviewSNR_AP"  "Status Review .... Enter!"
+			"1Wlan_eSSID"   "WLAN eSSID/Wireless-Name ________($cWssid)"
+			"2Wlan_EncUSE"  "WLAN Encription [none/wep/psk2] _($cWencr)"
+			"DWSroaming"    ">> DWS4000 Frequency & Roaming Configure <<"
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+	else
+		menuinput '"ReviewSNR_AP"  "Status Review .... Enter!"
+			"1Wlan_eSSID"   "WLAN eSSID/Wireless-Name ________($cWssid)"
+			"2Wlan_EncUSE"  "WLAN Encription [none/wep/psk2] _($cWencr)"
+			"3Wlan_EncKEY"  "WLAN Encription [Key Code] ______($cWkey)"
+			"DWSroaming"    ">> DWS4000 Frequency & Roaming Configure <<"
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+	fi
 
 	case $inputvar in
 
@@ -93,46 +105,101 @@ while : ; do
 		;;
 
 	1Wlan_eSSID)
-		textinput \
-"Please enter Wireless LAN ESSID/Name ... \n\n\
-Examples: \n\
- ex1)WLAN001  ex2)SR-123 \n" \
-			"$cWssid"
-		uci set wireless.@wifi-iface[0].ssid="$inputvar"
+		inputvar=$cWssid
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Wireless LAN ESSID/Name ...\n\n"$(
+				)"Examples:\n"$(
+	 			)" ex1)WLAN001  ex2)SR-123\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cWssid" ] && break
+			# Check input string is not null
+			if [ -n "$inputvar" ] ; then
+				uci set wireless.@wifi-iface[0].ssid="$inputvar"
+				break
+			fi
+			errormsg="Check input value is SSID!"
+		done
 		;;
 
 	2Wlan_EncUSE)
-		textinput \
-"Please enter Wireless LAN Encription Type [none/wep] \n\n\
-Examples: \n\
- ex1)none  ex2)wep-open  ex3)psk2+ccmp\n" \
-			"$cWencr"
-		if [ "$inputvar" = "psk2+ccmp" ] ; then
-			uci set wireless.@wifi-iface[0].encryption="psk2+ccmp"
-		elif [ "$inputvar" = "wep-open" ] ; then
-			uci set wireless.@wifi-iface[0].encryption="wep-open"
-		else
-			uci set wireless.@wifi-iface[0].encryption="none"
-		fi
+		inputvar=$cWencr
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Wireless LAN Encription Type [none/wep/psk2]\n\n"$(
+				)"Examples:\n"$(
+	 			)" ex1)none  ex2)wep-open  ex3)psk2+ccmp\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cWencr" ] && break
+			# Check encryption types
+			if [ "$inputvar" = "psk2+ccmp" ] ; then
+				uci set wireless.@wifi-iface[0].encryption="psk2+ccmp"
+				break
+			elif [ "$inputvar" = "wep-open" ] ; then
+				uci set wireless.@wifi-iface[0].encryption="wep-open"
+				break
+			elif [ -z "$inputvar" ] || [ "$inputvar" = "none" ] ; then
+				uci set wireless.@wifi-iface[0].encryption="none"
+				break
+			fi
+			errormsg="Check input value is one of encryption type!"
+		done
 		;;
 
 	3Wlan_EncKEY)
-		if [ "$cWencr" = "psk2+ccmp" ] ; then
-			textinput \
-"Please enter Wireless LAN Encription-Key-Code...\n\n\
-Examples: must input more and equal than 8 chars\n\
- ex1)12345678 ex2)1234567890123\n" \
-				"$cWkey"
-			uci set wireless.@wifi-iface[0].key="$inputvar"
-		else
-			textinput \
-"Please enter Wireless LAN Encription-Key-Code...\n\n\
-Examples: must input 5 chars or 13 chars\n\
- ex1)s:12345 ex2)s:1234567890123 ex3)s:string13chars\n" \
-				"$cWkey"
-			uci set wireless.@wifi-iface[0].key="1"
-			uci set wireless.@wifi-iface[0].key1="$inputvar"
-		fi
+		inputvar=$cWkey
+		errormsg=""
+		while :; do
+			if [ "$cWencr" = "psk2+ccmp" ] ; then
+				textinput \
+					 "Please enter Wireless LAN Encription-Key-Code...\n\n"$(
+					)"Examples: must input more and equal than 8 chars\n"$(
+	 				)" ex1)12345678  ex2)1234567890123\n"$(
+					)"\n$errormsg\n" \
+					"$inputvar"
+				retval=$?
+				# Check return error
+				[ $retval -ne 0 ] && break
+				# Check changed
+				[ "$inputvar" = "$cWencr" ] && break
+				# Check input string is not null
+				if [ -n "$inputvar" ] ; then
+					uci set wireless.@wifi-iface[0].key="$inputvar"
+					break
+				fi
+			else # elif [ "$cWencr" = "wep-open" ] ; then
+				textinput \
+					 "Please enter Wireless LAN Encription-Key-Code...\n\n"$(
+					)"Examples: must input 5 chars or 13 chars\n"$(
+	 				)" ex1)12345 ex2)1234567890123 ex3)string13chars\n"$(
+					)"\n$errormsg\n" \
+					"$inputvar"
+				retval=$?
+				# Check return error
+				[ $retval -ne 0 ] && break
+				# Check changed
+				[ "$inputvar" = "$cWencr" ] && break
+				# Check input string is not null
+				if [ -n "$inputvar" ] && ([ ${#inputvar} -eq 5 ] || [ ${#inputvar} -eq 13 ])  ; then
+					uci set wireless.@wifi-iface[0].key="1"
+					uci set wireless.@wifi-iface[0].key1="s:$inputvar"
+					break
+				fi
+			fi
+			errormsg="Check input key code and size is 5 or 13!"
+		done
 		;;
 
 	DWSroaming)

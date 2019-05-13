@@ -64,3 +64,22 @@ getChannel() {
 		grep -E -m1 "(\* $1 MHz \[[0-9]*\])" | \
 		cut -d'[' -f2 | cut -d']' -f1
 }
+
+# $1 = IPv4 string to validate
+isValidIPv4() {
+	local OLDIFS=$IFS
+	if expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+		IFS=.
+		set $1
+		for quad in 1 2 3 4; do
+			if eval [ \$$quad -gt 255 ]; then
+				IFS=$OLDIFS
+				return 1
+			fi
+		done
+		IFS=$OLDIFS
+		return 0
+	fi
+	IFS=$OLDIFS
+	return 1
+}

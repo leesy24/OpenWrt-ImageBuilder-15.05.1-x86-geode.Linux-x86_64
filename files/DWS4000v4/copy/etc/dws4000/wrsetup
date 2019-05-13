@@ -1,7 +1,9 @@
 #!/bin/sh
-# (C) 2010 DASAN Infonet Inc.,
-#           jsLee@DSI
+# (C) 2019 DASAN Infonet Inc.,
+#           leesy@DSI
 ##
+. wCommon
+
 DIALOG=${DIALOG=dialog}
 
 cp /etc/dws4000/wroaming.config /tmp/Rwroaming.config
@@ -16,13 +18,13 @@ trap "rm -f $tempfile; exit" 0 1 2 5 15
 iface="wlan0"
 ############
 
-
 FreqTBL="\
-2.4G = 2.412(1) 2.417(2) 2.422(3) 2.427(4) 2.432(5) \n \
-       2.437(6) 2.442(7) 2.447(8) 2.452(9) 2.457(10) \n \
-       2.462(11) 2.467(12) 2.472(13) \n \
-5.xG = 5.745(149) 5.765(153) 5.785(157) 5.805(161)"
-
+2.4G = 2.412(1) 2.417(2) 2.422(3) 2.427(4) 2.432(5) 2.437(6) 2.442(7)\n\
+       2.447(8) 2.452(9) 2.457(10) 2.462(11) 2.467(12) 2.472(13)\n\
+5.xG = 5.180(36) 5.200(40) 5.220(44) 5.240(48) 5.260(52) 5.280(56)\n\
+       5.300(60) 5.320(64) 5.500(100) 5.520(104) 5.540(108) 5.560(112)\n\
+       5.580(116) 5.600(120) 5.620(124) 5.640(128) 5.660(132) 5.680(136)\n\
+       5.700(140) 5.745(149) 5.765(153) 5.785(157) 5.805(161)"
 
 save_value() {
 	egrep -v '^$' $CONFIGPATH | egrep -v "^"$1 > $CONFIGPATH.new
@@ -33,14 +35,12 @@ save_value() {
 
 	cp $CONFIGPATH $CONFIGPATH_org
 	sync
-	sleep 1
-	sync
 }
 
 get_retval() {
 	retval=$?
 
-	choice=`cat $tempfile`
+	choice=$(cat $tempfile)
 
 	case $retval in
 	1)
@@ -57,11 +57,12 @@ textinput() {
 	--ascii-lines --title "INPUT BOX" --clear \
 	--inputbox "$1" 16 76 "$2" 2> $tempfile
 
-	retval=$?
+	local retval=$?
 
 	case $retval in
 	0)
-		inputvar=`cat $tempfile`;;
+		inputvar=$(cat $tempfile)
+		;;
 	1)
 		inputvar=$2
 		;;
@@ -70,25 +71,28 @@ textinput() {
 		;;
 	esac
 
-	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+	[ "$inputvar" = "--" ] && inputvar=""
+
+	return $retval
 }
 
 menuinput() {
 
-	menucmd=`cat <<END    
+	menucmd=$(cat <<END    
 $DIALOG --ascii-lines --clear --cr-wrap --title "[ DWS4000 Roaming Configuration ]" \
 	--menu "\n$3\nPlease select:\n\n" 20 71 8 \
 	$1 \
 	2> $tempfile
 END
-`
+)
+
 eval $menucmd
 
 	retval=$?
 
 	case $retval in
 	0)
-		inputvar=`cat $tempfile`
+		inputvar=$(cat $tempfile)
 		;;
 	1)
 		inputvar=$2
@@ -110,78 +114,209 @@ mchoice="";
 
 while : ; do
 
-inputvar=""
+	inputvar=""
 
-CUR_RunFreq1=`egrep $iface"_RunFreq1" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/'`    
-CUR_RunFreq2=`egrep $iface"_RunFreq2" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/'`    
-CUR_RunSNR=`egrep $iface"_RunSNR" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/'`    
-##
-CUR_2Gmode=`egrep $iface"_2Gmode" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/'`
+	CUR_RunFreq1=$(grep $iface"_RunFreq1" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_RunFreq2=$(egrep $iface"_RunFreq2" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_RunSNR=$(grep $iface"_RunSNR" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	##
+	CUR_2Gmode=$(grep $iface"_2Gmode" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingIP=$(grep $iface"_PingIP" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingTO=$(grep $iface"_PingTO" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingFC=$(grep $iface"_PingFC" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 
+	echo "($CUR_RunFreq1) ($CUR_RunFreq2) ($CUR_RunSNR) ($CUR_PingIP) ($CUR_PingTO) ($CUR_PingFC)"
 
+	menuinput '"1_runfreq1" "Configure running frequency1 ($CUR_RunFreq1)"
+		"2_runfreq2" 	"Configure running frequency2 ($CUR_RunFreq2)"
+		"3_runsnr" 	"Configure Minimum SNR for Roaming ($CUR_RunSNR)"
+		"4_run2Gmode" 	"Configure 2.4GHz Operation Mode ($CUR_2Gmode)"
+		"5_PingIP" 	"Configure Remote IP to ping ($CUR_PingIP)"
+		"6_PingTO" 	"Configure Time Out to ping remote IP ($CUR_PingTO)"
+		"7_PingFC" 	"Configure Fail Count to ping remote IP ($CUR_PingFC)"
+		"X_ExitCancel"	"Exit or Cancel to upper Menu"'
 
-echo "($CUR_RunFreq1) ($CUR_RunFreq2) ($CUR_RunSNR)"
+	##echo "menu...?"
 
-menuinput '"1_runfreq1" "Configure running frequency1 ($CUR_RunFreq1)"
-	"2_runfreq2" 	"Configure running frequency2 ($CUR_RunFreq2)"
-	"3_runsnr" 	"Configure Minimum SNR for Roaming ($CUR_RunSNR)"
-	"4_run2Gmode" 	"Configure 2.4GHz Operation Mode ($CUR_2Gmode)"
-	"X_ExitCancel"	"Exit or Cancel to upper Menu"'
+	case $inputvar in
 
-##echo "menu...?"
+	1_runfreq1)
+		inputvar=$CUR_RunFreq1
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Running-Frequency... with N.NNN GHz\n\n"$(
+				)"Examples:\n"$(
+				)"$FreqTBL\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_RunFreq1" ] && break
+			# Check one of FreqTBL
+			[ -n "$inputvar" ] && \
+			[ "$inputvar" = "$(echo "$FreqTBL" | grep -o -E -m1 "($inputvar\([0-9]*\))" | cut -d'(' -f1)" ] && \
+			{
+				save_value $iface"_RunFreq1"
+				touch $CONFIG_UPDATED
+				break
+			}
+			errormsg="Check input one of Freq table"
+		done
+		;;
 
-case $inputvar in
+	2_runfreq2)
+		inputvar=$CUR_RunFreq2
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Running-Frequency... with N.NNN GHz\n\n"$(
+				)"Examples:\n"$(
+				)"$FreqTBL\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_RunFreq2" ] && break
+			# Check one of FreqTBL
+			[ -n "$inputvar" ] && \
+			[ "$inputvar" = "$(echo "$FreqTBL" | grep -o -E -m1 "($inputvar\([0-9]*\))" | cut -d'(' -f1)" ] && \
+			{
+				save_value $iface"_RunFreq2"
+				touch $CONFIG_UPDATED
+				break
+			}
+			errormsg="Check input one of Freq table"
+		done
+		;;
 
-1_runfreq1)
-	textinput \
-	"Please enter Running-Frequency... with N.NNN GHz \n\n \
-Examples: \n $FreqTBL \n" \
-	"$CUR_RunFreq1"
+	3_runsnr)
+		inputvar=$CUR_RunSNR
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Running Minimum-SNR... with NN dBm(0 < NN < 70)\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_RunSNR" ] && break
+			# Check 0 < value < 70
+			[ -n "$inputvar" ] && [ $inputvar -gt 0 ] 2>/dev/null && [ $inputvar -lt 70 ] 2>/dev/null && {
+				save_value $iface"_RunSNR"
+				break
+			}
+			errormsg="Check input value NN is 0 < NN < 70"
+		done
+		;;
 
-	save_value $iface"_RunFreq1"
-	touch $CONFIG_UPDATED
-	;;
+	4_run2Gmode)
+		inputvar=$CUR_2Gmode
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter 2.4GHz Operation Mode (11b/11g)\n\n"$(
+				)"Examples:\n"$(
+				)" ex1)11b ex2)11g\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_2Gmode" ] && break
+			# Check one of op mode
+			if [ "$inputvar" = "11b" ] || [ "$inputvar" = "11g" ]; then
+				save_value $iface"_2Gmode"	
+				break
+			fi
+			errormsg="Check input value is one of Operation Mode"
+		done
+		;;
 
-2_runfreq2)
-	textinput \
-	"Please enter Running-Frequency... with N.NNN GHz \n\n \
-Examples: \n $FreqTBL \n" \
-	"$CUR_RunFreq2"
+	5_PingIP)
+		inputvar=$CUR_PingIP
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Remote IP to ping\n"$(
+				)" Ping disabled when empty\n\n"$(
+				)"Examples: can blank\n"$(
+				)" 192.168.0.127  10.1.1.127\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingIP" ] && break
+			# Check string null or valid IP v4
+			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
+				save_value $iface"_PingIP"
+				break
+			fi
+			errormsg="Check input value is IP v4 format!"
+		done
+		;;
 
-	save_value $iface"_RunFreq2"
-	touch $CONFIG_UPDATED
-	;;
+	6_PingTO)
+		inputvar=$CUR_PingTO
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Time Out to ping Remote IP in msec(> 0)\n\n"$(
+				)"Examples:\n"$(
+				)" 1  7  10  20\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingTO" ] && break
+			# Check greater than zero
+			[ $inputvar -gt 0 ] 2>/dev/null && {
+				save_value $iface"_PingTO"
+				break
+			}
+			errormsg="Check input value is greater than 0!"
+		done
+		;;
 
-3_runsnr)
-	textinput \
-	"Please enter Running Minimum-SNR... with NN dBm \n" \
-	"$CUR_RunSNR"
+	7_PingFC)
+		inputvar=$CUR_PingFC
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Fail Count to ping Remote IP\n"$(
+				)" Ping disabled when zero or empty\n\n"$(
+				)"Examples:\n"$(
+				)" 1  3  5 \n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingFC" ] && break
+			# Check string null or greater and equal than zero
+			([ -z "$inputvar" ] || [ $inputvar -ge 0 ] 2>/dev/null) && {
+				save_value $iface"_PingFC"
+				break
+			}
+			errormsg="Check input value is empty or greater and equal than 0!"
+		done
+		;;
 
-	save_value $iface"_RunSNR"
-	;;
-
-4_run2Gmode)
-	textinput \
-	"Please enter 2.4GHz Operation Mode (11b/11g) \n\n \
-Examples: \n ex1)11b ex2)11g \n" \
-	"$CUR_2Gmode"
-
-	save_value $iface"_2Gmode"	
-	;;
-
-X_ExitCancel | *)
-	rm $tempfile >/dev/null 2>/dev/null
-
-	## cp $CONFIGPATH $CONFIGPATH_org
-	
-	sync
-	sleep 1
-	sync
-	####
-
-	exit 0
-	;;
-esac
-
+	X_ExitCancel | *)
+		rm $tempfile >/dev/null 2>/dev/null
+		exit 0
+		;;
+	esac
 done
-
