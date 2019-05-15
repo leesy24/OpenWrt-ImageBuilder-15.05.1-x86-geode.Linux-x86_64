@@ -33,6 +33,7 @@ define Profile/DWS6000
 	-wpad-mini wpad
   FILES_COPY:=files/DWS6000/copy
   FILES_REMOVE:=files/DWS6000/remove.lst
+  SERIAL_BAUDRATE:=115200
 endef
 
 define Profile/DWS6000/Description
