@@ -325,7 +325,7 @@ define file_copy
 	echo "file_copy $(1)"; \
 	for copy_files in $(1); do \
 		echo -e "\tcopy_files $$copy_files"; \
-		for src_dir in $(sort $(foreach d,$(wildcard $(1)),$(dir $(d)))); do \
+		for src_dir in $(sort $(foreach d,$(wildcard $(copy_files)),$(dir $(d)))); do \
 			( cd $$src_dir; find -type f -or -type d ) | \
 				( cd $(2); while :; do \
 					read FILE; \

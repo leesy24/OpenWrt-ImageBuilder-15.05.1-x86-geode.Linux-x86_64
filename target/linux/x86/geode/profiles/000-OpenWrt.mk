@@ -6,7 +6,7 @@
 #
 
 define Profile/OpenWrt
-  NAME:=OpenWrt Profile
+	NAME:=OpenWrt Profile
 endef
 
 define Profile/OpenWrt/Description
