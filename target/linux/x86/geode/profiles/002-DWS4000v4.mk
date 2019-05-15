@@ -17,18 +17,21 @@ define Profile/DWS4000v4
 	fdisk \
 	-firewall \
 	ip \
-	-ip6tables \
-	-iptables \
+	-ip6tables -iptables \
 	iw iwinfo \
+	-kmod-button-hotplug \
 	-kmod-fs-msdos kmod-fs-vfat \
 	kmod-hwmon-lm90 \
 	kmod-i2c-algo-pca kmod-i2c-algo-pcf kmod-i2c-gpio \
 	kmod-leds-gpio \
+	-kmod-ledtrig-heartbeat -kmod-ledtrig-gpio -kmod-ledtrig-netdev \
+	-kmod-nf-nathelper \
 	kmod-nls-cp1250 kmod-nls-cp1251 kmod-nls-cp437 kmod-nls-cp775 \
 	kmod-nls-cp850 kmod-nls-cp852 kmod-nls-cp862 kmod-nls-cp864 \
 	kmod-nls-cp866 kmod-nls-cp932 kmod-nls-iso8859-1 kmod-nls-iso8859-13 \
 	kmod-nls-iso8859-15 kmod-nls-iso8859-2 kmod-nls-iso8859-6 \
 	kmod-nls-iso8859-8 kmod-nls-koi8r kmod-nls-utf8 \
+	-kmod-ipt-conntrack -kmod-ipt-core \
 	kmod-stp \
 	kmod-usb-core kmod-usb-hid \
 	kmod-usb-ohci-pci \
@@ -43,12 +46,14 @@ define Profile/DWS4000v4
 	kmod-usb-uhci \
 	kmod-usb2 \
 	lftp \
+	libiwinfo-lua \
 	libncurses \
-	luci \
+	luci-base luci-mod-admin-full luci-theme-bootstrap \
 	-mkdosfs \
 	-odhcp6c -odhcpd \
 	-ppp -ppp-mod-pppoe \
 	swconfig \
+	uhttpd uhttpd-mod-ubus \
 	usbreset usbutils \
 	-wpad-mini wpad
   FILES_COPY:=files/DWS4000v4/copy
