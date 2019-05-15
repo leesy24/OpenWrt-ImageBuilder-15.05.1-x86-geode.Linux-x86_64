@@ -174,7 +174,7 @@ Please Enter: \n [YES]/[no] \n" \
 
 menuinput() {
 	menucmd=`cat <<END
-$DIALOG --ascii-lines --clear --cr-wrap --title "[[ DWx6000 SYSTEM Configurations ]]" \
+$DIALOG --ascii-lines --clear --cr-wrap --title "[[ DWS6000 SYSTEM Configurations ]]" \
 	--menu "Name=$DW_hostname ($DW_TYPE $DW_hostID $DWtype) [ssid: $DW_SSID0 $DW_SSID1] <$DWmode>\
 	\n $DW_asso0 \n $DW_asso1 \nPlease menu select: \n" 22 76 13 \
 	$1 \
