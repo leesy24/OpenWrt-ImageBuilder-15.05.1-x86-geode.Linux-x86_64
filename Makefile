@@ -80,6 +80,8 @@ define Profile
   $(1)_PACKAGES:=$(PACKAGES)
   $(1)_FILES_COPY:=$(FILES_COPY)
   $(1)_FILES_REMOVE:=$(FILES_REMOVE)
+  $(1)_SERIAL_BAUDRATE:=$(SERIAL_BAUDRATE)
+
   PROFILE_NAMES += $(1)
   PROFILE_LIST += \
 	echo '$(1):'; [ -z '$(NAME)' ] || \
@@ -88,6 +90,13 @@ define Profile
 	echo '	Packages: $(PACKAGES)'; \
 	echo '	Files copy: $(FILES_COPY)'; \
 	echo '	Files remove: $(FILES_REMOVE)';
+ifneq ($(SERIAL_BAUDRATE),)
+  PROFILE_LIST += \
+	echo '	Serial baudrate: $(SERIAL_BAUDRATE)';
+else
+  PROFILE_LIST += \
+	echo '	Serial baudrate: default';
+endif
 endef
 
 include $(INCLUDE_DIR)/target.mk
@@ -106,6 +115,7 @@ BUILD_PACKAGES:=$(sort $(DEFAULT_PACKAGES) $(USER_PACKAGES) $($(USER_PROFILE)_PA
 # "-pkgname" in the package list means remove "pkgname" from the package list
 BUILD_PACKAGES:=$(filter-out $(filter -%,$(BUILD_PACKAGES)) $(patsubst -%,%,$(filter -%,$(BUILD_PACKAGES))),$(BUILD_PACKAGES))
 PACKAGES:=
+BUILD_SERIAL_BAUDRATE:=$($(USER_PROFILE)_SERIAL_BAUDRATE)
 
 _call_image:
 	@echo 'Building images for $(BOARD) $(CPU_TYPE)$(if $($(USER_PROFILE)_NAME), - $($(USER_PROFILE)_NAME))'
@@ -113,6 +123,11 @@ _call_image:
 	@echo 'Packages: $(BUILD_PACKAGES)'
 	@echo 'Files copy: $(BUILD_FILES_COPY)'
 	@echo 'Files remove: $(BUILD_FILES_REMOVE)'
+ifneq ($(BUILD_SERIAL_BAUDRATE),)
+	@echo 'Serial baudrate: $(BUILD_SERIAL_BAUDRATE)'
+else
+	@echo 'Serial baudrate: default'
+endif
 	@echo
 	rm -rf $(TARGET_DIR)
 	mkdir -p $(TARGET_DIR) $(BIN_DIR) $(TMP_DIR) $(DL_DIR)
@@ -183,7 +198,8 @@ build_image: FORCE
 	@echo Building images...
 	$(NO_TRACE_MAKE) -C target/linux/$(BOARD)/image install TARGET_BUILD=1 IB=1 \
 		$(if $(USER_PROFILE),PROFILE="$(USER_PROFILE)") \
-		VERSION="$(BUILD_VERSION)"
+		VERSION="$(BUILD_VERSION)" \
+		SERIAL_BAUDRATE="$(BUILD_SERIAL_BAUDRATE)"
 
 clean:
 	rm -rf $(TMP_DIR) $(DL_DIR) $(TARGET_DIR) $(BIN_DIR)
