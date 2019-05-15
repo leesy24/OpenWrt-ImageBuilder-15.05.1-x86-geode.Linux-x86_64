@@ -1,0 +1,70 @@
+# Put your custom commands here that should be executed once
+# the system init finished. By default this file does nothing.
+
+
+## sleep 2
+
+#DW_hostname=`uci get system.@system[0].hostname`
+#DW_TYPE=`echo $DW_hostname | cut -c-3`
+#if [ "$DW_TYPE" = "DWS" ] ; then
+#	echo " " > /dev/console
+#	echo "-----(1 of 2 wlan0/1)-----" > /dev/console
+#	/usr/sbin/brctl show > /dev/console
+#	/usr/sbin/brctl delif br-lan wlan1 > /dev/console
+#	/usr/sbin/brctl show > /dev/console
+#	echo "--------------------------" > /dev/console
+#	echo " " > /dev/console
+#fi
+
+###########################
+DW_hostname=`uci get system.@system[0].hostname`
+DW_TYPE=`echo $DW_hostname | cut -c-3`
+if [ "$DW_TYPE" = "DWS" ] ; then
+ ## /etc/config/DWroaming.sh &
+    /etc/config/DWroaming.sh 15 15 3 192.168.2.179 &
+    ## DWroaming.sh SNRmin SNRdelta PingCNT PingIPaddr ##
+    ##   ex) (@14dBm:if<29dBm), (@13dBm:if<28dBm) == Roaming!! 
+fi
+if [ "$DW_TYPE" = "DWB" ] ; then
+    /etc/config/AutoAP.sh &
+fi
+###########################
+
+
+##########
+sleep 30
+##########
+cp /etc/config/wireless /tmp/wireless_boot1
+##
+NewWLANcnt=`uci show wireless | grep -c disabled=1`
+##
+if [ $NewWLANcnt -gt 0 ] ; then
+	echo
+	echo "%% --------(Init New-WLAN H/W Configure)-----------Start! %%" >> /dev/console
+	rm /etc/config/wireless
+	wifi detect > /tmp/DTwireless
+	##
+	cp /tmp/wireless_boot1 /etc/config/wireless
+	sync
+	uci delete wireless.@wifi-iface[3]
+	uci delete wireless.radio3
+	uci delete wireless.@wifi-iface[2]
+	uci delete wireless.radio2
+	##
+	uci set wireless.radio0.macaddr=`uci get /tmp/DTwireless.radio0.macaddr`
+	uci set wireless.radio1.macaddr=`uci get /tmp/DTwireless.radio1.macaddr`	
+	uci commit wireless
+	##
+	echo "%% --------(Init New-WLAN H/W Configure)-----------Done! %%" >> /dev/console
+	echo ; echo ".... System Reboot Now!!" >> /dev/console
+	sleep 2
+	##
+	reboot
+	##
+else
+	echo "%% --------(Init New-WLAN H/W Configure)-----------Pass! %%" >> /dev/console
+fi
+
+
+exit 0
+

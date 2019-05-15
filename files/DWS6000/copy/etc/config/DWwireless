@@ -1,0 +1,35 @@
+
+config wifi-device 'radio0'
+	option type 'mac80211'
+	option txpower '30'
+	option channel 'auto'
+	option hwmode 'auto'
+	option country 'BR'
+	option macaddr '00:1b:b1:01:df:46'
+
+config wifi-iface
+	option device 'radio0'
+	option network 'lan'
+	option mode 'sta'
+	option wds '1'
+	option ssid 'DW-001A'
+	option encryption 'psk2'
+	option key 'www.dsintek.com'
+
+config wifi-device 'radio1'
+	option type 'mac80211'
+	option txpower '30'
+	option channel 'auto'
+	option hwmode 'auto'
+	option country 'BR'
+	option macaddr '90:a4:de:f7:3a:6a'
+
+config wifi-iface
+	option device 'radio1'
+	option network 'lan'
+	option mode 'sta'
+	option wds '1'
+	option ssid 'DW-001B'
+	option encryption 'psk2'
+	option key 'www.dsintek.com'
+
