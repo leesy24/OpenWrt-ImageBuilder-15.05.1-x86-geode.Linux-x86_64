@@ -31,8 +31,12 @@ define Profile/DWS6000
 		usbutils \
 		wireless-tools \
 		-wpad-mini wpad
-	FILES_COPY:=files/DWS6000/copy/.
-	FILES_REMOVE:=files/DWS6000/remove.lst
+	FILES_COPY:= \
+		files/DWx6000/copy/. \
+		files/DWS6000/copy/.
+	FILES_REMOVE:= \
+		files/DWx6000/remove.lst \
+		files/DWS6000/remove.lst
 	SERIAL_BAUDRATE:=115200
 endef
 
