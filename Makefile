@@ -147,10 +147,14 @@ ifneq ($(BUILD_FILES_REMOVE),)
 ifneq ($(wildcard $(BUILD_FILES_REMOVE)),)
 	@echo
 	@echo Remove useless files
-	while IFS='' read -r filename; do \
-		echo "Removing $$filename"; \
-		rm -rfv "$(TARGET_DIR)$$filename"; \
-	done < <(tr -d '\r' < $(BUILD_FILES_REMOVE));
+	@for remove_files in $(BUILD_FILES_REMOVE); do \
+		echo "remove_files $$remove_files"; \
+		while IFS='' read -r filename; do \
+			[ -z "$$filename" ] && continue; \
+			echo -e "\tRemoving \"$$filename\""; \
+			rm -rfv "$(TARGET_DIR)$$filename"; \
+		done < <(tr -d '[:blank:]\r' < $$remove_files); \
+	done;
 endif
 endif
 	$(MAKE) build_image

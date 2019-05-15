@@ -322,17 +322,21 @@ endef
 # $(1) => File glob expression
 # $(2) => Destination directory
 define file_copy
-	for src_dir in $(sort $(foreach d,$(wildcard $(1)),$(dir $(d)))); do \
-		( cd $$src_dir; find -type f -or -type d ) | \
-			( cd $(2); while :; do \
-				read FILE; \
-				[ -z "$$FILE" ] && break; \
-				[ -L "$$FILE" ] || continue; \
-				echo "Removing symlink $(2)/$$FILE"; \
-				rm -f "$$FILE"; \
-			done; ); \
-	done; \
-	$(CP) $(1) $(2)
+	echo "file_copy $(1)"; \
+	for copy_files in $(1); do \
+		echo -e "\tcopy_files $$copy_files"; \
+		for src_dir in $(sort $(foreach d,$(wildcard $(1)),$(dir $(d)))); do \
+			( cd $$src_dir; find -type f -or -type d ) | \
+				( cd $(2); while :; do \
+					read FILE; \
+					[ -z "$$FILE" ] && break; \
+					[ -L "$$FILE" ] || continue; \
+					echo "Removing symlink $(2)/$$FILE"; \
+					rm -f "$$FILE"; \
+				done; ); \
+		done; \
+		$(CP) $(1) $(2); \
+	done
 endef
 
 # file extension
