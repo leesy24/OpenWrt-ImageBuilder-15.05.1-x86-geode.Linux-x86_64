@@ -65,7 +65,7 @@ change_channel() {
 	#echo "change_channel $1"
 	uci set wireless.radio0.channel=$1
 	uci commit
-	/etc/init.d/network reload
+	/etc/init.d/network reload >/dev/null
 }
 
 # $1: new frequency in MHz
