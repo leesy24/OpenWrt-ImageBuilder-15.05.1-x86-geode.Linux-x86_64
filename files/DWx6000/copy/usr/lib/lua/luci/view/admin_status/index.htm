@@ -561,7 +561,7 @@
 		<tr><td width="33%"><%:Hostname%></td><td><%=luci.sys.hostname() or "?"%></td></tr>
 		<tr><td width="33%"><%:Model%></td><td><%=pcdata(boardinfo.model or boardinfo.system or "?")%></td></tr>
 		<tr><td width="33%"><%:Firmware Version%></td><td>
-			<%# =pcdata(ver.distname) -%> DWS6000(15.05.1_r48532) <%# =pcdata(ver.distversion) -%> <%# / -%>
+			<%# =pcdata(ver.distname) -%> DWx6000(15.05.1_r48532) <%# =pcdata(ver.distversion) -%> <%# / -%>
 			<%# =pcdata(ver.luciname) -%>  <%# ( -%> <%# =pcdata(ver.luciversion) -%> <%# ) -%>
 		</td></tr>
 		<tr><td width="33%"><%:Kernel Version%></td><td><%=unameinfo.release or "?"%></td></tr>
