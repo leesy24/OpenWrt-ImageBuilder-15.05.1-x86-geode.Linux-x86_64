@@ -1,0 +1,34 @@
+
+config wifi-device  'radio0'
+	option type     'mac80211'
+	option channel  '149'
+	option hwmode   'auto'
+	option path     'pci0000:00/0000:00:0c.0'
+	option htmode   'HT40'
+	option country  'BR'
+
+config wifi-iface
+	option device 'radio0'
+	option network 'lan'
+	option mode 'ap'
+	option wds '1'
+	option encryption 'psk2'
+	option key 'www.dsintek.com'
+	option ssid 'DW-115A'
+
+config wifi-device  'radio1'
+	option type     'mac80211'
+	option channel  '157'
+	option hwmode   'auto'
+	option path     'pci0000:00/0000:00:0e.0'
+	option htmode   'HT40'
+	option country  'BR'
+
+config wifi-iface
+	option device 'radio1'
+	option network 'lan'
+	option mode 'ap'
+	option wds '1'
+	option encryption 'psk2'
+	option key 'www.dsintek.com'
+	option ssid 'DW-115B'
