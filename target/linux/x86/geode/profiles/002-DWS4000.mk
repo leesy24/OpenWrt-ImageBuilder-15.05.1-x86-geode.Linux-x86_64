@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-define Profile/v4
+define Profile/DWS4000
 	NAME:=DWS4000 Profile
 	VERSION:=v4.32
 	PACKAGES:= \
