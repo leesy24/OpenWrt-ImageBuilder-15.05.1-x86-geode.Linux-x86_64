@@ -167,7 +167,7 @@ done
 curSNRerr=0
 cLOOP=0
 RXpkts=$(get_RXpkts)
-curPingFC=-4
+curPingFC=-2 # set to wait early n ping success
 
 # Main infinite loop
 while : ; do
@@ -244,18 +244,18 @@ while : ; do
 		curSNRerr=0
 		cLOOP=0
 		RXpkts=$(get_RXpkts)
-		curPingFC=-4
+		curPingFC=-2 # set to wait early n ping success
 
 		[ -e /tmp/.force_Roaming ] && rm -f /tmp/.force_Roaming
 	fi
 
-	msleep 50 ##2
+	msleep 100 ##2
 
 	# Check can't ping
 	if [ -z "$PingIP" ] || [ $PingFC -eq 0 ]; then
 		cLOOP=$((cLOOP+1))
-		# every 1sec = 50msec x 20
-		[ $cLOOP -gt 20 ] && {
+		# every 1sec = 100msec x 10
+		[ $cLOOP -gt 10 ] && {
 			cLOOP=0
 
 			RXpkts2=$(get_RXpkts)
@@ -267,16 +267,29 @@ while : ; do
 		}
 	else # Can ping
 		while [ $curPingFC -lt $PingFC ]; do
-			# Check fping return sucess(0) or fail(not zero)
+			# Check fping return sucess
 			fping -4 -b0 -t$PingTO -r1 -q $PingIP && {
+				# fping returned success
+				# Check early n ping status
+				[ $curPingFC -lt 0 ] && {
+					curPingFC=$((curPingFC+1))
+					echo "DWSroaming: Early Ping success!($curPingFC)" > /dev/kmsg
+					break
+				}
 				curPingFC=0
+				break
+			}
+
+			# fping returned fail
+
+			# Check early n ping status
+			[ $curPingFC -lt 0 ] && {
+				echo "DWSroaming: Early Ping fail!($curPingFC)" > /dev/kmsg
 				break
 			}
 
 			curPingFC=$((curPingFC+1))
 			echo "DWSroaming: Ping fail!($curPingFC)" > /dev/kmsg
-
-			[ $curPingFC -le 0 ] && break
 		done
 	fi
 done
