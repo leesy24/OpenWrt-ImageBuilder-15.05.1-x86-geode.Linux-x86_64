@@ -6,7 +6,7 @@ config interface 'loopback'
         option netmask '255.0.0.0'
 
 config interface lan
-	option ifname	'eth0'
+	option ifname	'eth0 eth1 eth2'
 	option type	'bridge'
 	option proto	'static'
 	option stp	'1'

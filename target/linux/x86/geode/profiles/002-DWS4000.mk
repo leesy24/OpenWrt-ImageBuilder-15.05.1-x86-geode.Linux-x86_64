@@ -5,9 +5,9 @@
 # See /LICENSE for more information.
 #
 
-define Profile/DWS4000v4
-	NAME:=DWS4000v4 Profile
-	VERSION:=.32
+define Profile/v4
+	NAME:=DWS4000 Profile
+	VERSION:=v4.32
 	PACKAGES:= \
 		avahi-daemon-service-http avahi-daemon-service-ssh avahi-nodbus-daemon \
 		bc \
@@ -56,11 +56,11 @@ define Profile/DWS4000v4
 		uhttpd uhttpd-mod-ubus \
 		usbreset usbutils \
 		-wpad-mini wpad
-	FILES_COPY:=files/DWS4000v4/copy/.
-	FILES_REMOVE:=files/DWS4000v4/remove.lst
+	FILES_COPY:=files/DWS4000/copy/.
+	FILES_REMOVE:=files/DWS4000/remove.lst
 endef
 
-define Profile/DWS4000v4/Description
-	DWS4000v4 LAN to WiFi client bridge package set based on Geode board.
+define Profile/DWS4000/Description
+	DWS4000 LAN to WiFi client bridge package set based on Geode board.
 endef
-$(eval $(call Profile,DWS4000v4))
+$(eval $(call Profile,DWS4000))

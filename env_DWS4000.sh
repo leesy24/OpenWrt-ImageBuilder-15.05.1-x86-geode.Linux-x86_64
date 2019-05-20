@@ -1,2 +1,2 @@
 # Set up PROFILE environment for build with "make image"
-export PROFILE=DWS4000v4
+export PROFILE=DWS4000
