@@ -128,18 +128,18 @@ curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
 actSNR=0
 actFreqMHz=$(get_actFreqMHz)
 
-echo "SNRmin=$snrMin F1=$runFreqGHz1 F2=$runFreqGHz2 PingIP=$PingIP PingTO="$PingTO"msec PingFC=$PingFC"
-echo "curF=$curFreqGHz=$(get_MHz2GHz $actFreqMHz) SSID=$curSSID"
+echo "DWSroaming: SNRmin=$snrMin F1=$runFreqGHz1 F2=$runFreqGHz2 PingIP=$PingIP PingTO="$PingTO"msec PingFC=$PingFC" > /dev/kmsg
+echo "DWSroaming: curF=$curFreqGHz=$(get_MHz2GHz $actFreqMHz) SSID=$curSSID" > /dev/kmsg
 
 # Check current Freq must runFreq1 or 2.
 [ $curFreqMHz -ne $runFreqMHz1 ] && [ $curFreqMHz -ne $runFreqMHz2 ] && {
-	echo -n "Unknown: $curFreqGHz->$runFreqGHz1 "
+	echo -n "DWSroaming: Unknown: $curFreqGHz->$runFreqGHz1 " > /dev/kmsg
 	change_freq $runFreqMHz1
 	curFreqMHz=$(get_curFreqMHz) # to MHz
 	curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
 	actFreqMHz=$(get_actFreqMHz)
 	actSNR=$(get_actSNR)  ##!!
-	echo "($curFreqGHz=$(get_MHz2GHz $actFreqMHz) $actSNR)"
+	echo "($curFreqGHz=$(get_MHz2GHz $actFreqMHz) $actSNR)" > /dev/kmsg
 }
 
 # Check and wait actual freq. match with freq. of config.
@@ -155,7 +155,7 @@ while : ; do
 
 	StartLoopTimer=$((StartLoopTimer+1))
 	[ $StartLoopTimer -ge $StartLoopTimeout ] && {
-		echo "Error! curF=$curFreqMHz actF=$actFreqMHz"
+		echo "DWSroaming: Error! curF=$curFreqMHz actF=$actFreqMHz" > /dev/kmsg
 		break
 	}
 
@@ -184,28 +184,28 @@ while : ; do
 	# Check need to roam
 	if [ $curSNRerr -eq 1 ] || [ $curPingFC -ge $PingFC ] || [ -e /tmp/.force_Roaming ] ; then
 		if [ -e /tmp/.force_Roaming ] ; then
-			echo -n "Forced: "
+			echo -n "DWSroaming: Forced: " > /dev/kmsg
 		elif [ $curPingFC -ge $PingFC ] ; then
-			echo -n "Ping($curPingFC): "
+			echo -n "DWSroaming: Ping($curPingFC): " > /dev/kmsg
 		else
-			echo -n "SNR($actSNR): "
+			echo -n "DWSroaming: SNR($actSNR): " > /dev/kmsg
 		fi
 
-		echo -n "$curFreqGHz->"
+		echo -n "$curFreqGHz->" > /dev/kmsg
 		
 		cnt=1
 		cntMax=4 # must be even value instead odd
 
 		if [ $curFreqMHz -eq $runFreqMHz1 ] ; then
-			echo -n "$runFreqGHz2 "
+			echo -n "$runFreqGHz2 " > /dev/kmsg
 			change_freq $runFreqMHz2 
 			nextFreq=1
 		elif [ $curFreqMHz -eq $runFreqMHz2 ] ; then
-			echo -n "$runFreqGHz1 "
+			echo -n "$runFreqGHz1 " > /dev/kmsg
 			change_freq $runFreqMHz1
 			nextFreq=2
 		else
-			echo -n "Freq_Unknown! "
+			echo -n "Freq_Unknown! " > /dev/kmsg
 			change_freq $runFreqMHz1
 			nextFreq=2
 		fi
@@ -213,7 +213,7 @@ while : ; do
 		while : ; do
 			actSNR=$(get_actSNR)  ##!!
 			if [ $snrMin -gt $actSNR ] ; then
-				echo -n "@"
+				echo -n "@" > /dev/kmsg
 				if [ $nextFreq -eq 1 ] ; then
 					change_freq $runFreqMHz1
 					nextFreq=2
@@ -222,13 +222,13 @@ while : ; do
 					nextFreq=1
 				fi
 			else
-				echo -n "_($cnt)OK! "
+				echo -n "_($cnt)OK! " > /dev/kmsg
 				break  ##--->
 			fi
 			
 			cnt=$((cnt+1))
 			if [ $cnt -ge $cntMax ] ; then
-				echo -n "_($cnt)Fail! "
+				echo -n "_($cnt)Fail! " > /dev/kmsg
 				#/etc/init.d/network restart
 				#sleep 5
 				break  ##--->
@@ -239,7 +239,7 @@ while : ; do
 		curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
 		actFreqMHz=$(get_actFreqMHz)
 		actSNR=$(get_actSNR)  ##!!
-		echo "($curFreqGHz=$(get_MHz2GHz $actFreqMHz) $actSNR)"
+		echo "($curFreqGHz=$(get_MHz2GHz $actFreqMHz) $actSNR)" > /dev/kmsg
 
 		curSNRerr=0
 		cLOOP=0
@@ -260,7 +260,7 @@ while : ; do
 
 			RXpkts2=$(get_RXpkts)
 			if [ $RXpkts -eq $RXpkts2 ] ; then
-				echo " __NONE_RxPackets_?? " $RXpkts2
+				echo "DWSroaming: __NONE_RxPackets_?? " $RXpkts2 > /dev/kmsg
 			fi
 
 			RXpkts=$RXpkts2
@@ -274,7 +274,7 @@ while : ; do
 			}
 
 			curPingFC=$((curPingFC+1))
-			echo "Ping fail!($curPingFC)"
+			echo "DWSroaming: Ping fail!($curPingFC)" > /dev/kmsg
 
 			[ $curPingFC -le 0 ] && break
 		done
