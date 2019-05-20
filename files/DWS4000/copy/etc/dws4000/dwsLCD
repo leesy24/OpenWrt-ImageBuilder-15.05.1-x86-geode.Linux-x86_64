@@ -14,7 +14,8 @@ iw phy0 info > /tmp/dwsLCD_phy0
 
 iface=wlan0
 SerialPort=/dev/ttyUSB0
-SendErrorPipe="2> /dev/null"
+#SendErrorPipe="2> /dev/null"
+SendErrorPipe=">/dev/kmsg 2>/dev/null"
 
 readCFG() {
 	cWssid=$(uci -q get wireless.@wifi-iface[0].ssid)
@@ -75,7 +76,7 @@ cfaLCDInit() {
 ### Check and wait USB serial character device file exists
 while [ ! -c $SerialPort ] ; do
 	sleep 1 # wait 1sec
-	echo "Check inserted the USB serial LCD!"
+	echo "dwsLCD: Check inserted the USB serial LCD!" > /dev/kmsg
 done
 USB_SERIAL_DEV_EXIST=1
 sleep 1 # wait 1sec
@@ -85,10 +86,10 @@ sleep 1 # wait 1sec
 cfa_send $SerialPort "\x00\d000" $SendErrorPipe
 if [ $? -eq 0 ] ; then
 	CFA_DETECTED=1
-	echo "Detected CFA LCD!"
+	echo "dwsLCD: Detected CFA LCD!" > /dev/kmsg
 else
 	CFA_DETECTED=0
-	echo "Detected legacy LCD!"
+	echo "dwsLCD: Detected legacy LCD!" > /dev/kmsg
 fi
 
 # Init LCD
@@ -106,7 +107,7 @@ while : ; do
 	while [ ! -c $SerialPort ] ; do
 		USB_SERIAL_DEV_EXIST=0
 		sleep 1 # wait 1sec
-		echo "Check inserted the USB serial LCD!"
+		echo "dwsLCD: Check inserted the USB serial LCD!" > /dev/kmsg
 	done
 
 	if [ $USB_SERIAL_DEV_EXIST -eq 0 ] ; then
@@ -117,12 +118,11 @@ while : ; do
 		cfa_send $SerialPort "\x00\d000" $SendErrorPipe
 		if [ $? -eq 0 ] ; then
 			CFA_DETECTED=1
-			echo "Detected CFA LCD!"
+			echo "dwsLCD: Detected CFA LCD!" > /dev/kmsg
 		else
 			CFA_DETECTED=0
-			echo "Detected legacy LCD!"
+			echo "dwsLCD: Detected legacy LCD!" > /dev/kmsg
 		fi
-		# echo "CFA_DETECTED=$CFA_DETECTED"
 
 		# Init LCD
 		if [ $CFA_DETECTED -eq 1 ] ; then
