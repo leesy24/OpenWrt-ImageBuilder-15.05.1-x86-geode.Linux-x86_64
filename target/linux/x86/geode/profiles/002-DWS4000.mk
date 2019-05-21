@@ -51,6 +51,7 @@ define Profile/DWS4000
 		luci-base luci-mod-admin-full luci-theme-bootstrap \
 		-mkdosfs \
 		-odhcp6c -odhcpd \
+		openssh-sftp-server \
 		-ppp -ppp-mod-pppoe \
 		swconfig \
 		uhttpd uhttpd-mod-ubus \
