@@ -5,6 +5,10 @@
 
 iface="wlan0"
 
+readModelName() {
+	ModelName=$(uci -q get system.@system[0].hostname)
+}
+
 readCFG() {
 	## echo "wSSID=$cWssid $cWencr Key=$cWkey $cWip $cWmask $cWgway $cLip $cLmask $cSlogip $cWdns "
 

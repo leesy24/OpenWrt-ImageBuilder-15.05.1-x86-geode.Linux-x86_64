@@ -77,7 +77,7 @@ textinput() {
 menuinput() {
 
 	menucmd=$(cat <<END    
-$DIALOG --ascii-lines --clear --cr-wrap --title "[ DWS4000 Roaming Configuration ]" \
+$DIALOG --ascii-lines --clear --cr-wrap --title "[ $ModelName Roaming Configuration ]" \
 	--menu "\n$3\nPlease select:\n\n" 20 71 8 \
 	$1 \
 	2> $tempfile
@@ -113,6 +113,8 @@ mchoice="";
 while : ; do
 
 	inputvar=""
+
+	readModelName
 
 	CUR_RunFreq1=$(grep $iface"_RunFreq1" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_RunFreq2=$(egrep $iface"_RunFreq2" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')

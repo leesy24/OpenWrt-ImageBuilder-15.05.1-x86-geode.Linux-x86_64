@@ -69,10 +69,11 @@ rm -f $tempfile
 
 mchoice="";
 
-
 while : ; do
 
 	inputvar=""
+
+	readModelName
 
 	readCFG
 	#######
