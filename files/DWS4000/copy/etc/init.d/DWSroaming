@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+START=21
+
+SCRIPT=DWSroaming
+SCRIPT_PATH=/etc/dws4000/
+
+start() {
+	echo "init: DWSroaming: start" >/dev/kmsg
+	exec $SCRIPT_PATH$SCRIPT &
+}
+
+stop() {
+	echo "init: DWSroaming: stop" >/dev/kmsg
+	killall -9 $SCRIPT
+}
+

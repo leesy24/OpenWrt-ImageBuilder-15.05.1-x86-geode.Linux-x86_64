@@ -9,10 +9,6 @@ if [ -e /dev/sdb1 ] ; then
    chmod 777 /tmp/Udisk
 fi
 
-########################## ##(move to /etc/init.d/network)##
-/etc/dws4000/DWSroaming &
-##########################
-
 ########################## ##(LCD-2016-11)##
 /etc/dws4000/dwsLCD &
 ##########################

@@ -158,7 +158,7 @@ while : ; do
 			if [ `uci -q get wireless.radio0.txpower` ] ; then
 				uci delete wireless.radio0.txpower
 				echo ; echo "[DWS4000].... Wlan-TxPower Option Deleted!!"
-				sleep 1
+				#sleep 1
 			fi
 			###################################################################
 			if [ -e $CONFIG_UPDATED ] ;  then
@@ -170,11 +170,18 @@ while : ; do
 				uci set wireless.radio0.channel=$channel
 				rm -f $CONFIG_UPDATED
 				echo ; echo "[DWS4000].... Wlan-Frequency Updated!!"
-				sleep 1
+				#sleep 1
 			fi
 			###################################################################
 			uci commit
-			sleep 2
+			#sleep 1
+			/etc/init.d/DWSroaming stop 2>/dev/null
+			echo ; echo "[DWS4000].... All Interface Restart...!!"
+			/etc/init.d/network restart 2>/dev/null
+			sleep 1
+			echo ; echo "[DWS4000].... DWSroaming Start...!!"
+			/etc/init.d/DWSroaming start 2>/dev/null
+			sleep 1
 		fi	
 		;;
 
@@ -191,7 +198,7 @@ while : ; do
 			if [ `uci -q get wireless.radio0.txpower` ] ; then
 				uci delete wireless.radio0.txpower
 				echo ; echo "[DWS4000].... Wlan-TxPower Option Deleted!!"
-				sleep 1
+				#sleep 1
 			fi
 			###################################################################
 			if [ -e $CONFIG_UPDATED ] ;  then
@@ -203,15 +210,15 @@ while : ; do
 				uci set wireless.radio0.channel=$channel
 				rm -f $CONFIG_UPDATED
 				echo ; echo "[DWS4000].... Wlan-Frequency Updated!!"
-				sleep 1
+				#sleep 1
 			fi
 			###################################################################
 			uci commit
-			sleep 1
+			#sleep 1
 			#/etc/init.d/collectd stop
 			#sync
 			echo ; echo "[DWS4000].... All Interface Restart...!!"
-			sleep 1
+			#sleep 1
 			sync
 			##clear
 			echo ; echo "[DWS4000].... System Reboot Now!!"
