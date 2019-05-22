@@ -13,6 +13,7 @@ define Profile/DWS4000
 		bc \
 		coreutils-stty \
 		-dosfsck -dosfslabel \
+		e2fsprogs \
 		ethtool \
 		fdisk \
 		-firewall \
