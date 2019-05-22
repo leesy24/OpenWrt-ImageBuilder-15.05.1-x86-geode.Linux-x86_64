@@ -76,7 +76,7 @@ cfaLCDInit() {
 ### Check and wait USB serial character device file exists
 while [ ! -c $SerialPort ] ; do
 	sleep 1 # wait 1sec
-	echo "dwsLCD: Check inserted the USB serial LCD!" > /dev/kmsg
+	#echo "dwsLCD: Check inserted the USB serial LCD!" > /dev/kmsg
 done
 USB_SERIAL_DEV_EXIST=1
 sleep 1 # wait 1sec
