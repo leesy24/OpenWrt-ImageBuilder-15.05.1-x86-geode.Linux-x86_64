@@ -551,7 +551,7 @@ wpa_supplicant_add_network() {
 	local scan_ssid="scan_ssid=1"
 	local freq
 
-	# Add scan_freq for DWS4000 by leesy@DSI
+	# Add freq_list and scan_freq and ignore_old_scan_res for DWS4000 & GE by leesy@DSI
 	[[ "$_w_mode" = "sta" ]] && {
 		[ -n "$channel" ] && {
 			freq="$(get_freq "$phy" "$channel")"
