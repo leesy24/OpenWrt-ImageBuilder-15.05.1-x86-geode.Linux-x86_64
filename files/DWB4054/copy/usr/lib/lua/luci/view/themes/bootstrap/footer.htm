@@ -6,7 +6,7 @@
 -%>
 
 <%
-	local ver = require "luci.version"
+	local company = require "luci.company"
 	local disp = require "luci.dispatcher"
 	local request  = disp.context.path
 	local category = request[1]
@@ -14,10 +14,7 @@
 	local categories = disp.node_childs(tree)
 %>
    <footer>
-<%#
--%>
-    DASAN-InfoTEK @2018 | Ow_15.05.1
-
+    <a href="http://www.dsintek.com/"><%= company.name %></a> @<%= company.year %> | <%= company.prefix %>_<%= company.origin %>
     <% if #categories > 1 then %>
      <ul class="breadcrumb pull-right" id="modemenu">
 	    <% for i, r in ipairs(categories) do %>

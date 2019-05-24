@@ -8,12 +8,10 @@
 	local fs = require "nixio.fs"
 	local util = require "luci.util"
 	local stat = require "luci.tools.status"
-	local ver = require "luci.version"
+	local company = require "luci.company"
 
 	local has_ipv6 = fs.access("/proc/net/ipv6_route")
-	local has_ipv6 = NONE
 	local has_dhcp = fs.access("/etc/config/dhcp")
-	local has_dhcp = NONE
 	local has_wifi = ((fs.stat("/etc/config/wireless", "size") or 0) > 0)
 
 	local sysinfo = luci.util.ubus("system", "info") or { }
@@ -563,9 +561,7 @@
 		<tr><td width="33%"><%:Hostname%></td><td><%=luci.sys.hostname() or "?"%></td></tr>
 		<tr><td width="33%"><%:Model%></td><td><%=pcdata(boardinfo.model or boardinfo.system or "?")%></td></tr>
 		<tr><td width="33%"><%:Firmware Version%></td><td>
-			DWB4054v6.1(15.05.1_r48532) @2018
-		<%# =pcdata(ver.distname) -%> <%# =pcdata(ver.distversion) -%> <%# / -%>
-			<%# =pcdata(ver.luciname) -%> <%# ( -%> <%# =pcdata(ver.luciversion) -%> <%# ) -%>
+			<%=pcdata(company.model)%>(<%=pcdata(company.origin)%>_<%=pcdata(company.revision)%>) @<%=pcdata(company.year)%>
 		</td></tr>
 		<tr><td width="33%"><%:Kernel Version%></td><td><%=unameinfo.release or "?"%></td></tr>
 		<tr><td width="33%"><%:Local Time%></td><td id="localtime">-</td></tr>

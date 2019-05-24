@@ -7,28 +7,31 @@
 
 define Profile/DWB4054
 	NAME:=DWB4054 Profile
-	VERSION:=v6.1
+	VERSION:=v6.2
 	PACKAGES:= \
 		avahi-daemon-service-http avahi-daemon-service-ssh avahi-nodbus-daemon \
-		collectd-mod-iwinfo \
-		coreutils-stty \
-		dosfsck dosfslabel \
+		-dnsmasq \
+		-dosfsck -dosfslabel \
+		e2fsprogs \
 		ethtool \
 		fdisk \
-		iperf \
-		iwinfo \
-		kamailio3-mod-dialog \
-		kmod-fs-msdos \
+		-firewall \
+		ip \
+		-ip6tables -iptables \
+		iw iwinfo \
+		-kmod-button-hotplug \
+		-kmod-fs-msdos kmod-fs-vfat \
 		kmod-hwmon-lm90 \
 		kmod-i2c-algo-pca kmod-i2c-algo-pcf kmod-i2c-gpio \
-		kmod-ide-generic kmod-ide-generic-old \
 		kmod-leds-gpio \
+		kmod-ledtrig-heartbeat kmod-ledtrig-gpio kmod-ledtrig-netdev \
+		-kmod-nf-nathelper \
 		kmod-nls-cp1250 kmod-nls-cp1251 kmod-nls-cp437 kmod-nls-cp775 \
 		kmod-nls-cp850 kmod-nls-cp852 kmod-nls-cp862 kmod-nls-cp864 \
 		kmod-nls-cp866 kmod-nls-cp932 kmod-nls-iso8859-1 kmod-nls-iso8859-13 \
 		kmod-nls-iso8859-15 kmod-nls-iso8859-2 kmod-nls-iso8859-6 \
 		kmod-nls-iso8859-8 kmod-nls-koi8r kmod-nls-utf8 \
-		kmod-scsi-generic \
+		-kmod-ipt-conntrack -kmod-ipt-core \
 		kmod-stp \
 		kmod-usb-core kmod-usb-hid \
 		kmod-usb-ohci-pci \
@@ -38,17 +41,20 @@ define Profile/DWB4054
 		kmod-usb-serial-mos7720 kmod-usb-serial-option kmod-usb-serial-oti6858 \
 		kmod-usb-serial-pl2303 kmod-usb-serial-qualcomm \
 		kmod-usb-serial-sierrawireless kmod-usb-serial-simple \
-		kmod-usb-serial-ti-usb kmod-usb-serial-wwan \
+		kmod-usb-serial-ti-usb -kmod-usb-serial-wwan \
 		kmod-usb-storage-extras \
 		kmod-usb-uhci \
-		kmod-usb2-pci \
-		kmod-usbip-client kmod-usbip-server \
-		luci \
-		mkdosfs \
+		kmod-usb2 \
+		libiwinfo-lua \
+		libncurses \
+		luci-base luci-mod-admin-full luci-theme-bootstrap \
+		-mkdosfs \
+		-odhcp6c -odhcpd \
+		openssh-sftp-server \
+		-ppp -ppp-mod-pppoe \
 		swconfig \
+		uhttpd uhttpd-mod-ubus \
 		usbreset usbutils \
-		vsftpd \
-		wireless-tools \
 		-wpad-mini wpad
 	FILES_COPY:=files/DWB4054/copy/.
 	FILES_REMOVE:=files/DWB4054/remove.lst

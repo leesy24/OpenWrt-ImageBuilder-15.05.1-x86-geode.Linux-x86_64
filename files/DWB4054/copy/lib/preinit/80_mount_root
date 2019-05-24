@@ -1,0 +1,39 @@
+#!/bin/sh
+# Copyright (C) 2006 OpenWrt.org
+# Copyright (C) 2010 Vertical Communications
+
+do_mount_root() {
+	. /lib/upgrade/platform.sh
+
+	if platform_export_rootpart; then
+		/usr/sbin/e2fsck -y -f "$ROOTPART"
+		local status="$?"
+		case "$status" in
+			0) echo "e2fsck ($ROOTPART): Good condition"
+				;; #no errors
+			1) echo "e2fsck ($ROOTPART): File system errors corrected"
+				;; #success
+			2|3) echo "e2fsck ($ROOTPART): File system errors corrected, system should be rebooted."
+				reboot
+				while :;do sleep 1;done
+				;;
+			4) echo "e2fsck ($ROOTPART): File system errors left uncorrected"
+				reboot
+				while :;do sleep 1;done
+				;;
+			*) echo "e2fsck ($ROOTPART): Error $status. Check not complete."
+				reboot
+				while :;do sleep 1;done
+				;;
+		esac
+	fi
+	mount_root
+	boot_run_hook preinit_mount_root
+	[ -f /sysupgrade.tgz ] && {
+		echo "- config restore -"
+		cd /
+		tar xzf /sysupgrade.tgz
+	}
+}
+
+[ "$INITRAMFS" = "1" ] || boot_hook_add preinit_main do_mount_root

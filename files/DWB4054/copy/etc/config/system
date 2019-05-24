@@ -1,17 +1,16 @@
 
 config system
-	option hostname 'DWB4054v61'
-	option zonename 'Asia/Seoul'
-	option timezone 'KST-9'
-	option conloglevel '8'
-	option cronloglevel '8'
+	option hostname	DWB4054
+	option zonename	Asia/Seoul
+	option timezone	KST-9
+	option conloglevel	8
+	option cronloglevel	8
 
-config timeserver 'ntp'
-	list server '0.openwrt.pool.ntp.org'
-	list server '1.openwrt.pool.ntp.org'
-	list server '2.openwrt.pool.ntp.org'
-	list server '3.openwrt.pool.ntp.org'
-	option enabled '1'
+config timeserver ntp
+	list server	0.openwrt.pool.ntp.org
+	list server	1.openwrt.pool.ntp.org
+	list server	2.openwrt.pool.ntp.org
+	list server	3.openwrt.pool.ntp.org
 
 config led
 	option name 'WifiRX'
@@ -20,6 +19,7 @@ config led
 	option trigger 'phy0rx'
 
 config led
+	option name 'WifiTX'
 	option sysfs 'alix:3'
 	option default '1'
 	option trigger 'phy0tx'

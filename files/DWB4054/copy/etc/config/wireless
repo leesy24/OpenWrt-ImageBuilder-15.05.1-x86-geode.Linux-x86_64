@@ -1,16 +1,15 @@
 
 config wifi-device 'radio0'
-	option type 'mac80211'
-	option path 'pci0000:00/0000:00:0c.0'
-	option country 'KR'
-	option txpower '20'
-	option hwmode '11a'
-	option channel '149'
+        option type 'mac80211'
+        option hwmode '11g'
+        option path 'pci0000:00/0000:00:0c.0'
+        option country 'KR'
+        option htmode 'HT40'
+        option channel '1'
 
 config wifi-iface
-	option device 'radio0'
-	option network 'lan'
-	option mode 'ap'
-	option encryption 'none'
-	option ssid 'SR-001'
-
+        option device 'radio0'
+        option network 'lan'
+        option mode 'ap'
+        option ssid 'SR-001'
+        option encryption 'none'
