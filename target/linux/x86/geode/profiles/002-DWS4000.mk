@@ -25,7 +25,7 @@ define Profile/DWS4000
 		kmod-hwmon-lm90 \
 		kmod-i2c-algo-pca kmod-i2c-algo-pcf kmod-i2c-gpio \
 		kmod-leds-gpio \
-		-kmod-ledtrig-heartbeat -kmod-ledtrig-gpio -kmod-ledtrig-netdev \
+		kmod-ledtrig-heartbeat kmod-ledtrig-gpio kmod-ledtrig-netdev \
 		-kmod-nf-nathelper \
 		kmod-nls-cp1250 kmod-nls-cp1251 kmod-nls-cp437 kmod-nls-cp775 \
 		kmod-nls-cp850 kmod-nls-cp852 kmod-nls-cp862 kmod-nls-cp864 \
