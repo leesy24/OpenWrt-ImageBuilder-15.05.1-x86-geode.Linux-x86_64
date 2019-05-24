@@ -19,8 +19,8 @@ config dnsmasq
 config dhcp 'lan'
         option interface 'lan'
         option leasetime '12h'
-        option start '9'
-        option limit '4'
+        option start '0'
+        option limit '10'
 
 config dhcp wlan
 	option interface 'wlan'
