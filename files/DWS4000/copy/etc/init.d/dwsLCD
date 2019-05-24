@@ -2,7 +2,7 @@
 # Copyright (C) 2006 OpenWrt.org
 START=97
 
-SCRIPT_NAME=DWSroaming
+SCRIPT_NAME=dwsLCD
 SCRIPT_PATH=/etc/dws4000/
 
 start() {

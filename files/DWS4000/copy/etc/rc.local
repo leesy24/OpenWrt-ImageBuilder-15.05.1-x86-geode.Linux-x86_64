@@ -9,8 +9,4 @@ if [ -e /dev/sdb1 ] ; then
    chmod 777 /tmp/Udisk
 fi
 
-########################## ##(LCD-2016-11)##
-/etc/dws4000/dwsLCD &
-##########################
-
 exit 0
