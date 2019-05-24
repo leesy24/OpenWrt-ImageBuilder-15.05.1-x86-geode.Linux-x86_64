@@ -74,12 +74,16 @@ cfaLCDInit() {
 ### Start of main script
 
 ### Check and wait USB serial character device file exists
+USB_SERIAL_DEV_EXIST=-1
 while [ ! -c $SerialPort ] ; do
 	sleep 1 # wait 1sec
-	#echo "dwsLCD: Check inserted the USB serial LCD!" > /dev/kmsg
+	[ $USB_SERIAL_DEV_EXIST -ne 0 ] && {
+		echo "dwsLCD: Check inserted the USB serial LCD!" > /dev/kmsg
+		USB_SERIAL_DEV_EXIST=0
+	}
 done
 USB_SERIAL_DEV_EXIST=1
-sleep 1 # wait 1sec
+#sleep 1 # wait 1sec
 
 ### Check CFA LCD
 ## Ping LCD
@@ -105,14 +109,16 @@ while : ; do
 
 	### Check and wait USB serial character device file exists
 	while [ ! -c $SerialPort ] ; do
-		USB_SERIAL_DEV_EXIST=0
 		sleep 1 # wait 1sec
-		echo "dwsLCD: Check inserted the USB serial LCD!" > /dev/kmsg
+		[ $USB_SERIAL_DEV_EXIST -ne 0 ] && {
+			echo "dwsLCD: Check inserted the USB serial LCD!" > /dev/kmsg
+			USB_SERIAL_DEV_EXIST=0
+		}
 	done
 
 	if [ $USB_SERIAL_DEV_EXIST -eq 0 ] ; then
 		USB_SERIAL_DEV_EXIST=1
-		sleep 1 # wait 1sec
+		#sleep 1 # wait 1sec
 		### Check CFA LCD
 		## Ping LCD
 		cfa_send $SerialPort "\x00\d000" $SendErrorPipe
