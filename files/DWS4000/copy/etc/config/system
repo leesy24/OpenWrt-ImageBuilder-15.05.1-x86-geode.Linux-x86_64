@@ -5,7 +5,6 @@ config system
 	option timezone	KST-9
 	option conloglevel	8
 	option cronloglevel	8
-	option log_ip	192.168.5.10
 
 config timeserver ntp
 	list server	0.openwrt.pool.ntp.org
