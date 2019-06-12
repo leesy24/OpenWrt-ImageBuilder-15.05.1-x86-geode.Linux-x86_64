@@ -89,14 +89,14 @@ while : ; do
 		menuinput '"ReviewSNR_AP"  "Status Review .... Enter!"
 			"1Wlan_eSSID"   "WLAN eSSID/Wireless-Name ________($cWssid)"
 			"2Wlan_EncUSE"  "WLAN Encription [none/wep/psk2] _($cWencr)"
-			"DWSroaming"    ">> $ModelName Frequency & Roaming Configure <<"
+			"DWSroaming"    ">> Frequency & Roaming & Parprouted Configure <<"
 			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
 	else
 		menuinput '"ReviewSNR_AP"  "Status Review .... Enter!"
 			"1Wlan_eSSID"   "WLAN eSSID/Wireless-Name ________($cWssid)"
 			"2Wlan_EncUSE"  "WLAN Encription [none/wep/psk2] _($cWencr)"
 			"3Wlan_EncKEY"  "WLAN Encription [Key Code] ______($cWkey)"
-			"DWSroaming"    ">> $ModelName Frequency & Roaming Configure <<"
+			"DWSroaming"    ">> Frequency & Roaming & Parprouted Configure <<"
 			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
 	fi
 
