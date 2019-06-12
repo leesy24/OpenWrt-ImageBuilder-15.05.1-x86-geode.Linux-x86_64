@@ -90,7 +90,7 @@ while : ; do
 		"1TestRoaming"   "** $ModelName Redundant-Roaming TEST! **"
 		"2NetIPconfig"   ">> Network TCP/IP Address _____Configure <<"
 		"3WLAN_config"   ">> Wireless LAN SSID & Secure _Configure <<"
-		"4DWSroaming"    ">> $ModelName Frequency & Roaming Configure <<"
+		"4DWSroaming"    ">> Frequency & Roaming & Parprouted Configure <<"
 		"5SaveCommit"    "Commit All Configure Save!"
 		"6SaveReboot"    "Save(commit) & ReBOOT....!"
 		"7JustREBOOT"	 "==============>ReBOOT....!"'

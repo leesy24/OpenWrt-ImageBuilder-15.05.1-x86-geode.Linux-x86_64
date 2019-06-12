@@ -77,8 +77,8 @@ textinput() {
 menuinput() {
 
 	menucmd=$(cat <<END    
-$DIALOG --ascii-lines --clear --cr-wrap --title "[ $ModelName Roaming Configuration ]" \
-	--menu "\n$3\nPlease select:\n\n" 20 71 8 \
+$DIALOG --ascii-lines --clear --cr-wrap --title "[ $ModelName Roaming & Parprouted Configuration ]" \
+	--menu "\n$3\nPlease select:\n\n" 20 71 9 \
 	$1 \
 	2> $tempfile
 END
@@ -124,8 +124,9 @@ while : ; do
 	CUR_PingIP=$(grep $iface"_PingIP" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_PingTO=$(grep $iface"_PingTO" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_PingFC=$(grep $iface"_PingFC" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_USE_PARPROUTED=$(grep "USE_PARPROUTED" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 
-	echo "($CUR_RunFreq1) ($CUR_RunFreq2) ($CUR_RunSNR) ($CUR_PingIP) ($CUR_PingTO) ($CUR_PingFC)"
+	echo "($CUR_RunFreq1) ($CUR_RunFreq2) ($CUR_RunSNR) ($CUR_PingIP) ($CUR_PingTO) ($CUR_PingFC) ($CUR_USE_PARPROUTED)"
 
 	menuinput '"1_runfreq1" "Configure running frequency1 ($CUR_RunFreq1)"
 		"2_runfreq2" 	"Configure running frequency2 ($CUR_RunFreq2)"
@@ -134,6 +135,7 @@ while : ; do
 		"5_PingIP" 	"Configure Remote IP to ping ($CUR_PingIP)"
 		"6_PingTO" 	"Configure Time Out to ping remote IP ($CUR_PingTO)"
 		"7_PingFC" 	"Configure Fail Count to ping remote IP ($CUR_PingFC)"
+		"8_Parprouted" 	"Configure to use parprouted ($CUR_USE_PARPROUTED)"
 		"X_ExitCancel"	"Exit or Cancel to upper Menu"'
 
 	##echo "menu...?"
@@ -311,6 +313,30 @@ while : ; do
 				break
 			}
 			errormsg="Check input value is empty or greater and equal than 0!"
+		done
+		;;
+
+	8_Parprouted)
+		inputvar=$CUR_USE_PARPROUTED
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Y to use parprouted otherwise enter N or empty\n"$(
+				)"Examples:\n"$(
+				)" Y  N\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_USE_PARPROUTED" ] && break
+			# Check string null or Y or N
+			([ -z "$inputvar" ] || [ $inputvar = "Y" ] || [ $inputvar = "N" ]) && {
+				save_value "USE_PARPROUTED"
+				break
+			}
+			errormsg="Check input value is Y or N or empty!"
 		done
 		;;
 
