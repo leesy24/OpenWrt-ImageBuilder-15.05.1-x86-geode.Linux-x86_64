@@ -119,6 +119,9 @@ change_freq() {
 
 rm -f /tmp/.force_Roaming
 
+[ -z "$USE_PARPROUTED" ] && USE_PARPROUTED="N"
+[ $USE_PARPROUTED = "Y" ] && sysctl -wq net.ipv4.conf.all.proxy_arp=0 || sysctl -wq net.ipv4.conf.all.proxy_arp=1
+
 #sleep 1
 
 snrMin=$wlan0_RunSNR
@@ -127,9 +130,8 @@ runFreqGHz2=$wlan0_RunFreq2 # in GHz
 runFreqMHz1=$(echo "$runFreqGHz1*1000/1" | bc) # to MHz
 runFreqMHz2=$(echo "$runFreqGHz2*1000/1" | bc) # to MHz
 PingIP=$wlan0_PingIP
-PingTO=$wlan0_PingTO
-PingFC=$wlan0_PingFC
-[ -z "$PingFC" ] && $PingFC=0
+[ -z "$wlan0_PingTO" ] && PingTO=0 || PingTO=$wlan0_PingTO
+[ -z "$wlan0_PingFC" ] && PingFC=0 || PingFC=$wlan0_PingFC
 
 curSSID=$(get_curSSID)
 curFreqMHz=$(get_curFreqMHz) # to MHz
@@ -174,6 +176,8 @@ while : ; do
 	actFreqMHz=$(get_actFreqMHz)
 done
 
+[ $USE_PARPROUTED = "Y" ] && /etc/init.d/parprouted start
+
 curSNRerr=0
 cLOOP=0
 RXpkts=$(get_RXpkts)
@@ -193,6 +197,8 @@ while : ; do
 
 	# Check need to roam
 	if [ $curSNRerr -eq 1 ] || [ $curPingFC -ge $PingFC ] || [ -e /tmp/.force_Roaming ] ; then
+		[ $USE_PARPROUTED = "Y" ] && /etc/init.d/parprouted stop
+
 		if [ -e /tmp/.force_Roaming ] ; then
 			log_n "DWSroaming: Forced: "
 		elif [ $curPingFC -ge $PingFC ] ; then
@@ -244,6 +250,8 @@ while : ; do
 				break  ##--->
 			fi
 		done
+
+		[ $USE_PARPROUTED = "Y" ] && /etc/init.d/parprouted start
 
 		curFreqMHz=$(get_curFreqMHz) # to MHz
 		curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
