@@ -1,0 +1,233 @@
+#!/bin/sh
+# (C) 2020 DASAN InfoTek,
+#           leesy@DSI
+##
+. wCommon
+
+DIALOG=${DIALOG=dialog}
+
+CONFIGPATH_org="/etc/dwsb/wroaming.config"
+CONFIG_UPDATED="/tmp/.wroaming.config.updated"
+
+tempfile="/tmp/DSWconfig_main$$"
+trap "rm -f $tempfile; exit" 0 1 2 5 15
+
+textinput() {
+	$DIALOG \
+	--ascii-lines --title "INPUT BOX" --clear \
+	--inputbox "$1" 20 76 "$2" 2> $tempfile
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=$(cat $tempfile)
+		;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+menuinput() {
+
+	menucmd=$(cat <<END    
+$DIALOG --ascii-lines --clear --cr-wrap --title "[ $ModelName V1.00 Configurations 2020@DSi ]" \
+	--menu "$3\
+	HostName = $cHostName IP = $cLip\n\
+	AP=[ $apHWMODE SSID:$apSSID Freq:$apFreq SNR:$apSNR #:$apCnt ]\n\
+	ST=[ $stHWMODE SSID:$stSSID Freq:$stFreq SNR:$stSNR AP=$stAP ]\n\
+	$rDATE >> Please menu select: \n" 22 76 11 \
+	$1 \
+	2> $tempfile
+END
+)
+
+eval $menucmd
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=$(cat $tempfile)
+		;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+
+########################## begin
+
+rm -f $tempfile
+
+mchoice="";
+
+while : ; do
+
+	sync
+	####
+
+	inputvar=""
+
+	readModelName
+
+	readCFG
+	readNET
+	#######
+
+	readDATE
+	#######
+
+	menuinput '"ReviewSTATs"  "Status Review .... Enter!"
+		"1NetIPconfig"   ">> Host Name & LAN IP __________Configure <<"
+		"2APWLANconfig"  ">> AP - Wireless SSID & Secure _Configure <<"
+		"3STWLANconfig"  ">> ST - Wireless SSID & Secure _Configure <<"
+		"4SaveCommit"    "Commit All Configure Save!"
+		"5SaveReboot"    "Save(commit) & ReBOOT....!"
+		"6JustREBOOT"	 "==============>ReBOOT....!"'
+
+	case $inputvar in
+
+	ReviewSTATs)
+		;;
+
+	1NetIPconfig)
+		/etc/dwsb/wNETsetup
+		;;
+
+	2APWLANconfig)
+		/etc/dwsb/wAPWLANsetup
+		;;
+
+	3STWLANconfig)
+		/etc/dwsb/wSTWLANsetup
+		;;
+
+	4SaveCommit)
+		textinput \
+			 "Commit All Configures & Save Now?? [Yes/No]\n\n"$(
+			)"Please Enter:\n"$(
+			)" [YES]/[no] \n" \
+			"NO"
+		if [ "$inputvar" = "YES" ] ; then
+			clear
+			echo ; echo "[$ModelName].... Commit All Configures Save Now!!"
+			###################################################################
+			if [ `uci -q get wireless.radio0.txpower` ] ; then
+				uci delete wireless.radio0.txpower
+				echo ; echo "[$ModelName].... Wlan-TxPower Option Deleted!!"
+				#sleep 1
+			fi
+			###################################################################
+			if [ -e $CONFIG_UPDATED ] ;  then
+				runFreqGHz1=$(grep $iface"_RunFreq1" $CONFIGPATH_org | sed 's/.*="\(.*\)"/\1/')
+				runFreqMHz1=$(echo "$runFreqGHz1*1000/1" | bc) # to MHz
+				#echo "Freq1 = $runFreqGHz1($runFreqMHz1)"
+				channel=$(getChannel $runFreqMHz1)
+				#echo "channel = $channel"
+				uci set wireless.radio0.channel=$channel
+				rm -f $CONFIG_UPDATED
+				echo ; echo "[$ModelName].... Wlan-Frequency Updated!!"
+				#sleep 1
+			fi
+			###################################################################
+			uci commit
+			#sleep 1
+			/etc/init.d/DWSroaming stop 2>/dev/null
+			echo ; echo "[$ModelName].... All Interface Restart...!!"
+			/etc/init.d/network restart 2>/dev/null
+			sleep 1
+			echo ; echo "[$ModelName].... DWSroaming Start...!!"
+			/etc/init.d/DWSroaming start 2>/dev/null
+			sleep 1
+		fi
+		;;
+
+	5SaveReboot)
+		textinput \
+			 "Commit All Configures & ReBOOT Now?? [Yes/No]\n\n"$(
+			)"Please Enter:\n"$(
+			)" [YES]/[no]\n" \
+			"NO"
+		if [ "$inputvar" = "YES" ] ; then
+			clear
+			echo ; echo "[$ModelName].... Commit All Configures Now!!"
+			###################################################################
+			if [ `uci -q get wireless.radio0.txpower` ] ; then
+				uci delete wireless.radio0.txpower
+				echo ; echo "[$ModelName].... Wlan-TxPower Option Deleted!!"
+				#sleep 1
+			fi
+			###################################################################
+			if [ -e $CONFIG_UPDATED ] ;  then
+				runFreqGHz1=$(grep $iface"_RunFreq1" $CONFIGPATH_org | sed 's/.*="\(.*\)"/\1/')
+				runFreqMHz1=$(echo "$runFreqGHz1*1000/1" | bc) # to MHz
+				#echo "Freq1 = $runFreqGHz1($runFreqMHz1)"
+				channel=$(getChannel $runFreqMHz1)
+				#echo "channel = $channel"
+				uci set wireless.radio0.channel=$channel
+				rm -f $CONFIG_UPDATED
+				echo ; echo "[$ModelName].... Wlan-Frequency Updated!!"
+				#sleep 1
+			fi
+			###################################################################
+			uci commit
+			#sleep 1
+			#/etc/init.d/collectd stop
+			#sync
+			echo ; echo "[$ModelName].... All Interface Restart...!!"
+			#sleep 1
+			sync
+			##clear
+			echo ; echo "[$ModelName].... System Reboot Now!!"
+			reboot
+			while : ; do
+				sleep 1
+				echo -n "."
+			done
+		fi
+		;;
+
+	6JustREBOOT)
+		textinput \
+			 "===============> ReBOOT Now?? [Yes/No]\n\n"$(
+			)"Please Enter:\n"$(
+			)" [YES]/[no]\n" \
+			"NO"
+		if [ "$inputvar" = "YES" ] ; then
+		  clear
+		  echo ; echo "[$ModelName].... System Reboot Now!!"
+		  reboot -f
+		  while : ; do
+			sleep 1
+			echo -n "."
+		  done
+		fi
+		;;
+
+	# *)
+	#	rm $tempfile >/dev/null 2>/dev/null
+	#	exit 0
+	#	;;
+
+	esac
+
+done
+
+sync
+
+rm $tempfile >/dev/null 2>/dev/null
+exit 0
+

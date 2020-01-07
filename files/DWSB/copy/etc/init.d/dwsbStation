@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+START=97
+
+SCRIPT_NAME=dwsbStation
+SCRIPT_PATH=/etc/dwsb/
+
+start() {
+	echo "init: $SCRIPT_NAME: start" >/dev/kmsg
+	exec $SCRIPT_PATH$SCRIPT_NAME &
+}
+
+stop() {
+	echo "init: $SCRIPT_NAME: stop" >/dev/kmsg
+	killall -9 $SCRIPT_NAME
+}
+

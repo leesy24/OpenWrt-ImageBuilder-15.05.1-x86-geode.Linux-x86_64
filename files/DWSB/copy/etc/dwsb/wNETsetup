@@ -1,0 +1,177 @@
+#!/bin/sh
+# (C) 2020 DASAN InfoTek,
+#           leesy@DSI
+##
+. wCommon
+
+DIALOG=${DIALOG=dialog}
+
+tempfile="/tmp/DSWconfig_NET$$"
+trap "rm -f $tempfile; exit" 0 1 2 5 15
+
+textinput() {
+	$DIALOG \
+	--ascii-lines --title "INPUT BOX" --clear \
+	--inputbox "$1" 20 76 "$2" 2> $tempfile
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=$(cat $tempfile)
+		;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+
+	return $retval
+}
+
+menuinput() {
+
+	menucmd=$(cat <<END    
+$DIALOG --ascii-lines --clear --cr-wrap --title "[[ Network IP Configurations ]]" \
+	--menu "$3\
+        HostName = $cHostName IP = $cLip\n\
+        AP=[ $apHWMODE SSID:$apSSID Freq:$apFreq SNR:$apSNR #:$apCnt ]\n\
+        ST=[ $stHWMODE SSID:$stSSID Freq:$stFreq SNR:$stSNR AP=$stAP ]\n\
+	$rDATE >> Please menu select: \n" 22 76 13 \
+	$1 \
+	2> $tempfile
+END
+)
+
+eval $menucmd
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=$(cat $tempfile)
+		;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+
+########################## begin
+
+rm -f $tempfile
+
+mchoice="";
+
+while : ; do
+
+	inputvar=""
+
+	readModelName
+
+	readCFG
+	#######
+
+	readNET
+	#######
+
+	menuinput '"1Host_Name"  "Host Name ___________________($cHostName)"
+		"2eLAN_IPaddr"  "Wired-LAN IP Address ________($cLip)"
+		"3eLAN_IPmask"  "Wired-LAN IP Subnet Mask ____($cLmask)"
+		"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+
+	case $inputvar in
+
+	1Host_Name)
+		inputvar=$cHostName
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Host Name ...\n\n"$(
+				)"Examples:\n"$(
+				)" DWSB  DWSB01  DWSBxx\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cHostName" ] && break
+			# Check input string is not null
+			if [ -n "$inputvar" ] ; then
+				uci set system.@system[0].hostname="$inputvar"
+				break
+			fi
+			errormsg="Check input value is Host Name format!"
+		done
+		;;
+
+	2eLAN_IPaddr)
+		inputvar=$cLip
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Wired Ethernet IP Address ...\n\n"$(
+				)"Examples:\n"$(
+				)" 10.1.123.1  168.126.0.129\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cLip" ] && break
+			# Check valid IP v4
+			if isValidIPv4 "$inputvar"; then
+				uci set network.lan.ipaddr="$inputvar"
+				###
+				eMAC=$(/sbin/ifconfig | grep "eth0" | tr -s " " | cut -d " " -f5)
+				echo "$eMAC $inputvar" > /etc/ethers
+				###
+				break
+			fi
+			errormsg="Check input value is IP v4 format!"
+		done
+		;;
+
+	3eLAN_IPmask)
+		inputvar=$cLmask
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Wired Ethernet IP Subnet Mask ...\n\n"$(
+				)"Examples:\n"$(
+				)" 255.255.255.0 255.255.255.128\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cLmask" ] && break
+			# Check valid IP v4
+			if isValidIPv4 "$inputvar"; then
+				uci set network.lan.netmask="$inputvar"
+				break
+			fi
+			errormsg="Check input value is IP v4 format!"
+		done
+		;;
+
+	X_ExitCancel | *)
+		rm $tempfile >/dev/null 2>/dev/null
+		exit 0
+		;;
+
+	esac
+done

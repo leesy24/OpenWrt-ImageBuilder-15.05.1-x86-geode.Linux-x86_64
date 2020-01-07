@@ -1,0 +1,189 @@
+#!/bin/sh
+#
+#####################################################################
+##
+##      DWSB LCD_Mon for Chaos Calmer 15.05.1 @linux3.18
+##
+##            Copyright 2020, by Dasan InfoTek Co.,
+##
+##                         ...leesy...
+##
+#####################################################################
+
+iw phy0 info > /tmp/iw_info_phy0
+iw phy1 info > /tmp/iw_info_phy1
+
+iface_ap=wlan0
+iface_st=wlan1
+SerialPort=/dev/ttyUSB0
+#SendErrorPipe="2> /dev/null"
+SendErrorPipe=">/dev/kmsg 2>/dev/null"
+
+readCFG() {
+	iwinfo $iface_ap info 2> /dev/null > /tmp/iw_info_$iface_ap
+	iwinfo $iface_ap assoclist 2> /dev/null > /tmp/iw_assoclist_$iface_ap
+	iwinfo $iface_st info 2> /dev/null > /tmp/iw_info_$iface_st
+	
+	host=$(uci -q get system.@system[0].hostname)
+	#ip=$(uci -q get network.lan.ipaddr)
+	ip=$(ip -4 addr show br-lan | sed -Ene 's/^.*inet ([0-9.]+)\/.*$/\1/p')
+	apssid=$(uci -q get wireless.@wifi-iface[0].ssid)
+	apCh=$(grep Channel /tmp/iw_info_$iface_ap | awk '{print $4}')
+	[ "$apCh" = "unknown" ] && {
+		apCh=$(uci -q get wireless.radio0.channel)
+	}
+	[ "$apCh" = "auto" ] && {
+		apFreq="Auto "
+	} || {
+		apFreq=$(grep -E -m1 "(\* .... MHz \[$apCh\])" /tmp/iw_info_phy0 | \
+			awk '{print $2}' | \
+			sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
+	}
+	##
+	apSNR=$(grep Link /tmp/iw_info_$iface_ap | awk '{print $6}' | cut -d'/' -f1)
+	([ -z "$apSNR" ] || [ "$apSNR" = "unknown" ]) && apSNR=0
+	apCnt=$(grep -cE '^([0-9A-F]{2}:){5}[0-9A-F]{2}' /tmp/iw_assoclist_$iface_ap)
+
+	stssid=$(uci -q get wireless.@wifi-iface[1].ssid)
+	stCh=$(grep Channel /tmp/iw_info_$iface_st | awk '{print $4}')
+	[ "$stCh" = "unknown" ] && {
+		stCh=$(uci -q get wireless.radio1.channel)
+	}
+	[ "$stCh" = "auto" ] && {
+		stFreq="Auto "
+	} || {
+		stFreq=$(grep -E -m1 "(\* .... MHz \[$stCh\])" /tmp/iw_info_phy1 | \
+			awk '{print $2}' | \
+			sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
+	}
+	##
+	stSNR=$(grep Link /tmp/iw_info_$iface_st | awk '{print $6}' | cut -d'/' -f1)
+	([ -z "$stSNR" ] || [ "$stSNR" = "unknown" ]) && stSNR=0
+
+	stAP=$(grep Access /tmp/iw_info_$iface_st | awk '{ print $3 }')
+	if [ -z "$stAP" ] || [ "$stAP" = "00:00:00:00:00:00" ] ; then
+		stAP="NotAss"
+	else
+		stAP=$(echo $stAP | cut -c12-)
+	fi
+
+	##
+	#rSSID=$(grep SSID /tmp/iw_info_$iface_ap | awk '{print $3" "$4}')
+
+	upTime=$(uptime | cut -c2- | cut -d',' -f1)
+	upTime=$(echo "$upTime        " | cut -c -20)
+
+	#rDATE=$(date +%Y%m%e)
+	#rDATE="$rDATE $upTime"
+	#rDATE=$(echo "$rDATE" | sed 's/^ *//g' | cut -c -20)
+}
+
+legacyLCDInit() {
+	serial_send $SerialPort "\x1B\x43" $SendErrorPipe
+}
+
+cfaLCDInit() {
+	### Init CFA LCD
+	## Set keypad backlight off
+	cfa_send $SerialPort "\x0e\d002\d100\d000" $SendErrorPipe
+	## Display splash strings
+	cfa_send $SerialPort "\x1f\d022\d000\d000DASAN InfoTek       " $SendErrorPipe
+	cfa_send $SerialPort "\x1f\d022\d000\d001                    " $SendErrorPipe
+	cfa_send $SerialPort "\x1f\d022\d000\d002                    " $SendErrorPipe
+	cfa_send $SerialPort "\x1f\d022\d000\d003     www.dsintek.com" $SendErrorPipe
+	## Store current state as boot state
+	cfa_send $SerialPort "\x04\d000" $SendErrorPipe
+}
+
+### Start of main script
+
+### Check and wait USB serial character device file exists
+USB_SERIAL_DEV_EXIST=-1
+while [ ! -c $SerialPort ] ; do
+	sleep 1 # wait 1sec
+	[ $USB_SERIAL_DEV_EXIST -ne 0 ] && {
+		echo "dwsbLCD: Check inserted the USB serial LCD!" > /dev/kmsg
+		USB_SERIAL_DEV_EXIST=0
+	}
+done
+USB_SERIAL_DEV_EXIST=1
+#sleep 1 # wait 1sec
+
+### Check CFA LCD
+## Ping LCD
+cfa_send $SerialPort "\x00\d000" $SendErrorPipe
+if [ $? -eq 0 ] ; then
+	CFA_DETECTED=1
+	echo "dwsbLCD: Detected CFA LCD!" > /dev/kmsg
+else
+	CFA_DETECTED=0
+	echo "dwsbLCD: Detected legacy LCD!" > /dev/kmsg
+fi
+
+# Init LCD
+if [ $CFA_DETECTED -eq 1 ] ; then
+	cfaLCDInit
+else
+	legacyLCDInit
+fi
+
+# infinite while loop
+while : ; do
+	sleep 1
+
+	### Check and wait USB serial character device file exists
+	while [ ! -c $SerialPort ] ; do
+		sleep 1 # wait 1sec
+		[ $USB_SERIAL_DEV_EXIST -ne 0 ] && {
+			echo "dwsbLCD: Check inserted the USB serial LCD!" > /dev/kmsg
+			USB_SERIAL_DEV_EXIST=0
+		}
+	done
+
+	if [ $USB_SERIAL_DEV_EXIST -eq 0 ] ; then
+		USB_SERIAL_DEV_EXIST=1
+		#sleep 1 # wait 1sec
+		### Check CFA LCD
+		## Ping LCD
+		cfa_send $SerialPort "\x00\d000" $SendErrorPipe
+		if [ $? -eq 0 ] ; then
+			CFA_DETECTED=1
+			echo "dwsbLCD: Detected CFA LCD!" > /dev/kmsg
+		else
+			CFA_DETECTED=0
+			echo "dwsbLCD: Detected legacy LCD!" > /dev/kmsg
+		fi
+
+		# Init LCD
+		if [ $CFA_DETECTED -eq 1 ] ; then
+			cfaLCDInit
+		else
+			legacyLCDInit
+		fi
+	fi
+
+	readCFG
+	###
+
+	if [ $CFA_DETECTED -eq 1 ] ; then
+		### Locate 0,0
+		cfa_send $SerialPort "\x1f\d022\d000\d000$host $ip  " $SendErrorPipe
+		### Locate 0,1
+		cfa_send $SerialPort "\x1f\d022\d000\d001$apssid $apFreq $apSNR $apCnt      " $SendErrorPipe
+		### Locate 0,2
+		cfa_send $SerialPort "\x1f\d022\d000\d002$stssid $stFreq $stSNR $stAP " $SendErrorPipe
+		### Locate 0,3
+		cfa_send $SerialPort "\x1f\d022\d000\d003$upTime                    " $SendErrorPipe
+	else
+		### Locate 0,0
+		serial_send $SerialPort "\x1B\x4C\x00\x00$host $ip  " $SendErrorPipe
+		### Locate 0,1
+		serial_send $SerialPort "\x1B\x4C\x00\x01$apssid $apFreq $apSNR $apCnt     " $SendErrorPipe
+		### Locate 0,2
+		serial_send $SerialPort "\x1B\x4C\x00\x02$stssid $stFreq $stSNR $stAP" $SendErrorPipe
+		### Locate 0,3
+		serial_send $SerialPort "\x1B\x4C\x00\x03$upTime" $SendErrorPipe
+	fi
+done
+
+### END of Main script ###

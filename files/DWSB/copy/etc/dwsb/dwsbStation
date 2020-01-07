@@ -1,0 +1,64 @@
+#!/bin/sh
+#
+#####################################################################
+##
+##      DWSB station for Chaos Calmer 15.05.1 @linux3.18
+##
+##                Copyright 2020, by Dasan InfoTek Co., 
+##
+##                         ...leesy...
+##
+#####################################################################
+
+iw phy1 info > /tmp/dwsbStation_phy1
+
+log() {
+  echo "$@"
+  logger -t $(basename $0) "$@"
+}
+
+log_n() {
+  echo -n "$@"
+  logger -t $(basename $0) "$@"
+}
+
+get_actFreqMHz() {
+	iw dev wlan1 link 2> /dev/null | grep "freq:" | awk '{ print $2 }'
+}
+
+get_curFreqMHz() {
+	local ch
+	local freq
+	ch=$(uci -q get wireless.radio1.channel)
+	[ "$ch" = "auto" ] && {
+		freq="auto"
+	} || {
+		freq=$(grep -E -m1 "(\* .... MHz \[$ch\])" /tmp/dwsbStation_phy1 | \
+			awk '{print $2}')
+		[ -z "$freq" ] && freq="0000"
+	}
+	echo $freq
+}
+
+### Start of main script
+
+#sleep 1
+
+# Main infinite loop
+# Check and wait actual freq. match with freq. of config.
+while : ; do
+	curFreqMHz=$(get_curFreqMHz)
+	actFreqMHz=$(get_actFreqMHz)
+
+	log "dwsbStation: curFreq=$curFreqMHz, actFreq=$actFreqMHz"
+
+	# Check actual Freq is not null, mean is not equal with current Freq.
+	[ -n "$actFreqMHz" ] && [ "$curFreqMHz" != "auto" ] && [ "$actFreqMHz" != "$curFreqMHz" ] && {
+		/etc/init.d/network restart
+		sleep 1
+	}
+
+	sleep 1
+done
+
+### End of main script
