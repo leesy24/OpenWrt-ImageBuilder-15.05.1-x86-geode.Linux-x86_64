@@ -1,0 +1,265 @@
+#!/bin/sh
+# (C) 2020 DASAN InfoTek,
+#           leesy@DSI
+##
+DIALOG=${DIALOG=dialog}
+
+tempfile="/tmp/main$$"
+trap "rm -f $tempfile; exit" 0 1 2 5 15
+
+. /etc/company_release
+
+textinput() {
+	$DIALOG \
+		--ascii-lines --title "INPUT BOX" --clear \
+		--inputbox "$1" 20 76 "$2" 2> $tempfile
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=$(cat $tempfile)
+		;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+menuinput() {
+
+	readWifi 0
+	fstMode=$cWmode
+	fstSSID=$cWssid
+	fstFreq=$cWfreq_a
+	fstSNR=$cWsnr
+	[ "$cWimode" = "ap" ] && fstStatus="Cnt:$cWcnt"
+	[ "$cWimode" = "sta" ] && fstStatus="$cWap"
+
+	readWifi 1
+	sndMode=$cWmode
+	sndSSID=$cWssid
+	sndFreq=$cWfreq_a
+	sndSNR=$cWsnr
+	[ "$cWimode" = "ap" ] && sndStatus="Cnt:$cWcnt"
+	[ "$cWimode" = "sta" ] && sndStatus="$cWap"
+
+	menucmd=$(cat <<END    
+$DIALOG --ascii-lines --clear --cr-wrap --timeout 10 \
+	--title "[ $MODEL $NAME@$YEAR - $1 ]" \
+	--menu "$3\
+	Hostname:$cHostname IP:$cLip/$cLmask\n\
+	$fstMode [ SSID:$fstSSID Freq:$fstFreq SNR:$fstSNR $fstStatus ]\n\
+	$sndMode [ SSID:$sndSSID Freq:$sndFreq SNR:$sndSNR $sndStatus ]\n\
+	Local Time:$aDate $aTime Uptime:$aUptime >> Please menu select: \n" 22 76 12 \
+	$2 \
+	2> $tempfile
+END
+)
+
+eval $menucmd
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=$(cat $tempfile)
+		;;
+	1)
+		inputvar=$4
+		;;
+	255)
+		inputvar=$(tail -1 $tempfile)
+		[ "$inputvar" != "timeout" ] && inputvar=$4
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+readSystem() {
+	cHostname=$(uci -q get system.@system[0].hostname)
+	aDate=$(date +%Y-%m-%d)
+	aTime=$(date +%T)
+	aUptime=$(uptime | sed 's/.*up \([^,]*\), .*/\1/')
+}
+
+readNetwork() {
+	cLip=$(uci -q get network.lan.ipaddr)
+	cLmask=$(uci -q get network.lan.netmask)
+}
+
+# $1 = WiFi index
+readWifi() {
+	cWdisabled=$(uci -q get wireless.@wifi-iface[$1].disabled)
+	cWwds=$(uci -q get wireless.@wifi-iface[$1].wds)
+	cWimode=$(uci -q get wireless.@wifi-iface[$1].mode)
+	[ "$cWdisabled" = "1" ] && {
+		cWmode="Disable"
+	} || {
+		[ "$cWimode" = "ap" ] && {
+			[ "$cWwds" = "1" ] && {
+				cWmode="APW"
+			} || {
+				cWmode="AP"
+			}
+		}
+		[ "$cWimode" = "sta" ] && {
+			[ "$cWwds" = "1" ] && {
+				cWmode="STW"
+			} || {
+				cWmode="ST"
+			}
+		}
+		[ "$cWimode" != "ap" ] && [ "$cWimode" != "sta" ] && {
+			cWmode=$cWimode
+		}
+	}
+    cWch=$(uci -q get wireless.radio$1.channel)
+    [ "$cWch" != "auto" ] && {
+            cWfreq=$(iw phy$1 info | \
+                    grep -E -m1 "(\* .... MHz \[$cWch\])" | \
+                    awk '{print $2}' | \
+                    sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
+    } || {
+            cWfreq="auto"
+    }
+	#cWfreq=$(uci -q get wireless.radio$1.channel)
+	cWssid=$(uci -q get wireless.@wifi-iface[$1].ssid)
+	cWencr=$(uci -q get wireless.@wifi-iface[$1].encryption)
+	if [ "$cWencr" = "psk2+ccmp" ] ; then        
+		cWkey=$(uci -q get wireless.@wifi-iface[$1].key)
+	else
+		cWkey=$(uci -q get wireless.@wifi-iface[$1].key1 | cut -c3-)
+	fi
+
+	cWch=$(iwinfo wlan$1 info | grep Channel | awk '{print $4}')
+	[ "$cWch" = "unknown" ] && {
+		cWch=$(uci -q get wireless.radio0.channel)
+	}
+	[ "$cWch" = "auto" ] && {
+		cWfreq_a="Auto"
+	} || {
+		cWfreq_a=$(iw phy$1 info | \
+                    grep -E -m1 "(\* .... MHz \[$cWch\])" | \
+                    awk '{print $2}' | \
+                    sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
+	}
+	cWsnr=$(iwinfo wlan$1 info | grep Link | awk '{print $6}' | cut -d'/' -f1)
+	([ -z "$cWsnr" ] || [ "$cWsnr" = "unknown" ]) && cWsnr=0
+	[ "$cWimode" = "ap" ] && {
+		cWcnt=$(iwinfo wlan$1 assoclist | grep -cE '^([0-9A-F]{2}:){5}[0-9A-F]{2}')
+	}
+	[ "$cWimode" = "sta" ] && {
+		cWap=$(iwinfo wlan$1 info | grep Access | awk '{ print $3 }')
+		([ -z "$cWap" ] || [ "$cWap" = "00:00:00:00:00:00" ]) && cWap="Not-Associated"
+	}
+}
+
+# $1 = IPv4 string to validate
+isValidIPv4() {
+	local OLDIFS=$IFS
+	if expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+		IFS=.
+		set $1
+		for quad in 1 2 3 4; do
+			if eval [ \$$quad -gt 255 ]; then
+				IFS=$OLDIFS
+				return 1
+			fi
+		done
+		IFS=$OLDIFS
+		return 0
+	fi
+	IFS=$OLDIFS
+	return 1
+}
+
+# $1 = Date string to validate as "YYYY-MM-DD"
+isValidDate() {
+	local OLDIFS=$IFS
+	if expr "$1" : '[0-9]*\-[0-9]*\-[0-9]*$' >/dev/null; then
+		IFS=-
+		set $1
+		#echo "year="$1
+		#echo "month="$2
+		#echo "day="$3
+		if eval [ $1 -lt 1900 ]; then
+			IFS=$OLDIFS
+			return 1
+		fi
+		if eval [ $1 -gt 2999 ]; then
+			IFS=$OLDIFS
+			return 1
+		fi
+		if eval [ $2 -lt 1 ]; then
+			IFS=$OLDIFS
+			return 1
+		fi
+		if eval [ $2 -gt 12 ]; then
+			IFS=$OLDIFS
+			return 1
+		fi
+		if eval [ $3 -lt 1 ]; then
+			IFS=$OLDIFS
+			return 1
+		fi
+		if eval [ $3 -gt 31 ]; then
+			IFS=$OLDIFS
+			return 1
+		fi
+		IFS=$OLDIFS
+		return 0
+	fi
+	IFS=$OLDIFS
+	return 1
+}
+
+# $1 = Time string to validate as "HH:MM:SS"
+isValidTime() {
+	local OLDIFS=$IFS
+	if expr "$1" : '[0-9]*\:[0-9]*\:[0-9]*$' >/dev/null; then
+		IFS=:
+		set $1
+		#echo "H="$1
+		#echo "M="$2
+		#echo "S="$3
+		if eval [ $1 -lt 0 ]; then
+			IFS=$OLDIFS
+			return 1
+		fi
+		if eval [ $1 -gt 23 ]; then
+			IFS=$OLDIFS
+			return 1
+		fi
+		if eval [ $2 -lt 0 ]; then
+			IFS=$OLDIFS
+			return 1
+		fi
+		if eval [ $2 -gt 59 ]; then
+			IFS=$OLDIFS
+			return 1
+		fi
+		if eval [ $3 -lt 0 ]; then
+			IFS=$OLDIFS
+			return 1
+		fi
+		if eval [ $3 -gt 59 ]; then
+			IFS=$OLDIFS
+			return 1
+		fi
+		IFS=$OLDIFS
+		return 0
+	fi
+	IFS=$OLDIFS
+	return 1
+}
+
+########################## begin
+
+rm -f $tempfile

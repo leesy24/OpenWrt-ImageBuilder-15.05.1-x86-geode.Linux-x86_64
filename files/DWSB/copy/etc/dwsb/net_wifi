@@ -1,0 +1,222 @@
+#!/bin/sh
+# (C) 2020 DASAN InfoTek,
+#           leesy@DSI
+##
+. common
+
+cWiFiIndex=$1
+[ "$cWiFiIndex" = "0" ] && cWiFiIndexStr="First"
+[ "$cWiFiIndex" = "1" ] && cWiFiIndexStr="Second"
+[ "$cWiFiIndex" != "0" ] && [ "$cWiFiIndex" != "1" ] && cWiFiIndexStr="Unknown"
+
+while : ; do
+
+	readSystem
+	readNetwork
+	readWifi $cWiFiIndex
+
+	inputvar=""
+
+	if [ "$cWdisabled" = "1" ] ; then
+		menuinput "$cWiFiIndexStr WiFi Configure" \
+			'"1WiFi_Mode"   "WiFi disable/AP/ST/WDS __________($cWmode)"'
+	elif [ "$cWencr" = "none" ] ; then
+		menuinput "$cWiFiIndexStr WiFi Configure" \
+			'"1WiFi_Mode"   "WiFi disable/AP/ST/WDS __________($cWmode)"
+			"2WiFi_Freq"    "WiFi Freq _______________________($cWfreq)"
+			"3WiFi_eSSID"   "WiFi eSSID/Wireless-Name ________($cWssid)"
+			"4WiFi_EncUSE"  "WiFi Encription [none/wep/psk2] _($cWencr)"
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+	else
+		menuinput "$cWiFiIndexStr WiFi Configure" \
+			'"1WiFi_Mode"   "WiFi disable/AP/ST/WDS __________($cWmode)"
+			"2WiFi_Freq"    "WiFi Freq _______________________($cWfreq)"
+			"3WiFi_eSSID"   "WiFi eSSID/Wireless-Name ________($cWssid)"
+			"4WiFi_EncUSE"  "WiFi Encription [none/wep/psk2] _($cWencr)"
+			"5WiFi_EncKEY"  "WiFi Encription [Key Code] ______($cWkey)"
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+	fi
+
+	case $inputvar in
+
+	1WiFi_Mode)
+		inputvar=$cWmode
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter WiFi Mode [Disable/AP/APW/ST/STW]\n\n"$(
+				)"Examples:\n"$(
+	 			)" ex1)Disable  ex2)AP  ex3)APW - AP with WDS\n"$(
+	 			)" ex4)ST  ex5)STW - Station with WDS\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cWmode" ] && break
+			# Check input string is one of WiFi Mode
+			if [ "$inputvar" = "Disable" ] ; then
+				uci set wireless.@wifi-iface[$cWiFiIndex].disabled="1"
+				break
+			elif [ "$inputvar" = "AP" ] ; then
+				uci delete wireless.@wifi-iface[$cWiFiIndex].disabled
+				uci delete wireless.@wifi-iface[$cWiFiIndex].wds
+				uci set wireless.@wifi-iface[$cWiFiIndex].mode="ap"
+				break
+			elif [ "$inputvar" = "APW" ] ; then
+				uci delete wireless.@wifi-iface[$cWiFiIndex].disabled
+				uci set wireless.@wifi-iface[$cWiFiIndex].wds="1"
+				uci set wireless.@wifi-iface[$cWiFiIndex].mode="ap"
+				break
+			elif [ "$inputvar" = "ST" ] ; then
+				uci delete wireless.@wifi-iface[$cWiFiIndex].disabled
+				uci delete wireless.@wifi-iface[$cWiFiIndex].wds
+				uci set wireless.@wifi-iface[$cWiFiIndex].mode="sta"
+				break
+			elif [ "$inputvar" = "STW" ] ; then
+				uci delete wireless.@wifi-iface[$cWiFiIndex].disabled
+				uci set wireless.@wifi-iface[$cWiFiIndex].wds="1"
+				uci set wireless.@wifi-iface[$cWiFiIndex].mode="sta"
+				break
+			fi
+			errormsg="Check input value is WiFi mode!"
+		done
+		;;
+
+	2WiFi_Freq)
+		inputvar=$cWfreq
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Running-Frequency... with N.NNN GHz\n\n"$(
+				)"Examples:\n"$(
+				)"$FreqTBL\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cWfreq" ] && break
+			# Check one of FreqTBL
+			[ -n "$inputvar" ] && [ "$inputvar" = "auto" ] && {
+                                uci set wireless.radio$cWiFiIndex.channel="$inputvar"
+                                break
+                        }
+			[ -n "$inputvar" ] && [ "$inputvar" = "$(echo "$FreqTBL" | grep -o -E -m1 "( $inputvar\([0-9]*\))" | cut -d' ' -f2 | cut -d'(' -f1)" ] && {
+				uci set wireless.radio$cWiFiIndex.channel="$(echo "$FreqTBL" | grep -o -E -m1 "($inputvar\([0-9]*\))" | cut -d'(' -f2 | cut -d')' -f1)"
+				break
+			}
+			errormsg="Check input one of Freq table"
+		done
+		;;
+
+	3WiFi_eSSID)
+		inputvar=$cWssid
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter AP SSID/Name ...\n\n"$(
+				)"Examples:\n"$(
+	 			)" ex1)AP01  ex2)APnn\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cWssid" ] && break
+			# Check input string is not null
+			if [ -n "$inputvar" ] ; then
+				uci set wireless.@wifi-iface[$cWiFiIndex].ssid="$inputvar"
+				break
+			fi
+			errormsg="Check input value is SSID!"
+		done
+		;;
+
+	4WiFi_EncUSE)
+		inputvar=$cWencr
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter WiFi Encription Type [none/wep/psk2]\n\n"$(
+				)"Examples:\n"$(
+	 			)" ex1)none  ex2)wep-open  ex3)psk2+ccmp\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cWencr" ] && break
+			# Check encryption types
+			if [ "$inputvar" = "psk2+ccmp" ] ; then
+				uci set wireless.@wifi-iface[$cWiFiIndex].encryption="psk2+ccmp"
+				break
+			elif [ "$inputvar" = "wep-open" ] ; then
+				uci set wireless.@wifi-iface[$cWiFiIndex].encryption="wep-open"
+				break
+			elif [ -z "$inputvar" ] || [ "$inputvar" = "none" ] ; then
+				uci set wireless.@wifi-iface[$cWiFiIndex].encryption="none"
+				break
+			fi
+			errormsg="Check input value is one of encryption type!"
+		done
+		;;
+
+	5WiFi_EncKEY)
+		inputvar=$cWkey
+		errormsg=""
+		while :; do
+			if [ "$cWencr" = "psk2+ccmp" ] ; then
+				textinput \
+					 "Please enter Wireless LAN Encription-Key-Code...\n\n"$(
+					)"Examples: must input more and equal than 8 chars\n"$(
+	 				)" ex1)12345678  ex2)1234567890123\n"$(
+					)"\n$errormsg\n" \
+					"$inputvar"
+				retval=$?
+				# Check return error
+				[ $retval -ne 0 ] && break
+				# Check changed
+				[ "$inputvar" = "$cWencr" ] && break
+				# Check input string is not null
+				if [ -n "$inputvar" ] ; then
+					uci set wireless.@wifi-iface[$cWiFiIndex].key="$inputvar"
+					break
+				fi
+			else # elif [ "$cWencr" = "wep-open" ] ; then
+				textinput \
+					 "Please enter Wireless LAN Encription-Key-Code...\n\n"$(
+					)"Examples: must input 5 chars or 13 chars\n"$(
+	 				)" ex1)12345 ex2)1234567890123 ex3)string13chars\n"$(
+					)"\n$errormsg\n" \
+					"$inputvar"
+				retval=$?
+				# Check return error
+				[ $retval -ne 0 ] && break
+				# Check changed
+				[ "$inputvar" = "$cWencr" ] && break
+				# Check input string is not null
+				if [ -n "$inputvar" ] && ([ ${#inputvar} -eq 5 ] || [ ${#inputvar} -eq 13 ])  ; then
+					uci set wireless.@wifi-iface[$cWiFiIndex].key="1"
+					uci set wireless.@wifi-iface[$cWiFiIndex].key1="s:$inputvar"
+					break
+				fi
+			fi
+			errormsg="Check input key code and size is 5 or 13!"
+		done
+		;;
+
+	timeout)
+		;;
+
+	X_ExitCancel | *)
+		rm $tempfile >/dev/null 2>/dev/null
+		exit 0
+		;;
+
+	esac
+done

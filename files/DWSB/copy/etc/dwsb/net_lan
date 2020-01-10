@@ -1,0 +1,78 @@
+#!/bin/sh
+# (C) 2020 DASAN InfoTek,
+#           leesy@DSI
+##
+. common
+
+while : ; do
+
+	readSystem
+	readNetwork
+
+	inputvar=""
+
+	menuinput "LAN Configure" \
+		'"1eLAN_IPaddr" "LAN IP Address ________($cLip)"
+		"2eLAN_IPmask"  "LAN IP Subnet Mask ____($cLmask)"
+		"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+
+	case $inputvar in
+
+	1eLAN_IPaddr)
+		inputvar=$cLip
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter LAN IP Address ...\n\n"$(
+				)"Examples:\n"$(
+				)" 10.1.123.1  168.126.0.129\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cLip" ] && break
+			# Check valid IP v4
+			if isValidIPv4 "$inputvar"; then
+				uci set network.lan.ipaddr="$inputvar"
+				break
+			fi
+			errormsg="Check input value is IP v4 format!"
+		done
+		;;
+
+	2eLAN_IPmask)
+		inputvar=$cLmask
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter LAN IP Subnet Mask ...\n\n"$(
+				)"Examples:\n"$(
+				)" 255.255.255.0 255.255.255.128\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cLmask" ] && break
+			# Check valid IP v4
+			if isValidIPv4 "$inputvar"; then
+				uci set network.lan.netmask="$inputvar"
+				break
+			fi
+			errormsg="Check input value is IP v4 format!"
+		done
+		;;
+
+	timeout)
+		;;
+
+	X_ExitCancel | *)
+		rm $tempfile >/dev/null 2>/dev/null
+		exit 0
+		;;
+
+	esac
+done

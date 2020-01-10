@@ -1,0 +1,110 @@
+#!/bin/sh
+# (C) 2020 DASAN InfoTek,
+#           leesy@DSI
+##
+. common
+
+while : ; do
+
+	readSystem
+	readNetwork
+
+	inputvar=""
+
+	menuinput "Status Overview" \
+		'"ReviewStatus"  "Review Status .... Enter!"
+		"1SystemConfig"     ">> Host Name & Date time __________Configure <<"
+		"2LanConfig"        ">> LAN Network ____________________Configure <<"
+		"3FirstWiFiConfig"  ">> 1st Wireless Network ___________Configure <<"
+		"4SecondWiFiConfig" ">> 2nd Wireless Network ___________Configure <<"
+		"5SaveCommit"    "Commit All Configure Save!"
+		"6SaveReboot"    "Save(commit) & ReBOOT....!"
+		"7JustREBOOT"	 "==============>ReBOOT....!"'
+
+	case $inputvar in
+
+	ReviewStatus)
+		;;
+
+	1SystemConfig)
+		/etc/dwsb/system
+		;;
+
+	2LanConfig)
+		/etc/dwsb/net_lan
+		;;
+
+	3FirstWiFiConfig)
+		/etc/dwsb/net_wifi 0
+		;;
+
+	4SecondWiFiConfig)
+		/etc/dwsb/net_wifi 1
+		;;
+
+	5SaveCommit)
+		textinput \
+			 "Commit All Configures & Save Now?? [Yes/No]\n\n"$(
+			)"Please Enter:\n"$(
+			)" [YES]/[no] \n" \
+			"NO"
+		if [ "$inputvar" = "YES" ] ; then
+			clear
+			echo ; echo "[$cHostname].... Commit All Configures Save Now!!"
+			uci commit
+			sleep 1
+		fi
+		;;
+
+	6SaveReboot)
+		textinput \
+			 "Commit All Configures & ReBOOT Now?? [Yes/No]\n\n"$(
+			)"Please Enter:\n"$(
+			)" [YES]/[no]\n" \
+			"NO"
+		if [ "$inputvar" = "YES" ] ; then
+			clear
+			echo ; echo "[$cHostname].... Commit All Configures Now!!"
+			uci commit
+			echo ; echo "[$cHostname].... All Interface Restart...!!"
+			sync
+			echo ; echo "[$cHostname].... System Reboot Now!!"
+			reboot
+			while : ; do
+				sleep 1
+				echo -n "."
+			done
+		fi
+		;;
+
+	7JustREBOOT)
+		textinput \
+			 "===============> ReBOOT Now?? [Yes/No]\n\n"$(
+			)"Please Enter:\n"$(
+			)" [YES]/[no]\n" \
+			"NO"
+		if [ "$inputvar" = "YES" ] ; then
+		  clear
+		  echo ; echo "[$cHostname].... System Reboot Now!!"
+		  reboot -f
+		  while : ; do
+			sleep 1
+			echo -n "."
+		  done
+		fi
+		;;
+
+	# *)
+	#	rm $tempfile >/dev/null 2>/dev/null
+	#	exit 0
+	#	;;
+
+	esac
+
+done
+
+sync
+
+rm $tempfile >/dev/null 2>/dev/null
+exit 0
+

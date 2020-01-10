@@ -1,0 +1,103 @@
+#!/bin/sh
+# (C) 2020 DASAN InfoTek,
+#           leesy@DSI
+##
+. common
+
+while : ; do
+
+	readSystem
+	readNetwork
+
+	inputvar=""
+
+	menuinput "System Configure" \
+		'"1Hostname"   "Host Name ___________________($cHostname)"
+		"2DateConfig"  "Date ________________________($aDate)"
+		"3TimeConfig"  "Time ________________________($aTime)"
+		"X_ExitCancel" "Exit or Cancel to upper Menu"'
+
+	case $inputvar in
+
+	1Hostname)
+		inputvar=$cHostname
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Host Name ...\n\n"$(
+				)"Examples:\n"$(
+				)" DWSB  DWSB01  DWSBxx\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cHostname" ] && break
+			# Check input string is not null
+			if [ -n "$inputvar" ] ; then
+				uci set system.@system[0].hostname="$inputvar"
+				break
+			fi
+			errormsg="Check input value is Host Name format!"
+		done
+		;;
+
+	2DateConfig)
+		inputvar=$aDate
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Date as YYYY-MM-DD format...\n\n"$(
+				)"Examples:\n"$(
+				)" 2020-1-3  2020-02-20\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$aDate" ] && break
+			# Check valid Date
+			if isValidDate "$inputvar"; then
+				date +%Y-%m-%d -s $inputvar
+				break
+			fi
+			errormsg="Check input value is Date format (YYYY-MM-DD)!"
+		done
+		;;
+
+	3TimeConfig)
+		inputvar=$aTime
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Time as HH:MM:SS format...\n\n"$(
+				)"Examples:\n"$(
+				)" 12:34:56  1:2:3\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$aTime" ] && break
+			# Check valid Time
+			if isValidTime "$inputvar"; then
+				date +%T -s $inputvar
+				break
+			fi
+			errormsg="Check input value is Time format (HH:MM:SS)!"
+		done
+		;;
+
+	timeout)
+		;;
+
+	X_ExitCancel | *)
+		rm $tempfile >/dev/null 2>/dev/null
+		exit 0
+		;;
+
+	esac
+done
