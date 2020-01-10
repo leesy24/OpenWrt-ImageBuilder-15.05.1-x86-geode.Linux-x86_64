@@ -33,21 +33,7 @@ textinput() {
 
 menuinput() {
 
-	readWifi 0
-	fstMode=$cWmode
-	fstSSID=$cWssid
-	fstFreq=$cWfreq_a
-	fstSNR=$cWsnr
-	[ "$cWimode" = "ap" ] && fstStatus="Cnt:$cWcnt"
-	[ "$cWimode" = "sta" ] && fstStatus="$cWap"
-
-	readWifi 1
-	sndMode=$cWmode
-	sndSSID=$cWssid
-	sndFreq=$cWfreq_a
-	sndSNR=$cWsnr
-	[ "$cWimode" = "ap" ] && sndStatus="Cnt:$cWcnt"
-	[ "$cWimode" = "sta" ] && sndStatus="$cWap"
+	readWifiAct
 
 	menucmd=$(cat <<END    
 $DIALOG --ascii-lines --clear --cr-wrap --timeout 10 \
@@ -158,6 +144,106 @@ readWifi() {
 	[ "$cWimode" = "sta" ] && {
 		cWap=$(iwinfo wlan$1 info | grep Access | awk '{ print $3 }')
 		([ -z "$cWap" ] || [ "$cWap" = "00:00:00:00:00:00" ]) && cWap="Not-Associated"
+	}
+}
+
+readWifiAct() {
+	fstDisabled=$(uci -q get wireless.@wifi-iface[0].disabled)
+	fstWds=$(uci -q get wireless.@wifi-iface[0].wds)
+	fstImode=$(uci -q get wireless.@wifi-iface[0].mode)
+	[ "$fstDisabled" = "1" ] && {
+		fstMode="Disable"
+	} || {
+		[ "$fstImode" = "ap" ] && {
+			[ "$fstWds" = "1" ] && {
+				fstMode="APW"
+			} || {
+				fstMode="AP"
+			}
+		}
+		[ "$fstImode" = "sta" ] && {
+			[ "$fstWds" = "1" ] && {
+				fstMode="STW"
+			} || {
+				fstMode="ST"
+			}
+		}
+		[ "$fstImode" != "ap" ] && [ "$fstImode" != "sta" ] && {
+			fstMode=$fstImode
+		}
+	}
+	fstSSID=$(uci -q get wireless.@wifi-iface[0].ssid)
+	fstCh=$(iwinfo wlan0 info | grep Channel | awk '{print $4}')
+	[ "$fstCh" = "unknown" ] && {
+		fstCh=$(uci -q get wireless.radio0.channel)
+	}
+	[ "$fstCh" = "auto" ] && {
+		fstFreq="Auto"
+	} || {
+		fstFreq=$(iw phy0 info | \
+                    grep -E -m1 "(\* .... MHz \[$fstCh\])" | \
+                    awk '{print $2}' | \
+                    sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
+	}
+	fstSNR=$(iwinfo wlan0 info | grep Link | awk '{print $6}' | cut -d'/' -f1)
+	([ -z "$fstSNR" ] || [ "$fstSNR" = "unknown" ]) && fstSNR=0
+	[ "$fstImode" = "ap" ] && {
+		fstCnt=$(iwinfo wlan0 assoclist | grep -cE '^([0-9A-F]{2}:){5}[0-9A-F]{2}')
+		fstStatus="Cnt:$fstCnt"
+	}
+	[ "$fstImode" = "sta" ] && {
+		fstAP=$(iwinfo wlan0 info | grep Access | awk '{ print $3 }')
+		([ -z "$fstAP" ] || [ "$fstAP" = "00:00:00:00:00:00" ]) && fstAP="Not-Associated"
+		fstStatus="$fstAP"
+	}
+
+	sndDisabled=$(uci -q get wireless.@wifi-iface[1].disabled)
+	sndWds=$(uci -q get wireless.@wifi-iface[1].wds)
+	sndImode=$(uci -q get wireless.@wifi-iface[1].mode)
+	[ "$sndDisabled" = "1" ] && {
+		sndMode="Disable"
+	} || {
+		[ "$sndImode" = "ap" ] && {
+			[ "$sndWds" = "1" ] && {
+				sndMode="APW"
+			} || {
+				sndMode="AP"
+			}
+		}
+		[ "$sndImode" = "sta" ] && {
+			[ "$sndWds" = "1" ] && {
+				sndMode="STW"
+			} || {
+				sndMode="ST"
+			}
+		}
+		[ "$sndImode" != "ap" ] && [ "$sndImode" != "sta" ] && {
+			sndMode=$sndImode
+		}
+	}
+	sndSSID=$(uci -q get wireless.@wifi-iface[1].ssid)
+	sndCh=$(iwinfo wlan1 info | grep Channel | awk '{print $4}')
+	[ "$sndCh" = "unknown" ] && {
+		sndCh=$(uci -q get wireless.radio1.channel)
+	}
+	[ "$sndCh" = "auto" ] && {
+		sndFreq="Auto"
+	} || {
+		sndFreq=$(iw phy1 info | \
+                    grep -E -m1 "(\* .... MHz \[$sndCh\])" | \
+                    awk '{print $2}' | \
+                    sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
+	}
+	sndSNR=$(iwinfo wlan1 info | grep Link | awk '{print $6}' | cut -d'/' -f1)
+	([ -z "$sndSNR" ] || [ "$sndSNR" = "unknown" ]) && sndSNR=0
+	[ "$sndImode" = "ap" ] && {
+		sndCnt=$(iwinfo wlan1 assoclist | grep -cE '^([0-9A-F]{2}:){5}[0-9A-F]{2}')
+		sndStatus="Cnt:$sndCnt"
+	}
+	[ "$sndImode" = "sta" ] && {
+		sndAP=$(iwinfo wlan1 info | grep Access | awk '{ print $3 }')
+		([ -z "$sndAP" ] || [ "$sndAP" = "00:00:00:00:00:00" ]) && sndAP="Not-Associated"
+		sndStatus="$sndAP"
 	}
 }
 
