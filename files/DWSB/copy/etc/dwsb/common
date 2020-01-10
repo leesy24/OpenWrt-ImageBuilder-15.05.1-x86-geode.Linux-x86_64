@@ -82,6 +82,14 @@ readNetwork() {
 
 # $1 = WiFi index
 readWifi() {
+	cWhwmode=$(uci -q get wireless.radio$1.hwmode)
+	if [ "$cWhwmode" = "11g" ] ; then
+		cWband="2.4"
+	elif [ "$cWhwmode" = "11a" ] ; then
+		cWband="5"
+	else
+		cWband="unknown"
+	fi
 	cWdisabled=$(uci -q get wireless.@wifi-iface[$1].disabled)
 	cWwds=$(uci -q get wireless.@wifi-iface[$1].wds)
 	cWimode=$(uci -q get wireless.@wifi-iface[$1].mode)
