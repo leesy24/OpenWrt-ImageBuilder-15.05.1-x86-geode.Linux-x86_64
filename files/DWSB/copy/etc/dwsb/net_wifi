@@ -72,22 +72,22 @@ while : ; do
 				uci set wireless.@wifi-iface[$cWiFiIndex].disabled="1"
 				break
 			elif [ "$inputvar" = "AP" ] ; then
-				uci delete wireless.@wifi-iface[$cWiFiIndex].disabled
-				uci delete wireless.@wifi-iface[$cWiFiIndex].wds
+				uci -q delete wireless.@wifi-iface[$cWiFiIndex].disabled
+				uci -q delete wireless.@wifi-iface[$cWiFiIndex].wds
 				uci set wireless.@wifi-iface[$cWiFiIndex].mode="ap"
 				break
 			elif [ "$inputvar" = "APW" ] ; then
-				uci delete wireless.@wifi-iface[$cWiFiIndex].disabled
+				uci -q delete wireless.@wifi-iface[$cWiFiIndex].disabled
 				uci set wireless.@wifi-iface[$cWiFiIndex].wds="1"
 				uci set wireless.@wifi-iface[$cWiFiIndex].mode="ap"
 				break
 			elif [ "$inputvar" = "ST" ] ; then
-				uci delete wireless.@wifi-iface[$cWiFiIndex].disabled
-				uci delete wireless.@wifi-iface[$cWiFiIndex].wds
+				uci -q delete wireless.@wifi-iface[$cWiFiIndex].disabled
+				uci -q delete wireless.@wifi-iface[$cWiFiIndex].wds
 				uci set wireless.@wifi-iface[$cWiFiIndex].mode="sta"
 				break
 			elif [ "$inputvar" = "STW" ] ; then
-				uci delete wireless.@wifi-iface[$cWiFiIndex].disabled
+				uci -q delete wireless.@wifi-iface[$cWiFiIndex].disabled
 				uci set wireless.@wifi-iface[$cWiFiIndex].wds="1"
 				uci set wireless.@wifi-iface[$cWiFiIndex].mode="sta"
 				break
