@@ -7,7 +7,7 @@
 
 define Profile/DWSB
 	NAME:=DWSB Profile
-	VERSION:=v1.1
+	VERSION:=v1.10
 	PACKAGES:= \
 		avahi-daemon-service-http avahi-daemon-service-ssh avahi-nodbus-daemon \
 		-dnsmasq \
