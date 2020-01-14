@@ -52,7 +52,9 @@ while : ; do
 			clear
 			echo ; echo "[$cHostname].... Commit All Configures Save Now!!"
 			uci commit
-			sleep 1
+			echo ; echo "[$cHostname].... Restart Network Subsystem ...!!"
+			/etc/init.d/network restart
+			sleep 10
 		fi
 		;;
 
@@ -66,8 +68,6 @@ while : ; do
 			clear
 			echo ; echo "[$cHostname].... Commit All Configures Now!!"
 			uci commit
-			echo ; echo "[$cHostname].... All Interface Restart...!!"
-			sync
 			echo ; echo "[$cHostname].... System Reboot Now!!"
 			reboot
 			while : ; do

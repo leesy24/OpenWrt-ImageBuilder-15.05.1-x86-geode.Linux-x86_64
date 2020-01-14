@@ -125,6 +125,8 @@ readWifi() {
     }
 	#cWfreq=$(uci -q get wireless.radio$1.channel)
 	cWssid=$(uci -q get wireless.@wifi-iface[$1].ssid)
+	cWinlimit=$(uci -q get wireless.@wifi-iface[$1].max_inactivity)
+	[ -z "$cWinlimit" ] && cWinlimit="0"
 	cWencr=$(uci -q get wireless.@wifi-iface[$1].encryption)
 	if [ "$cWencr" = "psk2+ccmp" ] ; then        
 		cWkey=$(uci -q get wireless.@wifi-iface[$1].key)

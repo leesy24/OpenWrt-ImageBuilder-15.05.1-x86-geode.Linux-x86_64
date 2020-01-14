@@ -36,7 +36,8 @@ while : ; do
 			"2WiFi_Band"    "WiFi Band _______________________($cWband GHz)"
 			"3WiFi_Freq"    "WiFi Freq _______________________($cWfreq)"
 			"4WiFi_eSSID"   "WiFi eSSID/Wireless-Name ________($cWssid)"
-			"5WiFi_EncUSE"  "WiFi Encription [none/wep/psk2] _($cWencr)"
+			"5WiFi_InLimit" "WiFi Station inactivity limit ___($cWinlimit sec(s))"
+			"6WiFi_EncUSE"  "WiFi Encription [none/wep/psk2] _($cWencr)"
 			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
 	else
 		menuinput "$cWiFiIndexStr WiFi Configure" \
@@ -44,8 +45,9 @@ while : ; do
 			"2WiFi_Band"    "WiFi Band _______________________($cWband GHz)"
 			"3WiFi_Freq"    "WiFi Freq _______________________($cWfreq)"
 			"4WiFi_eSSID"   "WiFi eSSID/Wireless-Name ________($cWssid)"
-			"5WiFi_EncUSE"  "WiFi Encription [none/wep/psk2] _($cWencr)"
-			"6WiFi_EncKEY"  "WiFi Encription [Key Code] ______($cWkey)"
+			"5WiFi_InLimit" "WiFi Station inactivity limit ___($cWinlimit sec(s))"
+			"6WiFi_EncUSE"  "WiFi Encription [none/wep/psk2] _($cWencr)"
+			"7WiFi_EncKEY"  "WiFi Encription [Key Code] ______($cWkey)"
 			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
 	fi
 
@@ -178,7 +180,31 @@ while : ; do
 		done
 		;;
 
-	5WiFi_EncUSE)
+	5WiFi_InLimit)
+		inputvar=$cWinlimit
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Station inactivity limit in seconds(> 0)\n\n"$(
+				)"Examples:\n"$(
+				)" 10  20  30  40  50\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$cWinlimit" ] && break
+			# Check string greater than zero
+			[ $inputvar -gt 0 ] 2>/dev/null && {
+				uci set wireless.@wifi-iface[$cWiFiIndex].max_inactivity="$inputvar"
+				break
+			}
+			errormsg="Check input value is greater than 0!"
+		done
+		;;
+
+	6WiFi_EncUSE)
 		inputvar=$cWencr
 		errormsg=""
 		while :; do
@@ -208,7 +234,7 @@ while : ; do
 		done
 		;;
 
-	6WiFi_EncKEY)
+	7WiFi_EncKEY)
 		inputvar=$cWkey
 		errormsg=""
 		while :; do
