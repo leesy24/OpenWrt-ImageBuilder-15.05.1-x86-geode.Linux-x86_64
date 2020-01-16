@@ -29,7 +29,7 @@ while : ; do
 
 	if [ "$cWdisabled" = "1" ] ; then
 		menuinput "$cWiFiIndexStr WiFi Configure" \
-			'"1WiFi_Mode"   "WiFi disable/AP/ST/WDS __________($cWmode)"'
+			'"1WiFi_Mode"   "WiFi disable/AP/ST/WDS __________($cWmode)"
 			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
 	elif [ "$cWencr" = "none" ] ; then
 		menuinput "$cWiFiIndexStr WiFi Configure" \
