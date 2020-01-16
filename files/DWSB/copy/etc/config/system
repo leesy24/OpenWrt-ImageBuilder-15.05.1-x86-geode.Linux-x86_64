@@ -13,14 +13,20 @@ config timeserver ntp
 	list server	3.openwrt.pool.ntp.org
 
 config led
-	option name 'WifiRX'
-	option sysfs 'alix:2'
-	option default '1'
-	option trigger 'phy0rx'
+        option default '0'
+        option sysfs 'alix:1'
+        option name 'On'
+        option trigger 'default-on'
 
 config led
-	option name 'WifiTX'
-	option sysfs 'alix:3'
-	option default '1'
-	option trigger 'phy0tx'
+        option default '0'
+        option sysfs 'alix:2'
+        option trigger 'phy0rx'
+        option name 'Phy0Rx'
+
+config led
+        option default '0'
+        option sysfs 'alix:3'
+        option trigger 'phy1rx'
+        option name 'Phy1Rx'
 
