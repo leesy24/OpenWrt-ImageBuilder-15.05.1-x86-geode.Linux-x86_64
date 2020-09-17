@@ -66,8 +66,8 @@ readLines() {
 			sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
 	}
 	##
-	fstSNR=$(grep Link /tmp/iw_info_$iface_1st | awk '{print $6}' | cut -d'/' -f1)
-	([ -z "$fstSNR" ] || [ "$fstSNR" = "unknown" ]) && fstSNR=0
+	fstSNR=$(grep SNR /tmp/iw_assoclist_$iface_1st | awk -F'[()]' '{print $2}' | awk '{print $2}')
+	[ -z "$fstSNR" ] && fstSNR=0
 	[ "$fstImode" = "ap" ] && {
 		fstCnt=$(grep -cE '^([0-9A-F]{2}:){5}[0-9A-F]{2}' /tmp/iw_assoclist_$iface_1st)
 	}
@@ -117,8 +117,8 @@ readLines() {
 			sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
 	}
 	##
-	sndSNR=$(grep Link /tmp/iw_info_$iface_2nd | awk '{print $6}' | cut -d'/' -f1)
-	([ -z "$sndSNR" ] || [ "$sndSNR" = "unknown" ]) && sndSNR=0
+	sndSNR=$(grep SNR /tmp/iw_assoclist_$iface_2nd | awk -F'[()]' '{print $2}' | awk '{print $2}')
+	[ -z "$sndSNR" ] && sndSNR=0
 	[ "$sndImode" = "ap" ] && {
 		sndCnt=$(grep -cE '^([0-9A-F]{2}:){5}[0-9A-F]{2}' /tmp/iw_assoclist_$iface_2nd)
 	}

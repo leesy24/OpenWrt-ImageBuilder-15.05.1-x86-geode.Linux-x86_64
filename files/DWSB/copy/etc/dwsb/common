@@ -195,8 +195,8 @@ readWifiAct() {
                     awk '{print $2}' | \
                     sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
 	}
-	fstSNR=$(iwinfo wlan0 info 2> /dev/null | grep Link | awk '{print $6}' | cut -d'/' -f1)
-	([ -z "$fstSNR" ] || [ "$fstSNR" = "unknown" ]) && fstSNR=0
+	fstSNR=$(iwinfo wlan0 assoclist 2> /dev/null | grep SNR | awk -F'[()]' '{print $2}' | awk '{print $2}')
+	[ -z "$fstSNR" ] && fstSNR=0
 	[ "$fstImode" = "ap" ] && {
 		fstCnt=$(iwinfo wlan0 assoclist 2> /dev/null | grep -cE '^([0-9A-F]{2}:){5}[0-9A-F]{2}')
 		fstStatus="Cnt:$fstCnt"
@@ -244,8 +244,8 @@ readWifiAct() {
                     awk '{print $2}' | \
                     sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
 	}
-	sndSNR=$(iwinfo wlan1 info 2> /dev/null | grep Link | awk '{print $6}' | cut -d'/' -f1)
-	([ -z "$sndSNR" ] || [ "$sndSNR" = "unknown" ]) && sndSNR=0
+	sndSNR=$(iwinfo wlan1 assoclist 2> /dev/null | grep SNR | awk -F'[()]' '{print $2}' | awk '{print $2}')
+	[ -z "$sndSNR" ] && sndSNR=0
 	[ "$sndImode" = "ap" ] && {
 		sndCnt=$(iwinfo wlan1 assoclist 2> /dev/null | grep -cE '^([0-9A-F]{2}:){5}[0-9A-F]{2}')
 		sndStatus="Cnt:$sndCnt"
