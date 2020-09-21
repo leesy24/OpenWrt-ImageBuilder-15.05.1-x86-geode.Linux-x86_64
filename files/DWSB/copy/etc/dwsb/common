@@ -8,6 +8,14 @@ tempfile="/tmp/main$$"
 trap "rm -f $tempfile; exit" 0 1 2 5 15
 
 . /etc/company_release
+#-----------------------------#
+### Load dual station roaming configurations from file
+[ -e /etc/dwsb/dual_sta_roaming.cfg ] && {
+	cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
+	. /tmp/dual_sta_roaming.cfg
+}
+USE_DUALSTATION_MODE=$_USE_DUALSTATION_MODE
+#-----------------------------#
 
 textinput() {
 	$DIALOG \
@@ -36,12 +44,12 @@ menuinput() {
 	readWifiAct
 
 	menucmd=$(cat <<END    
-$DIALOG --ascii-lines --clear --cr-wrap --timeout 10 \
+$DIALOG --ascii-lines --clear --cr-wrap --timeout 60 \
 	--title "[ $MODEL $NAME@$YEAR - $1 ]" \
 	--menu "$3\
 	Hostname:$cHostname IP:$cLip/$cLmask\n\
-	$fstMode [ SSID:$fstSSID Freq:$fstFreq SNR:$fstSNR $fstStatus ]\n\
-	$sndMode [ SSID:$sndSSID Freq:$sndFreq SNR:$sndSNR $sndStatus ]\n\
+	$fstMode [ SSID:$fstSSID Freq:$fstFreq SNR:$fstSNR $fstStatus ] $fstRoaming\n\
+	$sndMode [ SSID:$sndSSID Freq:$sndFreq SNR:$sndSNR $sndStatus ] $sndRoaming\n\
 	Local Time:$aDate $aTime Uptime:$aUptime >> Please menu select: \n" 22 76 12 \
 	$2 \
 	2> $tempfile
@@ -255,6 +263,24 @@ readWifiAct() {
 		([ -z "$sndAP" ] || [ "$sndAP" = "00:00:00:00:00:00" ]) && sndAP="Not-Associated"
 		sndStatus="$sndAP"
 	}
+
+	## Set default first Network roaming
+	fstRoaming=""
+	## Set default second Network roaming
+	sndRoaming=""
+	## Check Dual Station mode
+	if ([ "$USE_DUALSTATION_MODE" = "Y" ] && [ "$fstImode" = "sta" ] && [ "$sndImode" = "sta" ]) ; then
+		## Get roaming network info
+		brctlShow=$(brctl show)
+		## Get first Network roaming
+		[ $(echo $brctlShow | grep -c wlan0) -eq 1 ] && {
+			fstRoaming="<--- Roaming"
+		}
+		## Get second Network roaming
+		[ $(echo $brctlShow | grep -c wlan1) -eq 1 ] && {
+			sndRoaming="<--- Roaming"
+		}
+	fi
 }
 
 # $1 = IPv4 string to validate

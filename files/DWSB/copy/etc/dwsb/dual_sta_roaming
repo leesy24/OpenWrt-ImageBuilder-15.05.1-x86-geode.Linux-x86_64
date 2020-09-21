@@ -1,0 +1,233 @@
+#!/bin/sh
+# (C) 2020 DASAN InfoTek
+#           leesy@DSI
+##
+. common
+
+cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
+
+CONFIGPATH_org="/etc/dwsb/dual_sta_roaming.cfg"
+CONFIGPATH="/tmp/dual_sta_roaming.cfg"
+CONFIG_UPDATED="/tmp/.dual_sta_roaming.cfg.updated"
+
+save_value() {
+	egrep -v '^$' $CONFIGPATH | egrep -v "^"$1 > $CONFIGPATH.new
+	echo $1"=\"$inputvar\"" >> $CONFIGPATH.new
+	echo >> $CONFIGPATH.new
+	rm -f $CONFIGPATH
+	mv $CONFIGPATH.new $CONFIGPATH
+
+	cp $CONFIGPATH $CONFIGPATH_org
+	sync
+}
+
+while : ; do
+
+	readSystem
+
+	CUR_USE_DUALSTATION_MODE=$(grep "_USE_DUALSTATION_MODE" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_SNRmin=$(grep "_SNRmin" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_SNRdelta=$(grep "_SNRdelta" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingIP=$(grep "_PingIP" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingTO=$(grep "_PingTO" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingFC=$(grep "_PingFC" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+
+	### echo "($CUR_USE_DUALSTATION_MODE) ($CUR_SNRmin) ($CUR_SNRdelta) ($CUR_PingIP) ($CUR_PingTO) ($CUR_PingFC)"
+
+	inputvar=""
+
+	menuinput  "Dual Station Roaming Configure" \
+		'"1_UseDualSta" "Configure to use Dual Station mode ($CUR_USE_DUALSTATION_MODE)"
+		"2_SNRmin"      "Configure Minimum SNR for Roaming ($CUR_SNRmin)"
+		"3_SNRdelta"    "Configure Delta SNR for Roaming ($CUR_SNRdelta)"
+		"4_PingIP"      "Configure AP IP to ping ($CUR_PingIP)"
+		"5_PingTO"      "Configure Time Out to ping AP IP ($CUR_PingTO)"
+		"6_PingFC"      "Configure Fail Count to ping AP IP ($CUR_PingFC)"
+		"7_TestRoaming" "Test Dual Station Roaming!"
+		"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+
+	case $inputvar in
+
+	1_UseDualSta)
+		inputvar=$CUR_USE_DUALSTATION_MODE
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Y to use Dual Station mode otherwise enter N or empty\n"$(
+				)"Examples:\n"$(
+				)" Y  N\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_USE_DUALSTATION_MODE" ] && break
+			# Check string null or Y or N
+			([ -z "$inputvar" ] || [ $inputvar = "Y" ] || [ $inputvar = "N" ]) && {
+				save_value "_USE_DUALSTATION_MODE"
+				break
+			}
+			errormsg="Check input value is Y or N or empty!"
+		done
+		;;
+
+	2_SNRmin)
+		inputvar=$CUR_SNRmin
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter minimum SNR for roaming in NN dBm(0 < NN < 70)\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_SNRmin" ] && break
+			# Check 0 < value < 70
+			[ -n "$inputvar" ] && [ $inputvar -gt 0 ] 2>/dev/null && [ $inputvar -lt 70 ] 2>/dev/null && {
+				save_value "_SNRmin"
+				break
+			}
+			errormsg="Check input value NN is 0 < NN < 70"
+		done
+		;;
+
+	3_SNRdelta)
+		inputvar=$CUR_SNRdelta
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter delta SNR for roaming in NN dBm(0 <= NN <= 35)\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_SNRdelta" ] && break
+			# Check 0 < value < 70
+			[ -n "$inputvar" ] && [ $inputvar -ge 0 ] 2>/dev/null && [ $inputvar -le 35 ] 2>/dev/null && {
+				save_value "_SNRdelta"
+				break
+			}
+			errormsg="Check input value NN is 0 <= NN <= 35"
+		done
+		;;
+
+	4_PingIP)
+		inputvar=$CUR_PingIP
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter AP's IP to ping\n"$(
+				)" Ping disabled when empty\n\n"$(
+				)"Examples: can blank\n"$(
+				)" 192.168.0.127  10.1.1.127\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingIP" ] && break
+			# Check string null or valid IP v4
+			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
+				save_value "_PingIP"
+				break
+			fi
+			errormsg="Check input value is IP v4 format!"
+		done
+		;;
+
+	5_PingTO)
+		inputvar=$CUR_PingTO
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Time Out to ping AP IP in milli-second(> 0)\n\n"$(
+				)"Examples:\n"$(
+				)" 1  7  10  20\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingTO" ] && break
+			# Check greater than zero
+			[ $inputvar -gt 0 ] 2>/dev/null && {
+				save_value "_PingTO"
+				break
+			}
+			errormsg="Check input value is greater than 0!"
+		done
+		;;
+
+	6_PingFC)
+		inputvar=$CUR_PingFC
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Fail Count(0 < c <= 5) to ping AP IP\n"$(
+				)" Ping disabled when zero or empty\n\n"$(
+				)"Examples:\n"$(
+				)" 1  2  3  4  5\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingFC" ] && break
+			# Check string null or greater and equal than zero
+			([ -z "$inputvar" ] || [ $inputvar -ge 0 ] 2>/dev/null || [ $inputvar -le 5 ] 2>/dev/null) && {
+				save_value "_PingFC"
+				break
+			}
+			errormsg="Check input value is empty or greater and equal than 0 and little equal 5 !"
+		done
+		;;
+
+	7_TestRoaming)
+		inputvar="N"
+		textinput \
+			"Dual Station Roaming TEST... Now?? [Yes/No]\n\n"$(
+			)"Please Enter:\n"$(
+			)" [Y]=Run Roaming/[N]=Exit\n" \
+			"$inputvar"
+		retval=$?
+		# Check return error
+		[ $retval -ne 0 ] && break
+		[ "$inputvar" = "Y" ] && {
+			clear
+			echo ; echo "[$cHostname]... Roaming New Station Now!!"
+			touch /tmp/.force_Roaming
+			sleep 1 # sleep 1 second
+
+			local TestRoamingTimer=0
+			local TestRoamingTimeout=30 # 30secs
+			while [ -e /tmp/.force_Roaming ] ; do
+				sleep 1 # sleep 1 second
+				TestRoamingTimer=$((TestRoamingTimer+1))
+				[ $TestRoamingTimer -ge $TestRoamingTimeout ] && break
+			done
+
+			if [ -e /tmp/.force_Roaming ] ; then
+				rm -f /tmp/.force_Roaming
+				echo ; echo "[$cHostname]... Error! Roaming New Station!"
+			else
+				echo ; echo "[$cHostname]... Success! Roaming New Station."
+			fi
+
+			sleep 1 # sleep 1 second
+		}
+		;;
+
+	X_ExitCancel | *)
+		rm $tempfile >/dev/null 2>/dev/null
+		exit 0
+		;;
+	esac
+done

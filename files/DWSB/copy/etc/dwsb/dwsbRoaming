@@ -2,55 +2,59 @@
 #
 #####################################################################
 ##
-##            DWx6000 Configure for Owrt 12.09 @linux3.3
+##            DWSB Configure for Chaos Calmer 15.05.1 @linux3.18
 ##
-##            (DWroaming.sh):{ Redundant Roaming with DUAL-WLAN }
+##            (dwsbRoaming):{ Redundant Roaming with DUAL-WLAN Station}
 ##
-##            Copyright 2013, by Dasan InfoTEK 
+##            Copyright 2020, by Dasan InfoTEK 
 ##
-##                         ...jslee@dsintek.com...
+##                         ...leesy@dsintek.com...
 ##
 ##
 ##
-##     DWroaming.sh SNRmin SNRdelta FpingCNT FpingIP
+##     dwsbRoaming SNRmin SNRdelta PingIP PingTO PingFC
 ##     --------------------------------------------------------------------------
 ##       SNRmin   : [0].... Disable-SNR-Roaming, Nomal=[10~15]
 ##       SNRdelta : [0].... Disable-SNR-Roaming, Nomal=[15~25]
 ##       SNR-Roaming.!! if{mySNR < SNRmin}--&&--{[mySNR] > [otherSNR+SNRdelta]}!!
 ##     --------------------------------------------------------------------------
-##       FpingCNT : [0].....Disable-PING-Roaming, Nomal=[3,1~4] ;If Fail more [3]=4,5,
-##       FpingIP  : [10.1.1.123]
+##       PingIP : [10.1.1.123]
+##       PingTO : [1~1000] in milli second
+##       PingFC : [0].....Disable-PING-Roaming, Nomal=[3,1~4] ;If Fail more [3]=4,5,
 ##
 #####################################################################
 
 	## Dual--UnASSO : DW_WLactCNT=0
 	## Dual--ACT :: DW_WLact==2
 
-SNRmin="$1"
-SNRdelta="$2"
-##
-FpingCNT="$3"
-FpingIP="$4"
-
-
-echo ""
-echo ">>[ DWroaming.sh ] SNRmin=$SNRmin SNRdelta=$SNRdelta FpingCNT=$FpingCNT IP=$FpingIP"
-
-
-fpsleep() {
-	cntP1=`expr $1 \* 1`
-	while [ true ]
-	do
-	  if [ $cntP1 -gt 0 ] ; then
-		## fping -q 127.0.0.1 -i 2 -p 2 -t 1
-		fping -q 127.0.0.1 -i 1 -p 1 -t 1
-	  else
-		break
-	  fi
-	  cntP1=`expr $cntP1 - 1`
-	done
+log() {
+  echo "$@"
+  logger -t $(basename $0) "$@"
 }
 
+#-----------------------------#
+### Load dual station roaming configurations from file
+[ -e /etc/dwsb/dual_sta_roaming.cfg ] && {
+	cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
+	. /tmp/dual_sta_roaming.cfg
+}
+USE_DUALSTATION_MODE=$_USE_DUALSTATION_MODE
+SNRmin=$_SNRmin
+SNRdelta=$_SNRdelta
+PingIP=$_PingIP
+PingTO=$_PingTO
+PingFC=$_PingFC
+#-----------------------------#
+
+[ "$USE_DUALSTATION_MODE" != "Y" ] && {
+	/etc/init.d dwsbRoamming disable
+	log "Dual station Roaming mode disabled. ---> exit"
+	exit 0
+} 
+log ""
+log ">>[ dwsbRoaming ] SNRmin=$SNRmin SNRdelta=$SNRdelta Ping IP=$PingIP TO=$PingTO FC=$PingFC"
+
+rm -f /tmp/.force_Roaming
 
 Fp_ToutCNT=0
 Fp_aliveCNT=0
@@ -60,127 +64,215 @@ Fp_aliveCNT=0
 while : ; do
 ############
 
-	DW_WLact=`brctl show | grep wlan | xargs`
+	DW_brshow=$(brctl show | grep wlan)
+	### Get first wlan
+	DW_WLact=$(echo "$DW_brshow" | awk '{print $1}' | head -1)
+	### Get number of wlan word
+	DW_WLactCNT=$(echo "$DW_brshow" | grep -c wlan)
 	
-	DW_WLactCNT=`brctl show | grep -c wlan`
-	
-	DW_asso0=`iwinfo wlan0 assoclist | grep dBm`
-	DW_asso1=`iwinfo wlan1 assoclist | grep dBm`
-
-	DWassoWC0=`echo "$DW_asso0" | wc -w`
-	DWassoWC1=`echo "$DW_asso1" | wc -w`
-	
-	DWassoSNR0=`echo "$DW_asso0" | cut -f2 -d"(" | cut -c5-6 `
-	DWassoSNR1=`echo "$DW_asso1" | cut -f2 -d"(" | cut -c5-6 `
+	### Grep line which has SNR word
+	DW_asso0=$(iwinfo wlan0 assoclist | grep SNR)
+	DW_asso1=$(iwinfo wlan1 assoclist | grep SNR)
+	### Get SNR word count in text
+	DWassoWC0=$(echo "$DW_asso0" | grep -c SNR)
+	DWassoWC1=$(echo "$DW_asso1" | grep -c SNR)
+	### Check SNR word count
+	[ $DWassoWC0 -ne 0 ] && {
+		### Get SNR value via Extract second string in parentheses
+		DWassoSNR0=$(echo "$DW_asso0" | awk -F'[()]' '{print $2}' | awk '{print $2}')
+	} || {
+		DWassoSNR0=0
+	}
+	[ $DWassoWC1 -ne 0 ] && {
+		### Get SNR value via Extract second string in parentheses
+		DWassoSNR1=$(echo "$DW_asso1" | awk -F'[()]' '{print $2}' | awk '{print $2}')
+	} || {
+		DWassoSNR1=0
+	}
 	##
-	fpsleep 1
+	msleep 100
 	##
-	DWassoSNR0t=`echo "$DW_asso0" | cut -f2 -d"(" | cut -c5-6 `
-	DWassoSNR1t=`echo "$DW_asso1" | cut -f2 -d"(" | cut -c5-6 `
+	### Grep line which has SNR word
+	DW_asso0=$(iwinfo wlan0 assoclist | grep SNR)
+	DW_asso1=$(iwinfo wlan1 assoclist | grep SNR)
+	### Get SNR word count in text
+	DWassoWC0=$(echo "$DW_asso0" | grep -c SNR)
+	DWassoWC1=$(echo "$DW_asso1" | grep -c SNR)
+	### Check SNR word count
+	[ $DWassoWC0 -ne 0 ] && {
+		### Get SNR value via Extract second string in parentheses
+		DWassoSNR0t=$(echo "$DW_asso0" | awk -F'[()]' '{print $2}' | awk '{print $2}')
+	} || {
+		DWassoSNR0t=0
+	}
+	[ $DWassoWC1 -ne 0 ] && {
+		### Get SNR value via Extract second string in parentheses
+		DWassoSNR1t=$(echo "$DW_asso1" | awk -F'[()]' '{print $2}' | awk '{print $2}')
+	} || {
+		DWassoSNR1t=0
+	}
 	##
-	DWassoSNR0=`expr $DWassoSNR0 + $DWassoSNR0t `
-	DWassoSNR1=`expr $DWassoSNR1 + $DWassoSNR1t `
+	DWassoSNR0=$((DWassoSNR0+DWassoSNR0t))
+	DWassoSNR1=$((DWassoSNR1+DWassoSNR1t))
 	##
-	fpsleep 1
+	msleep 100
 	##
-	DWassoSNR0t=`echo "$DW_asso0" | cut -f2 -d"(" | cut -c5-6 `
-	DWassoSNR1t=`echo "$DW_asso1" | cut -f2 -d"(" | cut -c5-6 `
+	### Grep line which has SNR word
+	DW_asso0=$(iwinfo wlan0 assoclist | grep SNR)
+	DW_asso1=$(iwinfo wlan1 assoclist | grep SNR)
+	### Get SNR word count in text
+	DWassoWC0=$(echo "$DW_asso0" | grep -c SNR)
+	DWassoWC1=$(echo "$DW_asso1" | grep -c SNR)
+	### Check SNR word count
+	[ $DWassoWC0 -ne 0 ] && {
+		### Get SNR value via Extract second string in parentheses
+		DWassoSNR0t=$(echo "$DW_asso0" | awk -F'[()]' '{print $2}' | awk '{print $2}')
+	} || {
+		DWassoSNR0t=0
+	}
+	[ $DWassoWC1 -ne 0 ] && {
+		### Get SNR value via Extract second string in parentheses
+		DWassoSNR1t=$(echo "$DW_asso1" | awk -F'[()]' '{print $2}' | awk '{print $2}')
+	} || {
+		DWassoSNR1t=0
+	}
 	##
-	DWassoSNR0=`expr \( $DWassoSNR0 + $DWassoSNR0t \) / 3 `
-	DWassoSNR1=`expr \( $DWassoSNR1 + $DWassoSNR1t \) / 3 `
+	DWassoSNR0=$(((DWassoSNR0+DWassoSNR0t)/3))
+	DWassoSNR1=$(((DWassoSNR1+DWassoSNR1t)/3))
 	##------------------------------------------------------Avr(+/3)!!
-
-##	echo ">> DWassoSNR0 = $DWassoSNR0  >> DWassoSNR1 = $DWassoSNR1 "
-
-
-#	DW_WLactCNT=`expr "$DW_WLactCNT" \* 1`
-#	DWassoWC0=`expr $DWassoWC0 \* 1`
-#	DWassoWC1=`expr $DWassoWC1 \* 1`
-#	DWassoSNR0=`expr $DWassoSNR0 \* 1`
-#	DWassoSNR1=`expr $DWassoSNR1 \* 1`
-
+	[ $DWassoSNR0 -eq 0 ] && {
+		DWassoWC0=0
+	} || {
+		DWassoWC0=1
+	}
+	[ $DWassoSNR1 -eq 0 ] && {
+		DWassoWC1=0
+	} || {
+		DWassoWC1=1
+	}
+	##log ">> DWassoSNR0 = $DWassoSNR0  >> DWassoSNR1 = $DWassoSNR1 "
 
 ### if [ $SNRmin -gt 0 ] && [ $SNRmin -lt 50 ] && [ $SNRdelta -gt 5 ] && [ $SNRdelta -lt 50 ] ; then
 ########################################################################################################
+	### Check need to force roaming
+	if [ -e /tmp/.force_Roaming ] ; then
+		if [ "$DW_WLact" = "wlan0" ] ; then
+			log " Forced roaming ---> Wlan0==>Wlan1"
+			/usr/sbin/brctl delif br-lan wlan0  ##-
+			/usr/sbin/brctl addif br-lan wlan1  ##+
+			##
+			sleep 5 # sleep 5secs to wait until network stable
+		else
+			log " Forced roaming ---> Wlan1==>Wlan0"
+			/usr/sbin/brctl delif br-lan wlan1  ##-
+			/usr/sbin/brctl addif br-lan wlan0  ##+
+			##
+			sleep 5 # sleep 5secs to wait until network stable
+		fi
 
-	if [ $DWassoWC0 -gt 9 ] && [ $DWassoWC1 -gt 9 ] ; then  ############# Dual--ASSO
-		
+		### Reset fping alive count value
+		Fp_aliveCNT=0
+
+		[ -e /tmp/.force_Roaming ] && rm -f /tmp/.force_Roaming
+
+		continue ##------------------------------>>>
+	fi
+
+	### Check Station associated both
+	if [ $DWassoWC0 -ne 0 ] && [ $DWassoWC1 -ne 0 ] ; then  ############# Dual--ASSO
+		### Check SNR larger than 10dBm any station
 		if [ $DWassoSNR0 -gt 10 ] || [ $DWassoSNR1 -gt 10 ] ; then  ## Dual--ACT :: DW_WLactCNT==2
 		############( ONE-of-SNR_>>_minMINminMIN )################
-			if [ $DW_WLactCNT -gt 1 ] ; then  						## Dual--ACT :: DW_WLactCNT==2
-				if [ $DWassoSNR0 -gt $DWassoSNR1 ] ; then
+			if [ $DW_WLactCNT -ge 2 ] ; then  						## Dual--ACT :: DW_WLactCNT==2
+				if [ $DWassoSNR0 -ge $DWassoSNR1 ] ; then
+					log "Enable wlan0 $DWassoSNR0 $DWassoSNR1"
 					/usr/sbin/brctl delif br-lan wlan1  ##-
 					/usr/sbin/brctl addif br-lan wlan0  ##+
+					##
+					sleep 5 # sleep 5secs to wait until network stable
 				else
+					log "Enable wlan1 $DWassoSNR0 $DWassoSNR1"
 					/usr/sbin/brctl delif br-lan wlan0  ##-
 					/usr/sbin/brctl addif br-lan wlan1  ##+
+					##
+					sleep 5 # sleep 5secs to wait until network stable
 				fi
 			else
-				if [ $DW_WLactCNT -lt 1 ] ; then  					## None--ACT :: DW_WLactCNT==0
+				if [ $DW_WLactCNT -eq 0 ] ; then  					## None--ACT :: DW_WLactCNT==0
+					log "Enable wlan0 and wlan1 $DWassoSNR0 $DWassoSNR1"
 					/usr/sbin/brctl addif br-lan wlan0  ##+
 					/usr/sbin/brctl addif br-lan wlan1  ##+
+					##
+					sleep 5 # sleep 5secs to wait until network stable
 				else
 					########################################		## One---ACT :: DW_WLactCNT==1
 					if [ $SNRmin -gt 0 ] ; then
-						DWassoSNR0x2=`expr $DWassoSNR0 + $SNRdelta `  ##`expr $DWassoSNR0 + \( $DWassoSNR0 / 3 \) `
-						DWassoSNR1x2=`expr $DWassoSNR1 + $SNRdelta `  ##`expr $DWassoSNR1 + \( $DWassoSNR1 / 3 \) `
+						DWassoSNR0x2=$((DWassoSNR0+SNRdelta))  ##$((DWassoSNR0+(DWassoSNR0/3)))
+						DWassoSNR1x2=$((DWassoSNR1+SNRdelta))  ##$((DWassoSNR1+(DWassoSNR1/3)))
 						if [ $DWassoSNR1 -lt $SNRmin ] && [ $DWassoSNR0 -gt $DWassoSNR1x2 ] ; then 
 							if [ "$DW_WLact" != "wlan0" ] ; then
+								log " $DW_WLact $DWassoSNR0 $DWassoSNR1 ---> Wlan1==>Wlan0"
 								/usr/sbin/brctl delif br-lan wlan1  ##-
 								/usr/sbin/brctl addif br-lan wlan0  ##+
 								##
-								echo " $DW_WLact ---> Wlan1==>Wlan0"
+								sleep 5 # sleep 5secs to wait until network stable
 								continue ##------------------------------>>>
 							fi
 						fi
 						if [ $DWassoSNR0 -lt $SNRmin ] && [ $DWassoSNR1 -gt $DWassoSNR0x2 ] ; then 
 							if [ "$DW_WLact" != "wlan1" ] ; then
+								log " $DW_WLact $DWassoSNR0 $DWassoSNR1 ---> Wlan0==>Wlan1"
 								/usr/sbin/brctl delif br-lan wlan0  ##-
 								/usr/sbin/brctl addif br-lan wlan1  ##+
 								##
-								echo " $DW_WLact ---> Wlan0==>Wlan1"
+								sleep 5 # sleep 5secs to wait until network stable
 								continue ##------------------------------>>>
 							fi
 						fi
 					fi
 					########################################
-					########################################----------------(FpingCNT==="3")
-					if [ $FpingCNT -gt 0 ] && [ $FpingCNT -lt 5 ] ; then
+					########################################----------------(PingFC==="3")
+					if [ $PingFC -gt 0 ] && [ $PingFC -lt 5 ] ; then
 						Acnt=0
 						Fcnt=0
 						for i in 1 2 3 4 5 ## 6 7 8 9 10
 						do
-							  ret1=`fping -p 10 -t 7 -r 1 $FpingIP | tail -c 6`
-							  if [ "$ret1" = "alive" ] ; then
-								Acnt=`expr $Acnt + 1`
-							  else
-								Fcnt=`expr $Fcnt + 1`
-							  fi
+							# Check AP IP via fping 
+							fping -4 -b0 -t$PingTO -r1 -q $PingIP && {
+								# fping returned success
+								Acnt=$((Acnt+1))
+							} || {
+								# fping returned fail
+								Fcnt=$((Fcnt+1))
+							}
+							[ $i -lt 5 ] && msleep 10
 						done
 						####
-						if [ $Fcnt -gt $FpingCNT ] ; then     ##--(Fcnt==="4~5")
+						if [ $Fcnt -gt $PingFC ] ; then     ##--(Fcnt==="4~5")
 							if [ $Fp_aliveCNT -gt 1 ] ; then  ##-----------------X2-Looped!!
 								if [ "$DW_WLact" != "wlan0" ] ; then
+									log " Ping-Failed $Fcnt ---> Wlan1==>Wlan0"
 									/usr/sbin/brctl delif br-lan wlan1  ##-
 									/usr/sbin/brctl addif br-lan wlan0  ##+
 									##
-									echo " Ping-Failed ---> Wlan1==>Wlan0"
+									sleep 5 # sleep 5secs to wait until network stable
 								else
+									log " Ping-Failed $Fcnt ---> Wlan0==>Wlan1"
 									/usr/sbin/brctl delif br-lan wlan0  ##-
 									/usr/sbin/brctl addif br-lan wlan1  ##+
 									##
-									echo " Ping-Failed ---> Wlan0==>Wlan1"
+									sleep 5 # sleep 5secs to wait until network stable
 								fi
 								##----------!
 								Fp_aliveCNT=0
 								##----------!!-----(After-Exec--PingRoaming)!!
 							fi
-							Fp_ToutCNT=`expr $Fp_ToutCNT + 1`
+							Fp_ToutCNT=$((Fp_ToutCNT+1))
 							if [ $Fp_ToutCNT -gt 9999 ] ; then
 								Fp_ToutCNT=100
 							fi
 						else
-							Fp_aliveCNT=`expr $Fp_aliveCNT + 1`
+							Fp_aliveCNT=$((Fp_aliveCNT+1))
 							if [ $Fp_aliveCNT -gt 9999 ] ; then
 								Fp_aliveCNT=100
 							fi
@@ -193,37 +285,38 @@ while : ; do
 		fi
 		
 	else
-		if [ $DWassoWC0 -lt 9 ] && [ $DWassoWC1 -lt 9 ] ; then  ############# None------ASSO
+	### In case Station associated not both
+	### else of [ $DWassoWC0 -ne 0 ] && [ $DWassoWC1 -ne 0 ]
+		if [ $DWassoWC0 -eq 0 ] && [ $DWassoWC1 -eq 0 ] ; then  ############# None------ASSO
 			if [ $DW_WLactCNT -lt 2 ] ; then
+				log "00000000000000000000000000000000000> Wlan0 and Wlan1"
 				/usr/sbin/brctl addif br-lan wlan0  ##+
 				/usr/sbin/brctl addif br-lan wlan1  ##+
+				##
 			fi
 		else
 			################################################	############# ONE-------ASSO
-			if [ $DWassoWC0 -gt 9 ] && [ $DWassoWC1 -lt 9 ] ; then  ###### wlan0--ASSO
+			if [ $DWassoWC0 -ne 0 ] && [ $DWassoWC1 -eq 0 ] ; then  ###### wlan0--ASSO
 				if [ "$DW_WLact" != "wlan0" ] ; then
+					log "00000000000000000000000000000000000> Wlan0"
 					/usr/sbin/brctl delif br-lan wlan1  ##-
 					/usr/sbin/brctl addif br-lan wlan0  ##+
 					##
-					echo "00000000000000000000000000000000000> Wlan0"
+					sleep 5 # sleep 5secs to wait until network stable
 				fi
 			fi
-			if [ $DWassoWC0 -lt 9 ] && [ $DWassoWC1 -gt 9 ] ; then  ###### wlan1--ASSO
+			if [ $DWassoWC0 -eq 0 ] && [ $DWassoWC1 -ne 0 ] ; then  ###### wlan1--ASSO
 				if [ "$DW_WLact" != "wlan1" ] ; then
+					log "00000000000000000000000000000000000> Wlan1"
 					/usr/sbin/brctl delif br-lan wlan0  ##-
 					/usr/sbin/brctl addif br-lan wlan1  ##+
 					##
-					echo "00000000000000000000000000000000000> Wlan1"
+					sleep 5 # sleep 5secs to wait until network stable
 				fi
 			fi
 		fi
 	fi
-
-########################################################################################################
-### fi  ##if [ $SNRmin -gt 0 ] && [ $SNRmin -lt 50 ] ; then
-
 ####(while : ; do)
 done
-####(while : ; do)
 
 

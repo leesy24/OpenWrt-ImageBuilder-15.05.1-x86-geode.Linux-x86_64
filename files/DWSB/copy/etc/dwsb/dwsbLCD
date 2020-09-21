@@ -10,6 +10,15 @@
 ##
 #####################################################################
 
+#-----------------------------#
+### Load dual station roaming configurations from file
+[ -e /etc/dwsb/dual_sta_roaming.cfg ] && {
+	cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
+	. /tmp/dual_sta_roaming.cfg
+}
+USE_DUALSTATION_MODE=$_USE_DUALSTATION_MODE
+#-----------------------------#
+
 iw phy0 info > /tmp/iw_info_phy_1st
 iw phy1 info > /tmp/iw_info_phy_2nd
 
@@ -140,6 +149,21 @@ readLines() {
 	#rDATE="$rDATE $upTime"
 	#rDATE=$(echo "$rDATE" | sed 's/^ *//g' | cut -c -20)
 
+	## Check Dual Station mode
+	if ([ "$USE_DUALSTATION_MODE" = "Y" ] && [ "$fstImode" = "sta" ] && [ "$sndImode" = "sta" ]) ; then
+		## Get bridged network info
+		brctlShow=$(brctl show)
+		## Get first Network bridged
+		fstBridged=$(echo $brctlShow | grep -c wlan0)
+		## Get second Network bridged
+		sndBridged=$(echo $brctlShow | grep -c wlan1)
+	else
+		## Set default first Network bridged
+		fstBridged=1
+		## Set default second Network bridged
+		sndBridged=1
+	fi
+
 	line_1=$(echo "$host $ip                    " | cut -c -20)
 	[ "$fstDisabled" = "1" ] && {
 		line_2="$fstMode                    "
@@ -147,10 +171,19 @@ readLines() {
 		[ "$fstImode" = "ap" ] && {
 			line_2="$fstMode $fstSsid $fstFreq $fstSNR $fstCnt          "
 		} || {
+			### in case STA
 			[ "$fstAP" = "NotAss" ] && {
-				line_2="$fstMode $fstSsid $fstFreq $fstAP          "
+				[ $fstBridged -eq 1 ] && {
+					line_2="$fstMode $fstSsid $fstFreq $fstAP          "
+				} || {
+					line_2="$fstMode#$fstSsid#$fstFreq#$fstAP##########"
+				}
 			} || {
-				line_2="$fstMode $fstSsid $fstFreq $fstSNR $fstAP          "
+				[ $fstBridged -eq 1 ] && {
+					line_2="$fstMode $fstSsid $fstFreq $fstSNR $fstAP          "
+				} || {
+					line_2="$fstMode#$fstSsid#$fstFreq#$fstSNR#$fstAP##########"
+				}
 			}
 		}
 	}
@@ -161,10 +194,19 @@ readLines() {
 		[ "$sndImode" = "ap" ] && {
 			line_3="$sndMode $sndSsid $sndFreq $sndSNR $sndCnt          "
 		} || {
+			### in case STA
 			[ "$sndAP" = "NotAss" ] && {
-				line_3="$sndMode $sndSsid $sndFreq $sndAP          "
+				[ $sndBridged -eq 1 ] && {
+					line_3="$sndMode $sndSsid $sndFreq $sndAP          "
+				} || {
+					line_3="$sndMode#$sndSsid#$sndFreq#$sndAP##########"
+				}
 			} || {
-				line_3="$sndMode $sndSsid $sndFreq $sndSNR $sndAP          "
+				[ $sndBridged -eq 1 ] && {
+					line_3="$sndMode $sndSsid $sndFreq $sndSNR $sndAP          "
+				} || {
+					line_3="$sndMode#$sndSsid#$sndFreq#$sndSNR#$sndAP##########"
+				}
 			}
 		}
 	}

@@ -12,14 +12,15 @@ while : ; do
 	inputvar=""
 
 	menuinput "Status Overview" \
-		'"ReviewStatus"  "Review Status .... Enter!"
-		"1SystemConfig"     ">> Host Name & Date time __________Configure <<"
-		"2LanConfig"        ">> LAN Network ____________________Configure <<"
-		"3FirstWiFiConfig"  ">> 1st Wireless Network ___________Configure <<"
-		"4SecondWiFiConfig" ">> 2nd Wireless Network ___________Configure <<"
-		"5SaveCommit"    "Commit All Configure Save!"
-		"6SaveReboot"    "Save(commit) & ReBOOT....!"
-		"7JustREBOOT"	 "==============>ReBOOT....!"'
+		'"ReviewStatus"      "Review Status .... Enter!"
+		"1SystemConfig"      ">> Host Name & Date time __________Configure <<"
+		"2LanConfig"         ">> LAN Network ____________________Configure <<"
+		"3FirstWiFiConfig"   ">> 1st Wireless Network ___________Configure <<"
+		"4SecondWiFiConfig"  ">> 2nd Wireless Network ___________Configure <<"
+		"5DualStationConfig" ">> Dual Station Roaming ___________Configure <<"
+		"6SaveCommit"        "Commit All Configure Save!"
+		"7SaveReboot"        "Save(commit) & ReBOOT....!"
+		"8JustREBOOT"        "==============>ReBOOT....!"'
 
 	case $inputvar in
 
@@ -42,23 +43,42 @@ while : ; do
 		/etc/dwsb/net_wifi 1
 		;;
 
-	5SaveCommit)
+	5DualStationConfig)
+		/etc/dwsb/dual_sta_roaming
+		;;
+
+	6SaveCommit)
 		textinput \
 			 "Commit All Configures & Save Now?? [Yes/No]\n\n"$(
 			)"Please Enter:\n"$(
 			)" [YES]/[no] \n" \
 			"NO"
 		if [ "$inputvar" = "YES" ] ; then
+			/etc/init.d/dwsbRoaming stop
+			/etc/init.d/dwsbLCD stop
 			clear
 			echo ; echo "[$cHostname].... Commit All Configures Save Now!!"
 			uci commit
 			echo ; echo "[$cHostname].... Restart Network Subsystem ...!!"
 			/etc/init.d/network restart
+			### Load dual station roaming configurations from file
+			[ -e /etc/dwsb/dual_sta_roaming.cfg ] && {
+				cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
+				. /tmp/dual_sta_roaming.cfg
+			}
+			USE_DUALSTATION_MODE=$_USE_DUALSTATION_MODE
+			if [ "$USE_DUALSTATION_MODE" = "Y" ] ; then
+				/etc/init.d/dwsbRoaming enable
+				/etc/init.d/dwsbRoaming start
+			else
+				/etc/init.d/dwsbRoaming disable
+			fi
+			/etc/init.d/dwsbLCD start
 			sleep 10
 		fi
 		;;
 
-	6SaveReboot)
+	7SaveReboot)
 		textinput \
 			 "Commit All Configures & ReBOOT Now?? [Yes/No]\n\n"$(
 			)"Please Enter:\n"$(
@@ -77,7 +97,7 @@ while : ; do
 		fi
 		;;
 
-	7JustREBOOT)
+	8JustREBOOT)
 		textinput \
 			 "===============> ReBOOT Now?? [Yes/No]\n\n"$(
 			)"Please Enter:\n"$(
