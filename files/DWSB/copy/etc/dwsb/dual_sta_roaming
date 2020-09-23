@@ -36,15 +36,21 @@ while : ; do
 
 	inputvar=""
 
-	menuinput  "Dual Station Roaming Configure" \
-		'"1_UseDualSta" "Configure to use Dual Station mode ($CUR_USE_DUALSTATION_MODE)"
-		"2_SNRmin"      "Configure Minimum SNR for Roaming ($CUR_SNRmin)"
-		"3_SNRdelta"    "Configure Delta SNR for Roaming ($CUR_SNRdelta)"
-		"4_PingIP"      "Configure AP IP to ping ($CUR_PingIP)"
-		"5_PingTO"      "Configure Time Out to ping AP IP ($CUR_PingTO)"
-		"6_PingFC"      "Configure Fail Count to ping AP IP ($CUR_PingFC)"
-		"7_TestRoaming" "Test Dual Station Roaming!"
-		"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+	if [ "$CUR_USE_DUALSTATION_MODE" != "Y" ] ; then
+		menuinput  "Dual Station Roaming Configure" \
+			'"1_UseDualSta" "Configure to use Dual Station mode ($CUR_USE_DUALSTATION_MODE)"
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+	else
+		menuinput  "Dual Station Roaming Configure" \
+			'"1_UseDualSta" "Configure to use Dual Station mode ($CUR_USE_DUALSTATION_MODE)"
+			"2_SNRmin"      "Configure Minimum SNR for Roaming ($CUR_SNRmin)"
+			"3_SNRdelta"    "Configure Delta SNR for Roaming ($CUR_SNRdelta)"
+			"4_PingIP"      "Configure AP IP to ping ($CUR_PingIP)"
+			"5_PingTO"      "Configure Time Out to ping AP IP ($CUR_PingTO)"
+			"6_PingFC"      "Configure Fail Count to ping AP IP ($CUR_PingFC)"
+			"7_TestRoaming" "Test Dual Station Roaming!"
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+	fi
 
 	case $inputvar in
 
