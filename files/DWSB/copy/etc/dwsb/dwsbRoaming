@@ -47,7 +47,6 @@ PingFC=$_PingFC
 #-----------------------------#
 
 [ "$USE_DUALSTATION_MODE" != "Y" ] && {
-	/etc/init.d dwsbRoamming disable
 	log "Dual station Roaming mode disabled. ---> exit"
 	exit 0
 } 

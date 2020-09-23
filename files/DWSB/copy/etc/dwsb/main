@@ -68,10 +68,7 @@ while : ; do
 			}
 			USE_DUALSTATION_MODE=$_USE_DUALSTATION_MODE
 			if [ "$USE_DUALSTATION_MODE" = "Y" ] ; then
-				/etc/init.d/dwsbRoaming enable
 				/etc/init.d/dwsbRoaming start
-			else
-				/etc/init.d/dwsbRoaming disable
 			fi
 			/etc/init.d/dwsbLCD start
 			sleep 10
@@ -90,17 +87,6 @@ while : ; do
 			clear
 			echo ; echo "[$cHostname].... Commit All Configures Now!!"
 			uci commit
-			### Load dual station roaming configurations from file
-			[ -e /etc/dwsb/dual_sta_roaming.cfg ] && {
-				cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
-				. /tmp/dual_sta_roaming.cfg
-			}
-			USE_DUALSTATION_MODE=$_USE_DUALSTATION_MODE
-			if [ "$USE_DUALSTATION_MODE" = "Y" ] ; then
-				/etc/init.d/dwsbRoaming enable
-			else
-				/etc/init.d/dwsbRoaming disable
-			fi
 			echo ; echo "[$cHostname].... System Reboot Now!!"
 			reboot
 			while : ; do
