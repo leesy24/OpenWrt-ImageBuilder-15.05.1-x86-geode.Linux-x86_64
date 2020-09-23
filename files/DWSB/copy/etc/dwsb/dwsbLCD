@@ -216,6 +216,11 @@ readLines() {
 
 legacyLCDInit() {
 	serial_send $SerialPort "\x1B\x43" $SendErrorPipe
+	## Display splash strings
+	serial_send $SerialPort "\x1B\x4C\x00\x00DASAN InfoTek       " $SendErrorPipe
+	serial_send $SerialPort "\x1B\x4C\x00\x01 Model:DWSB         " $SendErrorPipe
+	serial_send $SerialPort "\x1B\x4C\x00\x02                    " $SendErrorPipe
+	serial_send $SerialPort "\x1B\x4C\x00\x03     www.dsintek.com" $SendErrorPipe
 }
 
 cfaLCDInit() {
@@ -224,7 +229,7 @@ cfaLCDInit() {
 	cfa_send $SerialPort "\x0e\d002\d100\d000" $SendErrorPipe
 	## Display splash strings
 	cfa_send $SerialPort "\x1f\d022\d000\d000DASAN InfoTek       " $SendErrorPipe
-	cfa_send $SerialPort "\x1f\d022\d000\d001                    " $SendErrorPipe
+	cfa_send $SerialPort "\x1f\d022\d000\d001 Model:DWSB         " $SendErrorPipe
 	cfa_send $SerialPort "\x1f\d022\d000\d002                    " $SendErrorPipe
 	cfa_send $SerialPort "\x1f\d022\d000\d003     www.dsintek.com" $SendErrorPipe
 	## Store current state as boot state
