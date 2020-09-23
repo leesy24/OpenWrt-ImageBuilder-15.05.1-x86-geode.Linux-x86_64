@@ -14,7 +14,7 @@ trap "rm -f $tempfile; exit" 0 1 2 5 15
 	cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
 	. /tmp/dual_sta_roaming.cfg
 }
-USE_DUALSTATION_MODE=$_USE_DUALSTATION_MODE
+USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
 #-----------------------------#
 
 textinput() {
@@ -269,7 +269,7 @@ readWifiAct() {
 	## Set default second Network active
 	sndActive=""
 	## Check Dual Station mode
-	if ([ "$USE_DUALSTATION_MODE" = "Y" ] && [ "$fstImode" = "sta" ] && [ "$sndImode" = "sta" ]) ; then
+	if ([ "$USE_DUALSTAROAM_MODE" = "Y" ] && [ "$fstImode" = "sta" ] && [ "$sndImode" = "sta" ]) ; then
 		## Get active network info
 		brctlShow=$(brctl show)
 		## Get first Network active

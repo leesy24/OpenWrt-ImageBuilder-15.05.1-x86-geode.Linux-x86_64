@@ -38,7 +38,7 @@ log() {
 	cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
 	. /tmp/dual_sta_roaming.cfg
 }
-USE_DUALSTATION_MODE=$_USE_DUALSTATION_MODE
+USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
 SNRmin=$_SNRmin
 SNRdelta=$_SNRdelta
 PingIP=$_PingIP
@@ -46,7 +46,7 @@ PingTO=$_PingTO
 PingFC=$_PingFC
 #-----------------------------#
 
-[ "$USE_DUALSTATION_MODE" != "Y" ] && {
+[ "$USE_DUALSTAROAM_MODE" != "Y" ] && {
 	log "Dual station Roaming mode disabled. ---> exit"
 	exit 0
 }

@@ -17,7 +17,7 @@ while : ; do
 		"2LanConfig"         ">> LAN Network ____________________Configure <<"
 		"3FirstWiFiConfig"   ">> 1st Wireless Network ___________Configure <<"
 		"4SecondWiFiConfig"  ">> 2nd Wireless Network ___________Configure <<"
-		"5DualStationConfig" ">> Dual Station Roaming ___________Configure <<"
+		"5DualStaRoamConfig" ">> Dual-Station Roaming ___________Configure <<"
 		"6SaveCommit"        "Commit All Configure Save!"
 		"7SaveReboot"        "Save(commit) & ReBOOT....!"
 		"8JustREBOOT"        "==============>ReBOOT....!"'
@@ -43,7 +43,7 @@ while : ; do
 		/etc/dwsb/net_wifi 1
 		;;
 
-	5DualStationConfig)
+	5DualStaRoamConfig)
 		/etc/dwsb/dual_sta_roaming
 		;;
 
@@ -66,8 +66,8 @@ while : ; do
 				cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
 				. /tmp/dual_sta_roaming.cfg
 			}
-			USE_DUALSTATION_MODE=$_USE_DUALSTATION_MODE
-			if [ "$USE_DUALSTATION_MODE" = "Y" ] ; then
+			USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
+			if [ "$USE_DUALSTAROAM_MODE" = "Y" ] ; then
 				/etc/init.d/dwsbRoaming start
 			fi
 			/etc/init.d/dwsbLCD start

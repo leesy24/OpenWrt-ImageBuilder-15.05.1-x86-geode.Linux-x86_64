@@ -22,7 +22,7 @@ exec 2>/dev/null
 	cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
 	. /tmp/dual_sta_roaming.cfg
 }
-USE_DUALSTATION_MODE=$_USE_DUALSTATION_MODE
+USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
 #-----------------------------#
 
 iw phy0 info > /tmp/iw_info_phy_1st
@@ -154,7 +154,7 @@ readLines() {
 	#rDATE=$(echo "$rDATE" | sed 's/^ *//g' | cut -c -20)
 
 	## Check Dual Station mode
-	if ([ "$USE_DUALSTATION_MODE" = "Y" ] && [ "$fstImode" = "sta" ] && [ "$sndImode" = "sta" ]) ; then
+	if ([ "$USE_DUALSTAROAM_MODE" = "Y" ] && [ "$fstImode" = "sta" ] && [ "$sndImode" = "sta" ]) ; then
 		## Get bridged network info
 		brctlShow=$(brctl show)
 		## Get first Network bridged

@@ -25,41 +25,41 @@ while : ; do
 
 	readSystem
 
-	CUR_USE_DUALSTATION_MODE=$(grep "_USE_DUALSTATION_MODE" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_USE_DUALSTAROAM_MODE=$(grep "_USE_DUALSTAROAM_MODE" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_SNRmin=$(grep "_SNRmin" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_SNRdelta=$(grep "_SNRdelta" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_PingIP=$(grep "_PingIP" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_PingTO=$(grep "_PingTO" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_PingFC=$(grep "_PingFC" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 
-	### echo "($CUR_USE_DUALSTATION_MODE) ($CUR_SNRmin) ($CUR_SNRdelta) ($CUR_PingIP) ($CUR_PingTO) ($CUR_PingFC)"
+	### echo "($CUR_USE_DUALSTAROAM_MODE) ($CUR_SNRmin) ($CUR_SNRdelta) ($CUR_PingIP) ($CUR_PingTO) ($CUR_PingFC)"
 
 	inputvar=""
 
-	if [ "$CUR_USE_DUALSTATION_MODE" != "Y" ] ; then
-		menuinput  "Dual Station Roaming Configure" \
-			'"1_UseDualSta" "Configure to use Dual Station mode ($CUR_USE_DUALSTATION_MODE)"
+	if [ "$CUR_USE_DUALSTAROAM_MODE" != "Y" ] ; then
+		menuinput  "Dual-Station Roaming Configure" \
+			'"1_UseDualSta" "Configure to use Dual-Station Roaming mode ($CUR_USE_DUALSTAROAM_MODE)"
 			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
 	else
-		menuinput  "Dual Station Roaming Configure" \
-			'"1_UseDualSta" "Configure to use Dual Station mode ($CUR_USE_DUALSTATION_MODE)"
+		menuinput  "Dual-Station Roaming Configure" \
+			'"1_UseDualSta" "Configure to use Dual-Station Roaming mode ($CUR_USE_DUALSTAROAM_MODE)"
 			"2_SNRmin"      "Configure Minimum SNR for Roaming ($CUR_SNRmin)"
 			"3_SNRdelta"    "Configure Delta SNR for Roaming ($CUR_SNRdelta)"
 			"4_PingIP"      "Configure AP IP to ping ($CUR_PingIP)"
 			"5_PingTO"      "Configure Time Out to ping AP IP ($CUR_PingTO)"
 			"6_PingFC"      "Configure Fail Count to ping AP IP ($CUR_PingFC)"
-			"7_TestRoaming" "Test Dual Station Roaming!"
+			"7_TestRoaming" "Test Dual-Station Roaming!"
 			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
 	fi
 
 	case $inputvar in
 
 	1_UseDualSta)
-		inputvar=$CUR_USE_DUALSTATION_MODE
+		inputvar=$CUR_USE_DUALSTAROAM_MODE
 		errormsg=""
 		while :; do
 			textinput \
-				"Please enter Y to use Dual Station mode otherwise enter N or empty\n"$(
+				"Please enter Y to use Dual-Station Roaming mode otherwise enter N or empty\n"$(
 				)"Examples:\n"$(
 				)" Y  N\n"$(
 				)"\n$errormsg\n" \
@@ -68,10 +68,10 @@ while : ; do
 			# Check return error
 			[ $retval -ne 0 ] && break
 			# Check changed
-			[ "$inputvar" = "$CUR_USE_DUALSTATION_MODE" ] && break
+			[ "$inputvar" = "$CUR_USE_DUALSTAROAM_MODE" ] && break
 			# Check string null or Y or N
 			([ -z "$inputvar" ] || [ $inputvar = "Y" ] || [ $inputvar = "N" ]) && {
-				save_value "_USE_DUALSTATION_MODE"
+				save_value "_USE_DUALSTAROAM_MODE"
 				break
 			}
 			errormsg="Check input value is Y or N or empty!"
@@ -199,7 +199,7 @@ while : ; do
 	7_TestRoaming)
 		inputvar="N"
 		textinput \
-			"Dual Station Roaming TEST... Now?? [Yes/No]\n\n"$(
+			"Dual-Station Roaming TEST... Now?? [Yes/No]\n\n"$(
 			)"Please Enter:\n"$(
 			)" [Y]=Run Roaming/[N]=Exit\n" \
 			"$inputvar"
