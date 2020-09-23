@@ -293,6 +293,7 @@ while : ; do
 				/usr/sbin/brctl addif br-lan wlan0  ##+
 				/usr/sbin/brctl addif br-lan wlan1  ##+
 				##
+				sleep 5 # sleep 5secs to wait until network stable
 			fi
 		else
 			################################################	############# ONE-------ASSO
