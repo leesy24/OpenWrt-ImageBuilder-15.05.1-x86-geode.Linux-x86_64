@@ -4,7 +4,7 @@
 ##
 ##            DWSB Configure for Chaos Calmer 15.05.1 @linux3.18
 ##
-##            (dwsbRoaming):{ Redundant Roaming with DUAL-WLAN Station}
+##            (dwsbDualStaRoaming):{ Redundant Roaming with DUAL-WLAN Station}
 ##
 ##            Copyright 2020, by Dasan InfoTEK 
 ##
@@ -12,7 +12,7 @@
 ##
 ##
 ##
-##     dwsbRoaming SNRmin SNRdelta PingIP PingTO PingFC
+##     dwsbDualStaRoaming SNRmin SNRdelta PingIP PingTO PingFC
 ##     --------------------------------------------------------------------------
 ##       SNRmin   : [0].... Disable-SNR-Roaming, Nomal=[10~15]
 ##       SNRdelta : [0].... Disable-SNR-Roaming, Nomal=[15~25]

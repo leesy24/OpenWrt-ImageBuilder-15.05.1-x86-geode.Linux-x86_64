@@ -2,7 +2,7 @@
 # Copyright (C) 2006 OpenWrt.org
 START=97
 
-SCRIPT_NAME=dwsbRoaming
+SCRIPT_NAME=dwsbDualStaRoaming
 SCRIPT_PATH=/etc/dwsb/
 
 start() {

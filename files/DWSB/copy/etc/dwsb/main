@@ -54,7 +54,7 @@ while : ; do
 			)" [YES]/[no] \n" \
 			"NO"
 		if [ "$inputvar" = "YES" ] ; then
-			/etc/init.d/dwsbRoaming stop
+			/etc/init.d/dwsbDualStaRoaming stop
 			/etc/init.d/dwsbLCD stop
 			clear
 			echo ; echo "[$cHostname].... Commit All Configures Save Now!!"
@@ -68,7 +68,7 @@ while : ; do
 			}
 			USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
 			if [ "$USE_DUALSTAROAM_MODE" = "Y" ] ; then
-				/etc/init.d/dwsbRoaming start
+				/etc/init.d/dwsbDualStaRoaming start
 			fi
 			/etc/init.d/dwsbLCD start
 			sleep 10
@@ -82,7 +82,7 @@ while : ; do
 			)" [YES]/[no]\n" \
 			"NO"
 		if [ "$inputvar" = "YES" ] ; then
-			/etc/init.d/dwsbRoaming stop
+			/etc/init.d/dwsbDualStaRoaming stop
 			/etc/init.d/dwsbLCD stop
 			clear
 			echo ; echo "[$cHostname].... Commit All Configures Now!!"
