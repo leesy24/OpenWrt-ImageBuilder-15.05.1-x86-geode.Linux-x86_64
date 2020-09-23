@@ -28,8 +28,8 @@
 	## Dual--ACT :: DW_WLact==2
 
 log() {
-  echo "$@"
-  logger -t $(basename $0) "$@"
+  echo "$(basename $0): $@" >/dev/kmsg
+  ##logger -t $(basename $0) "$@"
 }
 
 #-----------------------------#
@@ -50,8 +50,7 @@ PingFC=$_PingFC
 	log "Dual station Roaming mode disabled. ---> exit"
 	exit 0
 } 
-log ""
-log ">>[ dwsbRoaming ] SNRmin=$SNRmin SNRdelta=$SNRdelta Ping IP=$PingIP TO=$PingTO FC=$PingFC"
+log "SNRmin=$SNRmin SNRdelta=$SNRdelta Ping IP=$PingIP TO=$PingTO FC=$PingFC"
 
 rm -f /tmp/.force_Roaming
 
@@ -156,13 +155,13 @@ while : ; do
 	### Check need to force roaming
 	if [ -e /tmp/.force_Roaming ] ; then
 		if [ "$DW_WLact" = "wlan0" ] ; then
-			log " Forced roaming ---> Wlan0==>Wlan1"
+			log "Forced roaming ---> Wlan0==>Wlan1"
 			/usr/sbin/brctl delif br-lan wlan0  ##-
 			/usr/sbin/brctl addif br-lan wlan1  ##+
 			##
 			sleep 5 # sleep 5secs to wait until network stable
 		else
-			log " Forced roaming ---> Wlan1==>Wlan0"
+			log "Forced roaming ---> Wlan1==>Wlan0"
 			/usr/sbin/brctl delif br-lan wlan1  ##-
 			/usr/sbin/brctl addif br-lan wlan0  ##+
 			##
@@ -210,7 +209,7 @@ while : ; do
 						DWassoSNR1x2=$((DWassoSNR1+SNRdelta))  ##$((DWassoSNR1+(DWassoSNR1/3)))
 						if [ $DWassoSNR1 -lt $SNRmin ] && [ $DWassoSNR0 -gt $DWassoSNR1x2 ] ; then 
 							if [ "$DW_WLact" != "wlan0" ] ; then
-								log " $DW_WLact $DWassoSNR0 $DWassoSNR1 ---> Wlan1==>Wlan0"
+								log "$DW_WLact $DWassoSNR0 $DWassoSNR1 ---> Wlan1==>Wlan0"
 								/usr/sbin/brctl delif br-lan wlan1  ##-
 								/usr/sbin/brctl addif br-lan wlan0  ##+
 								##
@@ -220,7 +219,7 @@ while : ; do
 						fi
 						if [ $DWassoSNR0 -lt $SNRmin ] && [ $DWassoSNR1 -gt $DWassoSNR0x2 ] ; then 
 							if [ "$DW_WLact" != "wlan1" ] ; then
-								log " $DW_WLact $DWassoSNR0 $DWassoSNR1 ---> Wlan0==>Wlan1"
+								log "$DW_WLact $DWassoSNR0 $DWassoSNR1 ---> Wlan0==>Wlan1"
 								/usr/sbin/brctl delif br-lan wlan0  ##-
 								/usr/sbin/brctl addif br-lan wlan1  ##+
 								##
@@ -250,13 +249,13 @@ while : ; do
 						if [ $Fcnt -gt $PingFC ] ; then     ##--(Fcnt==="4~5")
 							if [ $Fp_aliveCNT -gt 1 ] ; then  ##-----------------X2-Looped!!
 								if [ "$DW_WLact" != "wlan0" ] ; then
-									log " Ping-Failed $Fcnt ---> Wlan1==>Wlan0"
+									log "Ping-Failed $Fcnt ---> Wlan1==>Wlan0"
 									/usr/sbin/brctl delif br-lan wlan1  ##-
 									/usr/sbin/brctl addif br-lan wlan0  ##+
 									##
 									sleep 5 # sleep 5secs to wait until network stable
 								else
-									log " Ping-Failed $Fcnt ---> Wlan0==>Wlan1"
+									log "Ping-Failed $Fcnt ---> Wlan0==>Wlan1"
 									/usr/sbin/brctl delif br-lan wlan0  ##-
 									/usr/sbin/brctl addif br-lan wlan1  ##+
 									##
