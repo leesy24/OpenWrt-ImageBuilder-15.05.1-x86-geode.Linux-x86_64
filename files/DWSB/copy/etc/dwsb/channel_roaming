@@ -1,0 +1,324 @@
+#!/bin/sh
+# (C) 2020 DASAN InfoTek
+#           leesy@DSI
+##
+. common
+
+cStaIndex=$1
+if [ $cStaIndex -eq 0 ] ; then
+	cStaIndexStr="1st"
+elif [ $cStaIndex -eq 1 ] ; then
+	cStaIndexStr="2nd"
+else
+	# in case not [ $cStaIndex -eq 0 ] || [ $cStaIndex -eq 1 ]
+	exit 1
+	#cStaIndexStr="Unknown"
+fi
+
+
+CONFIGPATH_org="/etc/dwsb/channel_roaming_$cStaIndex.cfg"
+CONFIGPATH="/tmp/channel_roaming_$cStaIndex.cfg"
+CONFIG_UPDATED="/tmp/.channel_roaming_$cStaIndex.cfg.updated"
+
+cp $CONFIGPATH_org $CONFIGPATH
+
+save_value() {
+	egrep -v '^$' $CONFIGPATH | egrep -v "^"$1 > $CONFIGPATH.new
+	echo $1"=\"$inputvar\"" >> $CONFIGPATH.new
+	echo >> $CONFIGPATH.new
+	rm -f $CONFIGPATH
+	mv $CONFIGPATH.new $CONFIGPATH
+
+	cp $CONFIGPATH $CONFIGPATH_org
+	sync
+}
+
+Freq24TBL="\
+2.4G = 2.412(1) 2.417(2) 2.422(3) 2.427(4) 2.432(5) 2.437(6) 2.442(7)\n\
+       2.447(8) 2.452(9) 2.457(10) 2.462(11) 2.467(12) 2.472(13)\n"
+
+Freq5TBL="\
+5.xG = 5.180(36) 5.200(40) 5.220(44) 5.240(48)\n\
+       5.745(149) 5.765(153) 5.785(157) 5.805(161)"
+
+while : ; do
+
+	readSystem
+	readNetwork
+	readWifi $cStaIndex
+
+	CUR_USE_CHANNELROAM_MODE=$(grep "_USE_CHANNELROAM_MODE" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_RunFreq1=$(grep "_RunFreq1" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_RunFreq2=$(grep "_RunFreq2" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_SNRmin=$(grep "_SNRmin" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingIP1=$(grep "_PingIP1" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingIP2=$(grep "_PingIP2" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingTO=$(grep "_PingTO" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingFC=$(grep "_PingFC" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+
+	### echo "($CUR_USE_CHANNELROAM_MODE) ($CUR_SNRmin) ($CUR_SNRdelta) ($CUR_PingIP1) ($CUR_PingIP2) ($CUR_PingTO) ($CUR_PingFC)"
+
+	inputvar=""
+
+	if [ "$CUR_USE_CHANNELROAM_MODE" != "Y" ] ; then
+		menuinput  "Channel Roaming $cStaIndexStr Station Configure" \
+			'"1_UseChRoam"  "Configure to use Channel Roaming mode ($CUR_USE_CHANNELROAM_MODE)"
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+	else
+		menuinput  "Channel Roaming $cStaIndexStr Station Configure" \
+			'"1_UseChRoam"  "Configure to use Channel Roaming mode ($CUR_USE_CHANNELROAM_MODE)"
+			"2_RunFreq1"    "Configure running frequency #1 ($CUR_RunFreq1)"
+			"3_RunFreq2"    "Configure running frequency #2 ($CUR_RunFreq2)"
+			"4_SNRmin"      "Configure Minimum SNR for Roaming ($CUR_SNRmin)"
+			"5_PingIP1"     "Configure AP IP to ping for freq #1 ($CUR_PingIP1)"
+			"6_PingIP2"     "Configure AP IP to ping for freq #2 ($CUR_PingIP2)"
+			"7_PingTO"      "Configure Time Out to ping AP IP ($CUR_PingTO)"
+			"8_PingFC"      "Configure Fail Count to ping AP IP ($CUR_PingFC)"
+			"9_TestRoaming" "Test Channel Roaming!"
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+	fi
+
+	case $inputvar in
+
+	1_UseChRoam)
+		inputvar=$CUR_USE_CHANNELROAM_MODE
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Y to use Dual Station mode otherwise enter N or empty\n"$(
+				)"Examples:\n"$(
+				)" Y  N\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_USE_CHANNELROAM_MODE" ] && break
+			# Check string null or Y or N
+			([ -z "$inputvar" ] || [ $inputvar = "Y" ] || [ $inputvar = "N" ]) && {
+				save_value "_USE_CHANNELROAM_MODE"
+				break
+			}
+			errormsg="ERROR: Check input value is Y or N or empty!"
+		done
+		;;
+
+	2_RunFreq1)
+		[ "$cWband" = "2.4" ] && FreqTBL=$Freq24TBL || FreqTBL=$Freq5TBL
+		inputvar=$CUR_RunFreq1
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Running-Frequency #1... with N.NNN GHz\n\n"$(
+				)"Examples:\n"$(
+				)"$FreqTBL\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_RunFreq1" ] && break
+			# Check one of FreqTBL
+			[ -n "$inputvar" ] && \
+			[ "$inputvar" = "$(echo "$FreqTBL" | grep -o -E -m1 "($inputvar\([0-9]*\))" | cut -d'(' -f1)" ] && \
+			{
+				save_value "_RunFreq1"
+				touch $CONFIG_UPDATED
+				break
+			}
+			errormsg="ERROR: Check input one of Freq table"
+		done
+		;;
+
+	3_RunFreq2)
+		[ "$cWband" = "2.4" ] && FreqTBL=$Freq24TBL || FreqTBL=$Freq5TBL
+		inputvar=$CUR_RunFreq2
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Running-Frequency #2... with N.NNN GHz\n\n"$(
+				)"Examples:\n"$(
+				)"$FreqTBL\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_RunFreq2" ] && break
+			# Check one of FreqTBL
+			[ -n "$inputvar" ] && \
+			[ "$inputvar" = "$(echo "$FreqTBL" | grep -o -E -m1 "($inputvar\([0-9]*\))" | cut -d'(' -f1)" ] && \
+			{
+				save_value "_RunFreq2"
+				touch $CONFIG_UPDATED
+				break
+			}
+			errormsg="ERROR: Check input one of Freq table !"
+		done
+		;;
+
+	4_SNRmin)
+		inputvar=$CUR_SNRmin
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter minimum SNR for roaming in NN dBm(0 < NN < 70)\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_SNRmin" ] && break
+			# Check 0 < value < 70
+			[ -n "$inputvar" ] && [ $inputvar -gt 0 ] 2>/dev/null && [ $inputvar -lt 70 ] 2>/dev/null && {
+				save_value "_SNRmin"
+				break
+			}
+			errormsg="ERROR: Check input value NN is 0 < NN < 70 !"
+		done
+		;;
+
+	5_PingIP1)
+		inputvar=$CUR_PingIP1
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter AP's IP to ping for frequency #1\n"$(
+				)" Ping disabled when empty\n\n"$(
+				)"Examples: can blank\n"$(
+				)" 192.168.0.127  10.1.1.127\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingIP1" ] && break
+			# Check string null or valid IP v4
+			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
+				save_value "_PingIP1"
+				break
+			fi
+			errormsg="ERROR: Check input value is IP v4 format!"
+		done
+		;;
+
+	6_PingIP2)
+		inputvar=$CUR_PingIP2
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter AP's IP to ping for frequency #2\n"$(
+				)" Ping disabled when empty\n\n"$(
+				)"Examples: can blank\n"$(
+				)" 192.168.0.127  10.1.1.127\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingIP2" ] && break
+			# Check string null or valid IP v4
+			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
+				save_value "_PingIP2"
+				break
+			fi
+			errormsg="ERROR: Check input value is IP v4 format!"
+		done
+		;;
+
+	7_PingTO)
+		inputvar=$CUR_PingTO
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Time Out to ping AP IP in milli-second(> 0)\n\n"$(
+				)"Examples:\n"$(
+				)" 1  7  10  20\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingTO" ] && break
+			# Check greater than zero
+			[ $inputvar -gt 0 ] 2>/dev/null && {
+				save_value "_PingTO"
+				break
+			}
+			errormsg="ERROR: Check input value is greater than 0!"
+		done
+		;;
+
+	8_PingFC)
+		inputvar=$CUR_PingFC
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Fail Count(0 < c <= 5) to ping AP IP\n"$(
+				)" Ping disabled when zero or empty\n\n"$(
+				)"Examples:\n"$(
+				)" 1  2  3  4  5\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingFC" ] && break
+			# Check string null or greater and equal than zero
+			([ -z "$inputvar" ] || [ $inputvar -ge 0 ] 2>/dev/null || [ $inputvar -le 5 ] 2>/dev/null) && {
+				save_value "_PingFC"
+				break
+			}
+			errormsg="ERROR: Check input value is empty or greater and equal than 0 and little equal 5 !"
+		done
+		;;
+
+	9_TestRoaming)
+		inputvar="N"
+		textinput \
+			"Channel Roaming $cStaIndexStr Station TEST... Now?? [Yes/No]\n\n"$(
+			)"Please Enter:\n"$(
+			)" [Y]=Run Roaming/[N]=Exit\n" \
+			"$inputvar"
+		retval=$?
+		# Check return error
+		[ $retval -ne 0 ] && break
+		[ "$inputvar" = "Y" ] && {
+			clear
+			echo ; echo "[$cHostname]... Roaming New Frequency Now!!"
+			touch /tmp/.force_Ch_Roaming_$cStaIndex
+			sleep 1 # sleep 1 second
+
+			local TestRoamingTimer=0
+			local TestRoamingTimeout=30 # 30secs
+			while [ -e /tmp/.force_Ch_Roaming_$cStaIndex ] ; do
+				sleep 1 # sleep 1 second
+				TestRoamingTimer=$((TestRoamingTimer+1))
+				[ $TestRoamingTimer -ge $TestRoamingTimeout ] && break
+			done
+
+			if [ -e /tmp/.force_Ch_Roaming_$cStaIndex ] ; then
+				rm -f /tmp/.force_Ch_Roaming_$cStaIndex
+				echo ; echo "[$cHostname]... Error! Roaming New Frequency!"
+			else
+				echo ; echo "[$cHostname]... Success! Roaming New Frequency."
+			fi
+
+			sleep 1 # sleep 1 second
+		}
+		;;
+
+	X_ExitCancel | *)
+		rm $tempfile >/dev/null 2>/dev/null
+		exit 0
+		;;
+	esac
+done

@@ -12,15 +12,17 @@ while : ; do
 	inputvar=""
 
 	menuinput "Status Overview" \
-		'"ReviewStatus"      "Review Status .... Enter!"
-		"1SystemConfig"      ">> Host Name & Date time __________Configure <<"
-		"2LanConfig"         ">> LAN Network ____________________Configure <<"
-		"3FirstWiFiConfig"   ">> 1st Wireless Network ___________Configure <<"
-		"4SecondWiFiConfig"  ">> 2nd Wireless Network ___________Configure <<"
-		"5DualStaRoamConfig" ">> Dual-Station Roaming ___________Configure <<"
-		"6SaveCommit"        "Commit All Configure Save!"
-		"7SaveReboot"        "Save(commit) & ReBOOT....!"
-		"8JustREBOOT"        "==============>ReBOOT....!"'
+		'"ReviewStatus"       "Review Status .... Enter!"
+		"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
+		"2LanConfig"          ">> LAN Network ____________________Configure <<"
+		"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
+		"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
+		"5ChRoamFirstConfig"  ">> Channel Roaming 1st Station ____Configure <<"
+		"6ChRoamSecondConfig" ">> Channel Roaming 2nd Station ____Configure <<"
+		"7DualStaRoamConfig"  ">> Dual-Station Roaming ___________Configure <<"
+		"8SaveCommit"         "Commit All Configure Save!"
+		"9SaveReboot"         "Save(commit) & ReBOOT....!"
+		"0JustREBOOT"         "==============>ReBOOT....!"'
 
 	case $inputvar in
 
@@ -43,47 +45,57 @@ while : ; do
 		/etc/dwsb/net_wifi 1
 		;;
 
-	5DualStaRoamConfig)
+	5ChRoamFirstConfig)
+		/etc/dwsb/channel_roaming 0
+		;;
+
+	6ChRoamSecondConfig)
+		/etc/dwsb/channel_roaming 1
+		;;
+
+	7DualStaRoamConfig)
 		/etc/dwsb/dual_sta_roaming
 		;;
 
-	6SaveCommit)
+	8SaveCommit)
 		textinput \
 			 "Commit All Configures & Save Now?? [Yes/No]\n\n"$(
 			)"Please Enter:\n"$(
 			)" [YES]/[no] \n" \
 			"NO"
 		if [ "$inputvar" = "YES" ] ; then
-			/etc/init.d/dwsbDualStaRoaming stop
 			/etc/init.d/dwsbLCD stop
+			/etc/init.d/dwsbDualStaRoaming stop
+			/etc/init.d/dwsbChRoaming_1 stop
+			/etc/init.d/dwsbChRoaming_0 stop
+
 			clear
 			echo ; echo "[$cHostname].... Commit All Configures Save Now!!"
 			uci commit
 			echo ; echo "[$cHostname].... Restart Network Subsystem ...!!"
 			/etc/init.d/network restart
-			### Load dual station roaming configurations from file
-			[ -e /etc/dwsb/dual_sta_roaming.cfg ] && {
-				cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
-				. /tmp/dual_sta_roaming.cfg
-			}
-			USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
-			if [ "$USE_DUALSTAROAM_MODE" = "Y" ] ; then
-				/etc/init.d/dwsbDualStaRoaming start
-			fi
+			sleep 5
+
+			/etc/init.d/dwsbChRoaming_0 start
+			/etc/init.d/dwsbChRoaming_1 start
+			/etc/init.d/dwsbDualStaRoaming start
 			/etc/init.d/dwsbLCD start
-			sleep 10
+			sleep 5
 		fi
 		;;
 
-	7SaveReboot)
+	9SaveReboot)
 		textinput \
 			 "Commit All Configures & ReBOOT Now?? [Yes/No]\n\n"$(
 			)"Please Enter:\n"$(
 			)" [YES]/[no]\n" \
 			"NO"
 		if [ "$inputvar" = "YES" ] ; then
-			/etc/init.d/dwsbDualStaRoaming stop
 			/etc/init.d/dwsbLCD stop
+			/etc/init.d/dwsbDualStaRoaming stop
+			/etc/init.d/dwsbChRoaming_1 stop
+			/etc/init.d/dwsbChRoaming_0 stop
+
 			clear
 			echo ; echo "[$cHostname].... Commit All Configures Now!!"
 			uci commit
@@ -96,7 +108,7 @@ while : ; do
 		fi
 		;;
 
-	8JustREBOOT)
+	0JustREBOOT)
 		textinput \
 			 "===============> ReBOOT Now?? [Yes/No]\n\n"$(
 			)"Please Enter:\n"$(

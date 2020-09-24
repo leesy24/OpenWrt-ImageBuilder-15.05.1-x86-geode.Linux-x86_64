@@ -10,6 +10,7 @@ define Profile/DWSB
 	VERSION:=v1.20
 	PACKAGES:= \
 		avahi-daemon-service-http avahi-daemon-service-ssh avahi-nodbus-daemon \
+		bc \
 		-dnsmasq \
 		-dosfsck -dosfslabel \
 		e2fsprogs \
