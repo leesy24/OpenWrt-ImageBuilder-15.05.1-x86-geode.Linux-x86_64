@@ -178,15 +178,15 @@ readLines() {
 			### in case STA
 			[ "$fstAP" = "NotAss" ] && {
 				[ $fstBridged -eq 1 ] && {
-					line_2="$fstMode $fstSsid $fstFreq $fstAP          "
+					line_2="$fstMode<$fstSsid $fstFreq $fstAP          "
 				} || {
-					line_2="$fstMode#$fstSsid#$fstFreq#$fstAP##########"
+					line_2="$fstMode $fstSsid $fstFreq $fstAP          "
 				}
 			} || {
 				[ $fstBridged -eq 1 ] && {
-					line_2="$fstMode $fstSsid $fstFreq $fstSNR $fstAP          "
+					line_2="$fstMode<$fstSsid $fstFreq $fstSNR $fstAP          "
 				} || {
-					line_2="$fstMode#$fstSsid#$fstFreq#$fstSNR#$fstAP##########"
+					line_2="$fstMode $fstSsid $fstFreq $fstSNR $fstAP          "
 				}
 			}
 		}
@@ -201,15 +201,15 @@ readLines() {
 			### in case STA
 			[ "$sndAP" = "NotAss" ] && {
 				[ $sndBridged -eq 1 ] && {
-					line_3="$sndMode $sndSsid $sndFreq $sndAP          "
+					line_3="$sndMode<$sndSsid $sndFreq $sndAP          "
 				} || {
-					line_3="$sndMode#$sndSsid#$sndFreq#$sndAP##########"
+					line_3="$sndMode $sndSsid $sndFreq $sndAP          "
 				}
 			} || {
 				[ $sndBridged -eq 1 ] && {
-					line_3="$sndMode $sndSsid $sndFreq $sndSNR $sndAP          "
+					line_3="$sndMode<$sndSsid $sndFreq $sndSNR $sndAP          "
 				} || {
-					line_3="$sndMode#$sndSsid#$sndFreq#$sndSNR#$sndAP##########"
+					line_3="$sndMode $sndSsid $sndFreq $sndSNR $sndAP          "
 				}
 			}
 		}
