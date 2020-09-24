@@ -8,14 +8,6 @@ tempfile="/tmp/main$$"
 trap "rm -f $tempfile; exit" 0 1 2 5 15
 
 . /etc/company_release
-#-----------------------------#
-### Load dual station roaming configurations from file
-[ -e /etc/dwsb/dual_sta_roaming.cfg ] && {
-	cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
-	. /tmp/dual_sta_roaming.cfg
-}
-USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
-#-----------------------------#
 
 textinput() {
 	$DIALOG \
@@ -264,6 +256,14 @@ readWifiAct() {
 		sndStatus="$sndAP"
 	}
 
+	#-----------------------------#
+	### Load dual station roaming configurations from file
+	[ -e /etc/dwsb/dual_sta_roaming.cfg ] && {
+		cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
+		. /tmp/dual_sta_roaming.cfg
+	}
+	USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
+	#-----------------------------#
 	## Set default first Network active
 	fstActive=""
 	## Set default second Network active
