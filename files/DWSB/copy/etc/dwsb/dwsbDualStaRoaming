@@ -32,6 +32,45 @@ log() {
   ##logger -t $(basename $0) "$@"
 }
 
+get_curWiFiMode() {
+	local disabled=$(uci -q get wireless.@wifi-iface[$1].disabled)
+	local wds=$(uci -q get wireless.@wifi-iface[$1].wds)
+	local mode=$(uci -q get wireless.@wifi-iface[$1].mode)
+	local ret_mode
+	[ "$disabled" = "1" ] && {
+		ret_mode="Disabled"
+	} || {
+		if [ "$mode" = "ap" ]; then
+			[ "$wds" = "1" ] && {
+				ret_mode="APW"
+			} || {
+				ret_mode="AP"
+			}
+		elif [ "$mode" = "sta" ]; then
+			[ "$wds" = "1" ] && {
+				ret_mode="STW"
+			} || {
+				ret_mode="ST"
+			}
+		else
+			# in case [ "$mode" != "ap" ] && [ "$mode" != "sta" ]
+			ret_mode=$mode
+		fi
+	}
+	echo $ret_mode
+}
+
+### Check two WiFi mode are Stations (or with WDS)
+curWiFiMode1=$(get_curWiFiMode 0)
+curWiFiMode2=$(get_curWiFiMode 1)
+if  ([ "$curWiFiMode1" != "ST" ] && [ "$curWiFiMode1" != "STW" ]) \
+	|| \
+	([ "$curWiFiMode2" != "ST" ] && [ "$curWiFiMode2" != "STW" ]) ; then
+	# in case two WiFi mode are not Stations
+	log "Two WiFi mode($curWiFiMode1,$curWiFiMode2) are not Stations. ---> exit"
+	exit 1
+fi
+
 #-----------------------------#
 ### Load dual station roaming configurations from file
 [ -e /etc/dwsb/dual_sta_roaming.cfg ] && {
