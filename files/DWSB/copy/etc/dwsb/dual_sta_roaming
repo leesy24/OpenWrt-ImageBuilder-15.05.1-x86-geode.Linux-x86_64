@@ -28,11 +28,12 @@ while : ; do
 	CUR_USE_DUALSTAROAM_MODE=$(grep "_USE_DUALSTAROAM_MODE" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_SNRmin=$(grep "_SNRmin" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_SNRdelta=$(grep "_SNRdelta" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
-	CUR_PingIP=$(grep "_PingIP" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingIP1=$(grep "_PingIP1" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingIP2=$(grep "_PingIP2" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_PingTO=$(grep "_PingTO" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_PingFC=$(grep "_PingFC" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 
-	### echo "($CUR_USE_DUALSTAROAM_MODE) ($CUR_SNRmin) ($CUR_SNRdelta) ($CUR_PingIP) ($CUR_PingTO) ($CUR_PingFC)"
+	### echo "($CUR_USE_DUALSTAROAM_MODE) ($CUR_SNRmin) ($CUR_SNRdelta) ($CUR_PingIP1) ($CUR_PingIP2) ($CUR_PingTO) ($CUR_PingFC)"
 
 	inputvar=""
 
@@ -45,10 +46,11 @@ while : ; do
 			'"1_UseDualSta" "Configure to use Dual-Station Roaming mode ($CUR_USE_DUALSTAROAM_MODE)"
 			"2_SNRmin"      "Configure Minimum SNR for Roaming ($CUR_SNRmin)"
 			"3_SNRdelta"    "Configure Delta SNR for Roaming ($CUR_SNRdelta)"
-			"4_PingIP"      "Configure AP IP to ping ($CUR_PingIP)"
-			"5_PingTO"      "Configure Time Out to ping AP IP ($CUR_PingTO)"
-			"6_PingFC"      "Configure Fail Count to ping AP IP ($CUR_PingFC)"
-			"7_TestRoaming" "Test Dual-Station Roaming!"
+			"4_PingIP1"     "Configure AP IP to ping for 1st STA ($CUR_PingIP1)"
+			"5_PingIP2"     "Configure AP IP to ping for 2nd STA ($CUR_PingIP2)"
+			"6_PingTO"      "Configure Time Out to ping AP IP ($CUR_PingTO)"
+			"7_PingFC"      "Configure Fail Count to ping AP IP ($CUR_PingFC)"
+			"8_TestRoaming" "Test Dual-Station Roaming!"
 			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
 	fi
 
@@ -122,12 +124,12 @@ while : ; do
 		done
 		;;
 
-	4_PingIP)
-		inputvar=$CUR_PingIP
+	4_PingIP1)
+		inputvar=$CUR_PingIP1
 		errormsg=""
 		while :; do
 			textinput \
-				 "Please enter AP's IP to ping\n"$(
+				 "Please enter AP's IP to ping for 1st Station\n"$(
 				)" Ping disabled when empty\n\n"$(
 				)"Examples: can blank\n"$(
 				)" 192.168.0.127  10.1.1.127\n"$(
@@ -137,17 +139,42 @@ while : ; do
 			# Check return error
 			[ $retval -ne 0 ] && break
 			# Check changed
-			[ "$inputvar" = "$CUR_PingIP" ] && break
+			[ "$inputvar" = "$CUR_PingIP1" ] && break
 			# Check string null or valid IP v4
 			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
-				save_value "_PingIP"
+				save_value "_PingIP1"
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"
 		done
 		;;
 
-	5_PingTO)
+	5_PingIP2)
+		inputvar=$CUR_PingIP2
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter AP's IP to ping for 2nd Station\n"$(
+				)" Ping disabled when empty\n\n"$(
+				)"Examples: can blank\n"$(
+				)" 192.168.0.127  10.1.1.127\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingIP2" ] && break
+			# Check string null or valid IP v4
+			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
+				save_value "_PingIP2"
+				break
+			fi
+			errormsg="Check input value is IP v4 format!"
+		done
+		;;
+
+	6_PingTO)
 		inputvar=$CUR_PingTO
 		errormsg=""
 		while :; do
@@ -171,7 +198,7 @@ while : ; do
 		done
 		;;
 
-	6_PingFC)
+	7_PingFC)
 		inputvar=$CUR_PingFC
 		errormsg=""
 		while :; do
@@ -196,7 +223,7 @@ while : ; do
 		done
 		;;
 
-	7_TestRoaming)
+	8_TestRoaming)
 		inputvar="N"
 		textinput \
 			"Dual-Station Roaming TEST... Now?? [Yes/No]\n\n"$(
