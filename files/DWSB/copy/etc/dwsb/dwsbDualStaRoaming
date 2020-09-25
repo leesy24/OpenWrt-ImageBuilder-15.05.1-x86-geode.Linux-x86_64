@@ -257,7 +257,7 @@ while : ; do
 						DWassoSNR1x2=$((DWassoSNR1+SNRdelta))  ##$((DWassoSNR1+(DWassoSNR1/3)))
 						if [ $DWassoSNR1 -lt $SNRmin ] && [ $DWassoSNR0 -gt $DWassoSNR1x2 ] ; then 
 							if [ "$DW_WLact" != "wlan0" ] ; then
-								log "$DW_WLact $DWassoSNR0 $DWassoSNR1 ---> Wlan1==>Wlan0 PingIP=$PingIP1"
+								log "SNR $DWassoSNR0 $DWassoSNR1 ---> Wlan1==>Wlan0 PingIP=$PingIP1"
 								/usr/sbin/brctl delif br-lan wlan1  ##-
 								/usr/sbin/brctl addif br-lan wlan0  ##+
 								##
@@ -268,7 +268,7 @@ while : ; do
 						fi
 						if [ $DWassoSNR0 -lt $SNRmin ] && [ $DWassoSNR1 -gt $DWassoSNR0x2 ] ; then 
 							if [ "$DW_WLact" != "wlan1" ] ; then
-								log "$DW_WLact $DWassoSNR0 $DWassoSNR1 ---> Wlan0==>Wlan1 PingIP=$PingIP2"
+								log "SNR $DWassoSNR0 $DWassoSNR1 ---> Wlan0==>Wlan1 PingIP=$PingIP2"
 								/usr/sbin/brctl delif br-lan wlan0  ##-
 								/usr/sbin/brctl addif br-lan wlan1  ##+
 								##
