@@ -162,10 +162,10 @@ readLines() {
 		## Get second Network bridged
 		sndBridged=$(echo $brctlShow | grep -c wlan1)
 	else
-		## Set default first Network bridged
-		fstBridged=1
-		## Set default second Network bridged
-		sndBridged=1
+		## Set default first Network not bridged
+		fstBridged=0
+		## Set default second Network not bridged
+		sndBridged=0
 	fi
 
 	line_1=$(echo "$host $ip                    " | cut -c -20)
