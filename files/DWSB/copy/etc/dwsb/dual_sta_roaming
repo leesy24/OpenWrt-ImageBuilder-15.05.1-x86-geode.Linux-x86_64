@@ -24,6 +24,7 @@ save_value() {
 while : ; do
 
 	readSystem
+	readNetwork
 
 	CUR_USE_DUALSTAROAM_MODE=$(grep "_USE_DUALSTAROAM_MODE" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_SNRmin=$(grep "_SNRmin" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
