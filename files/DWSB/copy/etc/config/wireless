@@ -15,6 +15,7 @@ config wifi-iface
         option ssid 'AP01'
         option encryption 'none'
 	option wds '1'
+        option disabled '1'
 
 config wifi-device 'radio1'
         option type 'mac80211'
@@ -34,5 +35,6 @@ config wifi-iface
         option key '1'
         option key1 's:string13chars'
 	option wds '1'
+        option disabled '1'
 
 
