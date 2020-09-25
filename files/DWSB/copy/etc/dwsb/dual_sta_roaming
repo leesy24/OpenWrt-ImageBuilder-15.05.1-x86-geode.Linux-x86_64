@@ -236,19 +236,19 @@ while : ; do
 		[ "$inputvar" = "Y" ] && {
 			clear
 			echo ; echo "[$cHostname]... Roaming New Station Now!!"
-			touch /tmp/.force_Roaming
+			touch /tmp/.force_Dual_Sta_Roaming
 			sleep 1 # sleep 1 second
 
 			local TestRoamingTimer=0
 			local TestRoamingTimeout=30 # 30secs
-			while [ -e /tmp/.force_Roaming ] ; do
+			while [ -e /tmp/.force_Dual_Sta_Roaming ] ; do
 				sleep 1 # sleep 1 second
 				TestRoamingTimer=$((TestRoamingTimer+1))
 				[ $TestRoamingTimer -ge $TestRoamingTimeout ] && break
 			done
 
-			if [ -e /tmp/.force_Roaming ] ; then
-				rm -f /tmp/.force_Roaming
+			if [ -e /tmp/.force_Dual_Sta_Roaming ] ; then
+				rm -f /tmp/.force_Dual_Sta_Roaming
 				echo ; echo "[$cHostname]... Error! Roaming New Station!"
 			else
 				echo ; echo "[$cHostname]... Success! Roaming New Station."

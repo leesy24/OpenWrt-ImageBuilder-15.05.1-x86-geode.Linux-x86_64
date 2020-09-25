@@ -95,7 +95,7 @@ PingIP=$PingIP1
 
 log "SNRmin=$SNRmin SNRdelta=$SNRdelta Ping IP1=$PingIP1 IP2=$PingIP2 TO=$PingTO FC=$PingFC"
 
-rm -f /tmp/.force_Roaming
+rm -f /tmp/.force_Dual_Sta_Roaming
 
 Fp_ToutCNT=0
 Fp_aliveCNT=0
@@ -196,7 +196,7 @@ while : ; do
 ### if [ $SNRmin -gt 0 ] && [ $SNRmin -lt 50 ] && [ $SNRdelta -gt 5 ] && [ $SNRdelta -lt 50 ] ; then
 ########################################################################################################
 	### Check need to force roaming
-	if [ -e /tmp/.force_Roaming ] ; then
+	if [ -e /tmp/.force_Dual_Sta_Roaming ] ; then
 		if [ "$DW_WLact" = "wlan0" ] ; then
 			log "Forced roaming ---> Wlan0==>Wlan1"
 			/usr/sbin/brctl delif br-lan wlan0  ##-
@@ -216,7 +216,7 @@ while : ; do
 		### Reset fping alive count value
 		Fp_aliveCNT=0
 
-		[ -e /tmp/.force_Roaming ] && rm -f /tmp/.force_Roaming
+		[ -e /tmp/.force_Dual_Sta_Roaming ] && rm -f /tmp/.force_Dual_Sta_Roaming
 
 		continue ##------------------------------>>>
 	fi
