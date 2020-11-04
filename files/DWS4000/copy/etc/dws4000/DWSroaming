@@ -10,38 +10,27 @@
 ##
 #####################################################################
 
-#-----------------------------#
-cp /etc/dws4000/wroaming.config /tmp/wroaming.config
-. /tmp/wroaming.config
-#-----------------------------#
-
-iw phy0 info > /tmp/DWSroaming_phy0
-
 log() {
-  echo "$@"
-  logger -t $(basename $0) "$@"
-}
-
-log_n() {
-  echo -n "$@"
-  logger -t $(basename $0) "$@"
+	##echo "$@"
+	echo "$(basename $0): $@" >/dev/kmsg
+	##logger -t $(basename $0) "$@"
 }
 
 get_actSSID() {
-	iw dev wlan0 link 2> /dev/null | grep "SSID:" | awk '{ print $2 }'
+	iw dev wlan$cStaIndex link 2> /dev/null | grep "SSID:" | awk '{ print $2 }'
 }
 
 get_curSSID() {
-	uci -q get wireless.@wifi-iface[0].ssid
+	uci -q get wireless.@wifi-iface[$cStaIndex].ssid
 }
 
 get_actFreqMHz() {
-	iw dev wlan0 link 2> /dev/null | grep "freq:" | awk '{ print $2 }'
+	iw dev wlan$cStaIndex link 2> /dev/null | grep "freq:" | awk '{ print $2 }'
 }
 
 get_curFreqMHz() {
 	local freq
-	freq=$(grep -E -m1 "(\* .... MHz \[$(uci -q get wireless.radio0.channel)\])" /tmp/DWSroaming_phy0 | \
+	freq=$(grep -E -m1 "(\* .... MHz \[$(uci -q get wireless.radio$cStaIndex.channel)\])" /tmp/DWSroaming_phy$cStaIndex | \
 		awk '{print $2}')
 	[ -z "$freq" ] && freq="0000"
 	echo $freq
@@ -54,26 +43,26 @@ get_MHz2GHz() {
 
 get_actSNR() {
 	local SNR
-	SNR=$(iwinfo wlan0 info 2> /dev/null | grep Link | awk '{print $6}' | cut -d'/' -f1)
+	SNR=$(iwinfo wlan$cStaIndex info 2> /dev/null | grep Link | awk '{print $6}' | cut -d'/' -f1)
 	[ -z "$SNR" ] && SNR=-2
 	[ "$SNR" = "unknown" ] && SNR=-1
 	echo $SNR
 }
 
 get_RXpkts() {
-	ifconfig wlan0 | grep "RX packets" | awk '{ print $2 }' | cut -c9-
+	ifconfig wlan$cStaIndex | grep "RX packets" | awk '{ print $2 }' | cut -c9-
 }
 
 # $1 = frequency in MHz
 get_channel() {
-	grep -E -m1 "(\* $1 MHz \[[0-9]*\])" /tmp/DWSroaming_phy0 | \
+	grep -E -m1 "(\* $1 MHz \[[0-9]*\])" /tmp/DWSroaming_phy$cStaIndex | \
 		cut -d'[' -f2 | cut -d']' -f1
 }
 
 # $1: new channel
 change_channel() {
 	#echo "change_channel $1"
-	uci set wireless.radio0.channel=$1
+	uci set wireless.radio$cStaIndex.channel=$1
 	uci commit
 	/etc/init.d/network reload >/dev/null
 }
@@ -81,41 +70,76 @@ change_channel() {
 # $1: new frequency in MHz
 change_freq() {
 	local targetFreq=$1
-	local ch
-	#echo "change_freq targetFreq=$targetFreq"
+	local targetCh
+	# log "change_freq():targetFreq=$targetFreq"
 
-	ch=$(get_channel $targetFreq)
+	targetCh=$(get_channel $targetFreq)
+	# log "change_freq():targetCh=$targetCh"
 	# check string is null
-	[ -z "$ch" ] && exit -1 
+	[ -z "$targetCh" ] && return 1 
 
-	change_channel $ch
+	change_channel $targetCh
+	sleep 1
 
 	local timer=0
 	local timeout=30 # 3secs <- 100msec x 30
 	#local timeout=50 # 5secs <- 100msec x 50
+	#local timeout=100 # 10secs <- 100msec x 100
 	local actSSID
 	local actFreq
-	while : ; do
+	while [ $timer -lt $timeout ] ; do
 		msleep 100
 
 		actSSID=$(get_actSSID)
+		# log "change_freq():Act SSID=$actSSID ($timer)"
 		[ "$actSSID" = "$curSSID" ] && {
 			actFreq=$(get_actFreqMHz)
-			#echo -n "$actFreq "
-			[ "$actFreq" = "$targetFreq" ] && break
-			# check string is not null
+			# log "change_freq():Act freq.=$actFreq"
+			[ "$actFreq" = "$targetFreq" ] && return 0
+			# check string is not null, mean is not equal with target Freq.
 			[ -n "$actFreq" ] && {
 				/etc/init.d/network restart
 				sleep 1
+				timer=0
 			}
 		}
 
 		timer=$((timer+1))
-		[ $timer -ge $timeout ] && break
 	done
+
+	return 1
 }
 
+########################
 ### Start of main script
+########################
+
+cStaIndex=0
+cStaIndexStr="1st"
+
+#-----------------------------#
+### Load roaming configuration from file
+if [ ! -e /etc/dws4000/wroaming.config ] ; then
+	# in case file not exist
+	log "File(/etc/dws4000/wroaming.config) not exist. ---> exit"
+	exit 1
+fi
+
+cp /etc/dws4000/wroaming.config /tmp/wroaming.config
+. /tmp/wroaming.config
+
+SNRmin=$wlan0_RunSNR
+RunFreqGHz1=$wlan0_RunFreq1 # in GHz
+RunFreqGHz2=$wlan0_RunFreq2 # in GHz
+RunFreqMHz1=$(echo "$RunFreqGHz1*1000/1" | bc) # to MHz
+RunFreqMHz2=$(echo "$RunFreqGHz2*1000/1" | bc) # to MHz
+PingIP=$wlan0_PingIP
+[ -z "$wlan0_PingTO" ] && PingTO=0 || PingTO=$wlan0_PingTO
+[ -z "$wlan0_PingFC" ] && PingFC=0 || PingFC=$wlan0_PingFC
+#-----------------------------#
+log "F1=$RunFreqGHz1 F2=$RunFreqGHz2 SNRmin=$SNRmin Ping IP=$PingIP TO="$PingTO"msec FC=$PingFC"
+
+iw phy$cStaIndex info > /tmp/DWSroaming_phy$cStaIndex
 
 rm -f /tmp/.force_Roaming
 
@@ -124,15 +148,6 @@ rm -f /tmp/.force_Roaming
 
 #sleep 1
 
-snrMin=$wlan0_RunSNR
-runFreqGHz1=$wlan0_RunFreq1 # in GHz
-runFreqGHz2=$wlan0_RunFreq2 # in GHz
-runFreqMHz1=$(echo "$runFreqGHz1*1000/1" | bc) # to MHz
-runFreqMHz2=$(echo "$runFreqGHz2*1000/1" | bc) # to MHz
-PingIP=$wlan0_PingIP
-[ -z "$wlan0_PingTO" ] && PingTO=0 || PingTO=$wlan0_PingTO
-[ -z "$wlan0_PingFC" ] && PingFC=0 || PingFC=$wlan0_PingFC
-
 curSSID=$(get_curSSID)
 curFreqMHz=$(get_curFreqMHz) # to MHz
 curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
@@ -140,19 +155,22 @@ curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
 actSNR=0
 actFreqMHz=$(get_actFreqMHz)
 
-log "DWSroaming: SNRmin=$snrMin F1=$runFreqGHz1 F2=$runFreqGHz2 PingIP=$PingIP PingTO="$PingTO"msec PingFC=$PingFC"
-log "DWSroaming: curF=$curFreqGHz=$(get_MHz2GHz $actFreqMHz) SSID=$curSSID"
+log "Cur SSID=$curSSID,Cur freq.=$curFreqGHz,Act freq.=$(get_MHz2GHz $actFreqMHz),PingIP=$PingIP"
 
-# Check current Freq must runFreq1 or 2.
-[ $curFreqMHz -ne $runFreqMHz1 ] && [ $curFreqMHz -ne $runFreqMHz2 ] && {
-	log_n "DWSroaming: Unknown: $curFreqGHz->$runFreqGHz1 "
-	change_freq $runFreqMHz1
+# Check current Freq must RunFreq1 or 2.
+if [ $curFreqMHz -ne $RunFreqMHz1 ] && [ $curFreqMHz -ne $RunFreqMHz2 ]; then
+	log "Cur freq. Unknown: $curFreqGHz->$RunFreqGHz1"
+	change_freq $RunFreqMHz1
+	if [ $? -ne 0 ]; then
+		log "Cur freq. Unknown: $curFreqGHz->$RunFreqGHz2"
+		change_freq $RunFreqMHz2
+	fi
 	curFreqMHz=$(get_curFreqMHz) # to MHz
 	curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
 	actFreqMHz=$(get_actFreqMHz)
 	actSNR=$(get_actSNR)  ##!!
-	log "($curFreqGHz=$(get_MHz2GHz $actFreqMHz) $actSNR)"
-}
+	log "Cur freq.=$curFreqGHz,Act freq.=$(get_MHz2GHz $actFreqMHz),Act SNR=$actSNR,PingIP=$PingIP"
+fi
 
 # Check and wait actual freq. match with freq. of config.
 StartLoopTimer=0
@@ -167,7 +185,7 @@ while : ; do
 
 	StartLoopTimer=$((StartLoopTimer+1))
 	[ $StartLoopTimer -ge $StartLoopTimeout ] && {
-		log "DWSroaming: Error! curF=$curFreqMHz actF=$actFreqMHz"
+		log "Error! curF=$curFreqMHz actF=$actFreqMHz"
 		break
 	}
 
@@ -187,67 +205,56 @@ curPingFC=-2 # set to wait early n ping success
 while : ; do
 	# Check actual SNR lower and equal than minimum SNR
 	actSNR=$(get_actSNR)  ##!!
-	[ $actSNR -le $snrMin ] && {
+	[ $actSNR -le $SNRmin ] && {
 		msleep 20
 		actSNR=$(get_actSNR)  ##!!
-		[ $actSNR -le $snrMin ] && {
+		[ $actSNR -le $SNRmin ] && {
 			curSNRerr=1
 		}
 	}
 
 	# Check need to roam
-	if [ $curSNRerr -eq 1 ] || [ $curPingFC -ge $PingFC ] || [ -e /tmp/.force_Roaming ] ; then
+	if [ $curSNRerr -eq 1 ] || [ $curPingFC -ge $PingFC ] || [ $curPingFC -le $((-2-PingFC)) ] || [ -e /tmp/.force_Roaming ] ; then
 		[ $USE_PARPROUTED = "Y" ] && /etc/init.d/parprouted stop
 
-		if [ -e /tmp/.force_Roaming ] ; then
-			log_n "DWSroaming: Forced: "
-		elif [ $curPingFC -ge $PingFC ] ; then
-			log_n "DWSroaming: Ping($curPingFC): "
-		else
-			log_n "DWSroaming: SNR($actSNR): "
-		fi
+		[ -e /tmp/.force_Roaming ] && log "Forced Roaming: "
+		[ $curPingFC -ge $PingFC ] && log "Ping($curPingFC) failed Roaming: "
+		[ $curPingFC -le $((-2-PingFC)) ] && log "Early Ping($curPingFC) failed Roaming: "
+		[ $curSNRerr -eq 1 ] && log "SNR($actSNR) error Roaming: "
 
-		log_n "$curFreqGHz->"
+		log "Cur freq.=$curFreqMHz"
 		
-		cnt=1
-		cntMax=4 # must be even value instead odd
-
-		if [ $curFreqMHz -eq $runFreqMHz1 ] ; then
-			log_n "$runFreqGHz2 "
-			change_freq $runFreqMHz2 
-			nextFreq=1
-		elif [ $curFreqMHz -eq $runFreqMHz2 ] ; then
-			log_n "$runFreqGHz1 "
-			change_freq $runFreqMHz1
-			nextFreq=2
+		if [ $curFreqMHz -eq $RunFreqMHz1 ] ; then
+			targetFreqMHz=$RunFreqMHz2
+		elif [ $curFreqMHz -eq $RunFreqMHz2 ] ; then
+			targetFreqMHz=$RunFreqMHz1
 		else
-			log_n "Freq_Unknown! "
-			change_freq $runFreqMHz1
-			nextFreq=2
+			targetFreqMHz=$RunFreqMHz1
+			log "Cur freq. Unknown!"
 		fi
 
 		while : ; do
-			actSNR=$(get_actSNR)  ##!!
-			if [ $snrMin -gt $actSNR ] ; then
-				log_n "@"
-				if [ $nextFreq -eq 1 ] ; then
-					change_freq $runFreqMHz1
-					nextFreq=2
-				else
-					change_freq $runFreqMHz2	
-					nextFreq=1
+			log "Target freq.=$targetFreqMHz"
+			##########################
+			change_freq $targetFreqMHz
+			########################## 
+
+			# Check return value of change_freq() OK
+			if [ $? -eq 0 ]; then
+				# Check SNR
+				actSNR=$(get_actSNR)  ##!!
+				if [ $actSNR -gt $SNRmin  ] ; then
+					log "SNR $actSNR OK"
+					break  ## exit while loop --->
 				fi
-			else
-				log_n "_($cnt)OK! "
-				break  ##--->
+				log "SNR $actSNR Fail!"
 			fi
-			
-			cnt=$((cnt+1))
-			if [ $cnt -ge $cntMax ] ; then
-				log_n "_($cnt)Fail! "
-				#/etc/init.d/network restart
-				#sleep 5
-				break  ##--->
+
+			# Get next tartget freq.
+			if [ $targetFreqMHz -eq $RunFreqMHz1 ] ; then
+				targetFreqMHz=$RunFreqMHz2
+			else
+				targetFreqMHz=$RunFreqMHz1
 			fi
 		done
 
@@ -257,7 +264,7 @@ while : ; do
 		curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
 		actFreqMHz=$(get_actFreqMHz)
 		actSNR=$(get_actSNR)  ##!!
-		log"($curFreqGHz=$(get_MHz2GHz $actFreqMHz) $actSNR)"
+		log "Cur freq.=$curFreqGHz,Act freq.=$(get_MHz2GHz $actFreqMHz),Act SNR=$actSNR,PingIP=$PingIP"
 
 		curSNRerr=0
 		cLOOP=0
@@ -269,7 +276,7 @@ while : ; do
 
 	msleep 100 ##2
 
-	# Check can't ping
+	# Check can't ping, 
 	if [ -z "$PingIP" ] || [ $PingFC -eq 0 ]; then
 		cLOOP=$((cLOOP+1))
 		# every 1sec = 100msec x 10
@@ -278,20 +285,23 @@ while : ; do
 
 			RXpkts2=$(get_RXpkts)
 			if [ $RXpkts -eq $RXpkts2 ] ; then
-				log "DWSroaming: __NONE_RxPackets_?? $RXpkts2"
+				log "__NONE_RxPackets_?? $RXpkts2"
 			fi
 
 			RXpkts=$RXpkts2
 		}
-	else # Can ping
+	else # It can ping
 		while [ $curPingFC -lt $PingFC ]; do
+			msleep 10 # milli-second sleep to stable ping
+
 			# Check fping return sucess
 			fping -4 -b0 -t$PingTO -r1 -q $PingIP && {
 				# fping returned success
 				# Check early n ping status
 				[ $curPingFC -lt 0 ] && {
 					curPingFC=$((curPingFC+1))
-					log "DWSroaming: Early Ping success!($curPingFC)"
+					# log "Early Ping success!($curPingFC)"
+					# Exit while loop
 					break
 				}
 				curPingFC=0
@@ -302,12 +312,14 @@ while : ; do
 
 			# Check early n ping status
 			[ $curPingFC -lt 0 ] && {
-				log "DWSroaming: Early Ping fail!($curPingFC)"
+				# log "Early Ping fail!($curPingFC)"
+				curPingFC=$((curPingFC-1))
+				# Exit while loop
 				break
 			}
 
 			curPingFC=$((curPingFC+1))
-			log "DWSroaming: Ping fail!($curPingFC)"
+			# log "Ping fail!($curPingFC)"
 		done
 	fi
 done
