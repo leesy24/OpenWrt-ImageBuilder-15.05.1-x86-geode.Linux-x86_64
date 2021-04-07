@@ -1,0 +1,101 @@
+#!/bin/sh
+# (C) 2019 DASAN InfoTek,
+#           leesy@DSI
+##
+
+iface="wlan0"
+
+readModelName() {
+	ModelName=$(uci -q get system.@system[0].hostname)
+}
+
+readCFG() {
+	## echo "wSSID=$cWssid $cWencr Key=$cWkey $cWip $cWmask $cWgway $cLip $cLmask $cSlogip $cWdns "
+
+	##rSNR=$(iwinfo $iface info | grep Link | awk '{print $2}' | cut -d'=' -f2 | cut -d'/' -f1)
+	##rFreq=$(iwinfo $iface info | grep  Freq  | awk '{ print $2 }' | cut -c11-)
+	##rAP=$(iwinfo $iface info | grep Freq | awk '{ print $6 }')
+	rFreq=$(iw phy0 info | \
+		grep -E -m1 "(\* .... MHz \[$(uci -q get wireless.radio0.channel)\])" | \
+		awk '{print $2}' | \
+		sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
+
+	iwinfo $iface info > /tmp/iwinfo_info_$iface
+	iwinfo $iface assoclist > /tmp/iwinfo_assoclist_$iface
+	##
+	rSNR=$(grep Link /tmp/iwinfo_info_$iface | awk '{print $6}' | cut -d'/' -f1)
+	([ -z "$rSNR" ] || [ "$rSNR" = "unknown" ]) && rSNR=0
+	#rFreq=$(grep Channel /tmp/iwinfo_info_$iface | awk '{ print $5}' | cut -d'(' -f2 | cut -d')' -f1)
+	rSTA=$(grep -cE '^([0-9A-F]{2}:){5}[0-9A-F]{2}' /tmp/iwinfo_assoclist_$iface)
+	([ -z "$rSTA" ] || [ "$rSTA" = "0" ]) && rSTA="No station connected"
+	##
+	rHWMODE=$(grep "HW Mode" /tmp/iwinfo_info_$iface | awk '{print $5}')
+	#rSSID=$(grep "ESSID" /tmp/iwinfo_info_$iface | awk '{print $3}')
+	rSSID=$(uci -q get wireless.@wifi-iface[0].ssid)
+}
+
+readWIFI() {
+	cWhwmode=$(uci -q get wireless.radio0.hwmode)
+	if [ "$cWhwmode" = "11g" ] ; then
+		cWband="2.4"
+	elif [ "$cWhwmode" = "11a" ] ; then
+		cWband="5"
+	else
+		cWband="unknown"
+	fi
+    cWch=$(uci -q get wireless.radio0.channel)
+    [ "$cWch" != "auto" ] && {
+            cWfreq=$(iw phy0 info | \
+                    grep -E -m1 "(\* .... MHz \[$cWch\])" | \
+                    awk '{print $2}' | \
+                    sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
+    } || {
+            cWfreq="auto"
+    }
+	cWssid=$(uci -q get wireless.@wifi-iface[0].ssid)
+	cWencr=$(uci -q get wireless.@wifi-iface[0].encryption)
+	if [ "$cWencr" = "psk2+ccmp" ] ; then        
+		cWkey=$(uci -q get wireless.@wifi-iface[0].key)
+	else
+		cWkey=$(uci -q get wireless.@wifi-iface[0].key1 | cut -c3-)
+	fi
+}
+
+readNET() {
+	cLip=$(uci -q get network.lan.ipaddr)
+	cLmask=$(uci -q get network.lan.netmask)
+	cLgway=$(uci -q get network.lan.gateway)
+	cLdns=$(uci -q get network.lan.dns)
+}
+
+readDATE() {
+	rDATE=$(date +%Y%m%e)
+	upTime=$(uptime | cut -d',' -f1)
+	rDATE="$rDATE $upTime"
+}
+
+# $1 = frequency in MHz
+getChannel() {
+	iw phy0 info | \
+		grep -E -m1 "(\* $1 MHz \[[0-9]*\])" | \
+		cut -d'[' -f2 | cut -d']' -f1
+}
+
+# $1 = IPv4 string to validate
+isValidIPv4() {
+	local OLDIFS=$IFS
+	if expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+		IFS=.
+		set $1
+		for quad in 1 2 3 4; do
+			if eval [ \$$quad -gt 255 ]; then
+				IFS=$OLDIFS
+				return 1
+			fi
+		done
+		IFS=$OLDIFS
+		return 0
+	fi
+	IFS=$OLDIFS
+	return 1
+}
