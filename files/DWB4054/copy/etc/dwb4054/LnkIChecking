@@ -1,0 +1,139 @@
+#!/bin/sh
+#
+#####################################################################
+##
+##DWB4054 Link Integrity Checking for Chaos Calmer 15.05.1 @linux3.18
+##
+##                Copyright 2021, by Dasan InfoTek Co., 
+##
+##                         ...leesy...
+##
+#####################################################################
+
+log() {
+	##echo "$@"
+	echo "$(basename $0): $@" >/dev/kmsg
+	##logger -t $(basename $0) "$@"
+}
+
+isWiFiDown() {
+	iwinfo wlan$cWlanIndex info > /dev/null 2> /dev/null
+	echo $?
+}
+
+########################
+### Start of main script
+########################
+
+# Set Wlan index
+cWlanIndex=0
+
+#-----------------------------#
+### Load roaming configuration from file
+if [ ! -e /etc/dwb4054/wLnkIC.config ] ; then
+	# in case file not exist
+	log "File(/etc/dwb4054/wLnkIC.config) not exist. ---> exit"
+	exit 1
+fi
+
+cp /etc/dwb4054/wLnkIC.config /tmp/wLnkIC.config
+. /tmp/wLnkIC.config
+
+PingIP=$_PingIP
+[ -z "$_PingCI" ] && PingCI=0 || PingCI=$_PingCI
+[ -z "$_PingTO" ] && PingTO=0 || PingTO=$_PingTO
+[ -z "$_PingFC" ] && PingFC=0 || PingFC=$_PingFC
+#-----------------------------#
+log "Ping IP=$PingIP CI="$PingCI"sec TO="$PingTO"msec FC=$PingFC"
+
+rm -f /tmp/.force_LinkErr
+
+#sleep 1
+
+# Init CI count
+CntCI=0
+
+# Main infinite loop
+while : ; do
+	# Check need to test link error
+	if [ -e /tmp/.force_LinkErr ] ; then
+		log "Forced Down WiFi radio$cWlanIndex !"
+		# Get last Wifi up/down status
+		local Last_isWiFiDown=$(isWiFiDown)
+		# Check WiFi is not down
+		if [ $Last_isWiFiDown -eq 0 ] ; then
+			wifi down radio$cWlanIndex > /dev/null 2> /dev/null
+		fi
+		# Wait untit test finished
+		while [ -e /tmp/.force_LinkErr ]; do
+			sleep 1
+		done
+		log "Finished Forced Down WiFi radio$cWlanIndex !"
+		# Back to last WiFi up/down status
+		if [ $Last_isWiFiDown -eq 0 ] ; then
+			wifi up radio$cWlanIndex > /dev/null 2> /dev/null
+		fi
+	fi
+
+	# Check parameters are correct
+	if [ -z "$PingIP" ] || [ $PingCI -eq 0 ] || [ $PingTO -eq 0 ] || [ $PingFC -eq 0 ]; then
+		# Parameters are incorrect
+		# Do nothing
+		sleep 1
+	else # Parameters are correct
+		# Sleep 1 sec
+		sleep 1
+		# Update CI count
+		CntCI=$((CntCI+1))
+
+		# Check Sleep CI(Check Interval) secs
+		if [ $CntCI -ge $PingCI ]; then
+			# Init CI count
+			CntCI=0
+
+			# Check remote IP via ping
+			#log "Checking remote IP($PingIP)"
+
+			# Init ping fail count(FC)
+			curPingFC=0
+			# Ping check loop
+			while : ; do
+				# Check fping return sucess
+				fping -4 -b0 -t$PingTO -r1 -q $PingIP && {
+					# fping returned success
+					#log "Ping success!($PingIP)"
+					# Check WiFi is down
+					if [ $(isWiFiDown) -eq 1 ] ; then
+						log "Ping success!($PingIP) ->"
+						log "Up WiFi radio$cWlanIndex !"
+						wifi up radio$cWlanIndex > /dev/null 2> /dev/null
+					fi
+					break
+				}
+
+				# fping returned fail
+				# log "Ping fail!($curPingFC)"
+
+				# Increase fail count(FC)
+				curPingFC=$((curPingFC+1))
+
+				# Check FC is reach the limit
+				if [ $curPingFC -ge $PingFC ] ; then
+					#log "Ping fail count is over!(($PingIP:$curPingFC)"
+					# Check WiFi is not down
+					if [ $(isWiFiDown) -eq 0 ] ; then
+						log "Ping failed!($PingIP:$curPingFC) ->"
+						log "Down WiFi radio$cWlanIndex !"
+						wifi down radio$cWlanIndex > /dev/null 2> /dev/null
+					fi
+					break
+				fi
+
+				# Sleep 10 milli-second to stable ping
+				msleep 10
+			done
+		fi
+	fi
+done
+
+### End of main script

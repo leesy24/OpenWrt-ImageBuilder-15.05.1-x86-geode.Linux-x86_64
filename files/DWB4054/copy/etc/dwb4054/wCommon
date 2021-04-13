@@ -6,32 +6,34 @@
 iface="wlan0"
 
 readModelName() {
-	ModelName=$(uci -q get system.@system[0].hostname)
+	#ModelName=$(uci -q get system.@system[0].hostname)
+	ModelName=$(cat /proc/sys/kernel/hostname)
 }
 
 readCFG() {
-	## echo "wSSID=$cWssid $cWencr Key=$cWkey $cWip $cWmask $cWgway $cLip $cLmask $cSlogip $cWdns "
-
-	##rSNR=$(iwinfo $iface info | grep Link | awk '{print $2}' | cut -d'=' -f2 | cut -d'/' -f1)
-	##rFreq=$(iwinfo $iface info | grep  Freq  | awk '{ print $2 }' | cut -c11-)
-	##rAP=$(iwinfo $iface info | grep Freq | awk '{ print $6 }')
-	rFreq=$(iw phy0 info | \
-		grep -E -m1 "(\* .... MHz \[$(uci -q get wireless.radio0.channel)\])" | \
-		awk '{print $2}' | \
-		sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
-
 	iwinfo $iface info > /tmp/iwinfo_info_$iface
 	iwinfo $iface assoclist > /tmp/iwinfo_assoclist_$iface
-	##
-	rSNR=$(grep Link /tmp/iwinfo_info_$iface | awk '{print $6}' | cut -d'/' -f1)
-	([ -z "$rSNR" ] || [ "$rSNR" = "unknown" ]) && rSNR=0
-	#rFreq=$(grep Channel /tmp/iwinfo_info_$iface | awk '{ print $5}' | cut -d'(' -f2 | cut -d')' -f1)
-	rSTA=$(grep -cE '^([0-9A-F]{2}:){5}[0-9A-F]{2}' /tmp/iwinfo_assoclist_$iface)
-	([ -z "$rSTA" ] || [ "$rSTA" = "0" ]) && rSTA="No station connected"
-	##
-	rHWMODE=$(grep "HW Mode" /tmp/iwinfo_info_$iface | awk '{print $5}')
-	#rSSID=$(grep "ESSID" /tmp/iwinfo_info_$iface | awk '{print $3}')
-	rSSID=$(uci -q get wireless.@wifi-iface[0].ssid)
+	## if iwinfo command returned success
+	if [ $? -eq 0 ] ; then
+		rHWMODE=$(grep "HW Mode" /tmp/iwinfo_info_$iface | awk '{print $5}')
+
+		rSSID=$(grep "ESSID" /tmp/iwinfo_info_$iface | awk '{print $3}' | cut -d'"' -f2)
+
+		rSNR=$(grep "Link" /tmp/iwinfo_info_$iface | awk '{print $6}' | cut -d'/' -f1)
+		([ -z "$rSNR" ] || [ "$rSNR" = "unknown" ]) && rSNR=0
+
+		rFreq=$(grep "Channel" /tmp/iwinfo_info_$iface | awk '{ print $5 }' | cut -c2-)
+
+		rSTA=$(grep -cE '^([0-9A-F]{2}:){5}[0-9A-F]{2}' /tmp/iwinfo_assoclist_$iface)
+		([ -z "$rSTA" ] || [ "$rSTA" = "0" ]) && rSTA="No station connected"
+	else
+	## iwinfo command returned fail
+		rHWMODE="Down by Link error!"
+		rSSID=""
+		rSNR=0
+		rFreq=""
+		rSTA=""
+	fi
 }
 
 readWIFI() {

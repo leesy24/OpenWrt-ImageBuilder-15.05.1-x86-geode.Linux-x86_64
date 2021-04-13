@@ -1,0 +1,246 @@
+#!/bin/sh
+# (C) 2019 DASAN Infonet Inc.,
+#           leesy@DSI
+##
+. wCommon
+
+DIALOG=${DIALOG=dialog}
+
+cp /etc/dwb4054/wLnkIC.config /tmp/wLnkIC.config
+
+CONFIGPATH_org="/etc/dwb4054/wLnkIC.config"
+CONFIGPATH="/tmp/wLnkIC.config"
+CONFIG_UPDATED="/tmp/wLnkIC.config.updated"
+
+tempfile="/tmp/config_LnkIC$$"
+trap "rm -f $tempfile; exit" 0 1 2 5 15
+
+############
+
+save_value() {
+	egrep -v '^$' $CONFIGPATH | egrep -v "^"$1 > $CONFIGPATH.new
+	echo $1"=\"$inputvar\"" >> $CONFIGPATH.new
+	echo >> $CONFIGPATH.new
+	rm -f $CONFIGPATH
+	mv $CONFIGPATH.new $CONFIGPATH
+
+	cp $CONFIGPATH $CONFIGPATH_org
+	sync
+}
+
+get_retval() {
+	retval=$?
+
+	choice=$(cat $tempfile)
+
+	case $retval in
+	1)
+		choice="__NULL"
+		;;
+	255)
+		choice="__NULL"
+		;;
+	esac
+}
+
+textinput() {
+	$DIALOG \
+	--ascii-lines --title "INPUT BOX" --clear \
+	--inputbox "$1" 16 76 "$2" 2> $tempfile
+
+	local retval=$?
+
+	case $retval in
+	0)
+		inputvar=$(cat $tempfile)
+		;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	[ "$inputvar" = "--" ] && inputvar=""
+
+	return $retval
+}
+
+menuinput() {
+
+	menucmd=$(cat <<END    
+$DIALOG --ascii-lines --clear --cr-wrap --title "[[ Link Integrity Check Configuration ]]" \
+	--menu "$3\nWLAN=[ $rHWMODE ESSID:$rSSID ] \nStat=[ SNR:$rSNR Freq:$rFreq STAs:$rSTA ] \
+	\n$rDATE >> Please select menu:\n\n" 22 76 11 \
+	$1 \
+	2> $tempfile
+END
+)
+
+eval $menucmd
+
+	retval=$?
+
+	case $retval in
+	0)
+		inputvar=$(cat $tempfile)
+		;;
+	1)
+		inputvar=$2
+		;;
+	255)
+		inputvar=$2
+		;;
+	esac
+
+	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+}
+
+
+# begin
+
+rm -f $tempfile
+
+mchoice="";
+
+while : ; do
+
+	inputvar=""
+
+	readModelName
+
+	readCFG
+	#######
+
+	readWIFI
+	#######
+
+	readDATE
+	#######
+
+	CUR_PingIP=$(grep "_PingIP" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingCI=$(grep "_PingCI" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingTO=$(grep "_PingTO" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingFC=$(grep "_PingFC" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+
+	echo "($CUR_PingIP) ($CUR_PingCI) ($CUR_PingTO) ($CUR_PingFC)"
+
+	menuinput '"ReviewSTATs"  "Status Review .... Enter!"
+		"1_PingIP" 	"Configure Remote IP to ping ($CUR_PingIP)"
+		"2_PingCI" 	"Configure Check Interval to ping remote IP ($CUR_PingCI sec)"
+		"3_PingTO" 	"Configure Time Out to ping remote IP ($CUR_PingTO msec)"
+		"4_PingFC" 	"Configure Fail Count to ping remote IP ($CUR_PingFC)"
+		"X_ExitCancel"	"Exit or Cancel to upper Menu"'
+
+	##echo "menu...?"
+
+	case $inputvar in
+
+	ReviewSTATs)
+		;;
+
+	1_PingIP)
+		inputvar=$CUR_PingIP
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Remote IP to ping\n"$(
+				)" Ping disabled when empty\n\n"$(
+				)"Examples: can blank\n"$(
+				)" 192.168.0.127  10.1.1.127\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingIP" ] && break
+			# Check string null or valid IP v4
+			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
+				save_value "_PingIP"
+				break
+			fi
+			errormsg="Check input value is IP v4 format!"
+		done
+		;;
+
+	2_PingCI)
+		inputvar=$CUR_PingCI
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Check Interval to ping Remote IP in sec(> 0)\n\n"$(
+				)"Examples:\n"$(
+				)" 1  7  10  20\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingCI" ] && break
+			# Check greater than zero
+			[ $inputvar -gt 0 ] 2>/dev/null && {
+				save_value "_PingCI"
+				break
+			}
+			errormsg="Check input value is greater than 0!"
+		done
+		;;
+
+	3_PingTO)
+		inputvar=$CUR_PingTO
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Time Out to ping Remote IP in msec(> 0)\n\n"$(
+				)"Examples:\n"$(
+				)" 1  7  10  20\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingTO" ] && break
+			# Check greater than zero
+			[ $inputvar -gt 0 ] 2>/dev/null && {
+				save_value "_PingTO"
+				break
+			}
+			errormsg="Check input value is greater than 0!"
+		done
+		;;
+
+	4_PingFC)
+		inputvar=$CUR_PingFC
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Fail Count to ping Remote IP\n"$(
+				)" Ping disabled when zero or empty\n\n"$(
+				)"Examples:\n"$(
+				)" 1  2  3  4  5\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingFC" ] && break
+			# Check string null or greater and equal than zero
+			([ -z "$inputvar" ] || [ $inputvar -ge 0 ] 2>/dev/null) && {
+				save_value "_PingFC"
+				break
+			}
+			errormsg="Check input value is empty or greater and equal than 0!"
+		done
+		;;
+
+	X_ExitCancel | *)
+		rm $tempfile >/dev/null 2>/dev/null
+		exit 0
+		;;
+	esac
+done
