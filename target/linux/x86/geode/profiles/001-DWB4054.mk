@@ -7,7 +7,7 @@
 
 define Profile/DWB4054
 	NAME:=DWB4054 Profile
-	VERSION:=v6.2
+	VERSION:=v6.3
 	PACKAGES:= \
 		avahi-daemon-service-http avahi-daemon-service-ssh avahi-nodbus-daemon \
 		-dnsmasq \
