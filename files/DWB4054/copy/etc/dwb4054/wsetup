@@ -141,12 +141,14 @@ while : ; do
 			###################################################################
 			uci commit
 			#sleep 1
-			echo ; echo "[$ModelName].... LnkIChecking Stop...!!"
+			echo ; echo "[$ModelName].... LnkIChecking, dwbLCD Stop...!!"
 			/etc/init.d/LnkIChecking stop 2>/dev/null
+			/etc/init.d/dwbLCD stop 2>/dev/null
 			echo ; echo "[$ModelName].... All Interface Restart...!!"
 			/etc/init.d/network restart 2>/dev/null
 			sleep 1
-			echo ; echo "[$ModelName].... LnkIChecking Start...!!"
+			echo ; echo "[$ModelName].... LnkIChecking, dwbLCD Start...!!"
+			/etc/init.d/dwbLCD start 2>/dev/null
 			/etc/init.d/LnkIChecking start 2>/dev/null
 			sleep 1
 		fi

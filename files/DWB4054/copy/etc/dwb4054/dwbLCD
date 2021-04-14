@@ -1,0 +1,175 @@
+#!/bin/sh
+#
+#####################################################################
+##
+##      DWS4000 LCD_Mon for Chaos Calmer 15.05.1 @linux3.18
+##
+##            Copyright 2019, by Dasan InfoTek Co.,
+##
+##                         ...leesy...
+##
+#####################################################################
+
+iface=wlan0
+SerialPort=/dev/ttyUSB0
+#SendErrorPipe="2> /dev/null"
+SendErrorPipe=">/dev/kmsg 2>/dev/null"
+
+readCFG() {
+	cBip=$(ifconfig br-lan 2> /dev/null | grep "inet addr" | awk '{print $2}' | cut -d":" -f2)
+	# limit 17 chars
+	cBip=$(echo "$cBip                 " | head -c17)
+
+	iwinfo $iface info 2> /dev/null > /tmp/iwinfo_info_$iface
+	iwinfo $iface assoclist 2> /dev/null > /tmp/iwinfo_assoclist_$iface
+
+	## if iwinfo command returned success
+	if [ $? -eq 0 ] ; then
+		cWssid=$(grep "ESSID" /tmp/iwinfo_info_$iface | awk '{print $3}' | cut -d'"' -f2)
+		# limit 10 chars
+		cWssid=$(echo "$cWssid          " | head -c10)
+
+		rFreq=$(grep "Channel" /tmp/iwinfo_info_$iface | awk '{print $5}' | cut -c2-)
+		# limit 6 chars
+		rFreq=$(echo "$rFreq      " | head -c6)
+
+		rSNR=$(grep "Link" /tmp/iwinfo_info_$iface | awk '{print $6}' | cut -d'/' -f1)
+		([ -z "$rSNR" ] || [ "$rSNR" = "unknown" ]) && rSNR=0
+		# limit 6 chars
+		rSNR=$(echo "$rSNR      " | head -c6)
+
+		rSTA=$(grep -cE '^([0-9A-F]{2}:){5}[0-9A-F]{2}' /tmp/iwinfo_assoclist_$iface)
+		([ -z "$rSTA" ] || [ "$rSTA" = "0" ]) && rSTA="0"
+		# limit 1 char
+		rSTA=$(echo "$rSTA " | head -c1)
+	else
+	## iwinfo command returned fail
+		# limit 10 chars
+		cWssid="Link down!"
+		# limit 6 chars
+		rFreq="      "
+		# limit 6 chars
+		rSNR="      "
+		# limit 1 char
+		rSTA=" "
+	fi
+
+	upTime=$(uptime | cut -c2- | cut -d',' -f1)
+	# limit 20 chars
+	upTime=$(echo "$upTime                    " | head -c20)
+}
+
+legacyLCDInit() {
+	serial_send $SerialPort "\x1B\x43" $SendErrorPipe
+	## Display splash strings
+	serial_send $SerialPort "\x1B\x4C\x00\x00DASAN InfoTek       " $SendErrorPipe
+	serial_send $SerialPort "\x1B\x4C\x00\x01 Model:DWB4054      " $SendErrorPipe
+	serial_send $SerialPort "\x1B\x4C\x00\x02                    " $SendErrorPipe
+	serial_send $SerialPort "\x1B\x4C\x00\x03     www.dsintek.com" $SendErrorPipe
+}
+
+cfaLCDInit() {
+	### Init CFA LCD
+	## Set keypad backlight off
+	cfa_send $SerialPort "\x0e\d002\d100\d000" $SendErrorPipe
+	## Display splash strings
+	cfa_send $SerialPort "\x1f\d022\d000\d000DASAN InfoTek       " $SendErrorPipe
+	cfa_send $SerialPort "\x1f\d022\d000\d001 Model:DWB4054      " $SendErrorPipe
+	cfa_send $SerialPort "\x1f\d022\d000\d002                    " $SendErrorPipe
+	cfa_send $SerialPort "\x1f\d022\d000\d003     www.dsintek.com" $SendErrorPipe
+	## Store current state as boot state
+	cfa_send $SerialPort "\x04\d000" $SendErrorPipe
+}
+
+### Start of main script
+
+### Check and wait USB serial character device file exists
+USB_SERIAL_DEV_EXIST=-1
+while [ ! -c $SerialPort ] ; do
+	sleep 1 # wait 1sec
+	[ $USB_SERIAL_DEV_EXIST -ne 0 ] && {
+		echo "dwsLCD: Check inserted the USB serial LCD!" > /dev/kmsg
+		USB_SERIAL_DEV_EXIST=0
+	}
+done
+USB_SERIAL_DEV_EXIST=1
+#sleep 1 # wait 1sec
+
+### Check CFA LCD
+## Ping LCD
+cfa_send $SerialPort "\x00\d000" $SendErrorPipe
+if [ $? -eq 0 ] ; then
+	CFA_DETECTED=1
+	echo "dwsLCD: Detected CFA LCD!" > /dev/kmsg
+else
+	CFA_DETECTED=0
+	echo "dwsLCD: Detected legacy LCD!" > /dev/kmsg
+fi
+
+# Init LCD
+if [ $CFA_DETECTED -eq 1 ] ; then
+	cfaLCDInit
+else
+	legacyLCDInit
+fi
+
+# infinite while loop
+while : ; do
+	sleep 1
+
+	### Check and wait USB serial character device file exists
+	while [ ! -c $SerialPort ] ; do
+		sleep 1 # wait 1sec
+		[ $USB_SERIAL_DEV_EXIST -ne 0 ] && {
+			echo "dwsLCD: Check inserted the USB serial LCD!" > /dev/kmsg
+			USB_SERIAL_DEV_EXIST=0
+		}
+	done
+
+	if [ $USB_SERIAL_DEV_EXIST -eq 0 ] ; then
+		USB_SERIAL_DEV_EXIST=1
+		#sleep 1 # wait 1sec
+		### Check CFA LCD
+		## Ping LCD
+		cfa_send $SerialPort "\x00\d000" $SendErrorPipe
+		if [ $? -eq 0 ] ; then
+			CFA_DETECTED=1
+			echo "dwsLCD: Detected CFA LCD!" > /dev/kmsg
+		else
+			CFA_DETECTED=0
+			echo "dwsLCD: Detected legacy LCD!" > /dev/kmsg
+		fi
+
+		# Init LCD
+		if [ $CFA_DETECTED -eq 1 ] ; then
+			cfaLCDInit
+		else
+			legacyLCDInit
+		fi
+	fi
+
+	readCFG
+	###
+
+	if [ $CFA_DETECTED -eq 1 ] ; then
+		### Locate 0,0 20chars
+		cfa_send $SerialPort "\x1f\d022\d000\d000IP:$cBip" $SendErrorPipe
+		### Locate 0,1 20chars
+		cfa_send $SerialPort "\x1f\d022\d000\d001ID:$cWssid STAs:$rSTA" $SendErrorPipe
+		### Locate 0,2 20chars
+		cfa_send $SerialPort "\x1f\d022\d000\d002FQ:$rFreq SNR:$rSNR" $SendErrorPipe
+		### Locate 0,3 20chars
+		cfa_send $SerialPort "\x1f\d022\d000\d003$upTime" $SendErrorPipe
+	else
+		### Locate 0,0
+		serial_send $SerialPort "\x1B\x4C\x00\x00IP:$cBip" $SendErrorPipe
+		### Locate 0,1
+		serial_send $SerialPort "\x1B\x4C\x00\x01ID:$cWssid STAs:$rSTA" $SendErrorPipe
+		### Locate 0,2
+		serial_send $SerialPort "\x1B\x4C\x00\x02FQ:$rFreq SNR:$rSNR" $SendErrorPipe
+		### Locate 0,3
+		serial_send $SerialPort "\x1B\x4C\x00\x03$upTime" $SendErrorPipe
+	fi
+done
+
+### END of Main script ###
