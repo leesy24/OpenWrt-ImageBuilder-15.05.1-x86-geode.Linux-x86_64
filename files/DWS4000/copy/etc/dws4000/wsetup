@@ -37,9 +37,9 @@ textinput() {
 menuinput() {
 
 	menucmd=$(cat <<END    
-$DIALOG --ascii-lines --clear --cr-wrap --title "[ $ModelName V4.34 Configurations 2020@DSi ]" \
-	--menu "$3\nWLAN=[ $rHWMODE ESSID:$rSSID ] \nStat=[ SNR:$rSNR Freq:$rFreq AP=$rAP ] \
-	\n$rDATE >> Please menu select: \n" 22 76 11 \
+$DIALOG --ascii-lines --clear --cr-wrap --title "[ $ModelName V4.34 Configurations 2021@DSi ]" \
+	--menu "$3\nWLAN=[ $rHWMODE ESSID:$rSSID ]\nStat=[ SNR:$rSNR Freq:$rFreq AP=$rAP ] \
+	\n$rDATE >> Please select menu: \n" 22 76 11 \
 	$1 \
 	2> $tempfile
 END
@@ -67,6 +67,8 @@ eval $menucmd
 
 ########################## begin
 
+init_config_org
+
 rm -f $tempfile
 
 mchoice="";
@@ -78,12 +80,12 @@ while : ; do
 
 	inputvar=""
 
-	readModelName
+	readActual_ModelName
 
-	readCFG
+	readActual_Status
 	#######
 
-	readDATE
+	readActual_DateTimeUpTime
 	#######
 
 	menuinput '"ReviewSTATs"  "Status Review .... Enter!"
@@ -155,33 +157,41 @@ while : ; do
 		if [ "$inputvar" = "YES" ] ; then
 			clear
 			echo ; echo "[$ModelName].... Commit All Configures Save Now!!"
+			echo ; echo "[$ModelName].... DWSroaming, dwsLCD Stop...!!"
+			/etc/init.d/dwsLCD stop 2>/dev/null
+			/etc/init.d/DWSroaming stop 2>/dev/null
 			###################################################################
-			if [ `uci -q get wireless.radio0.txpower` ] ; then
-				uci delete wireless.radio0.txpower
+			if [ ! -z "$(get_config_new_org_value wireless.radio0.txpower)" ] ; then
+				add_config_new_command "delete wireless.radio0.txpower"
 				echo ; echo "[$ModelName].... Wlan-TxPower Option Deleted!!"
 				#sleep 1
 			fi
 			###################################################################
 			if [ -e $CONFIG_UPDATED ] ;  then
+				local runFreqGHz1
+				local runFreqMHz1
+				local channel
 				runFreqGHz1=$(grep $iface"_RunFreq1" $CONFIGPATH_org | sed 's/.*="\(.*\)"/\1/')
 				runFreqMHz1=$(echo "$runFreqGHz1*1000/1" | bc) # to MHz
 				#echo "Freq1 = $runFreqGHz1($runFreqMHz1)"
 				channel=$(getChannel $runFreqMHz1)
 				#echo "channel = $channel"
-				uci set wireless.radio0.channel=$channel
+				add_config_new_command "set wireless.radio0.channel=$channel"
 				rm -f $CONFIG_UPDATED
 				echo ; echo "[$ModelName].... Wlan-Frequency Updated!!"
 				#sleep 1
 			fi
 			###################################################################
+			apply_config_new_4_commit
+			clean_config_new
 			uci commit
 			#sleep 1
-			/etc/init.d/DWSroaming stop 2>/dev/null
 			echo ; echo "[$ModelName].... All Interface Restart...!!"
 			/etc/init.d/network restart 2>/dev/null
 			sleep 1
-			echo ; echo "[$ModelName].... DWSroaming Start...!!"
+			echo ; echo "[$ModelName].... DWSroaming, dwsLCD Start...!!"
 			/etc/init.d/DWSroaming start 2>/dev/null
+			/etc/init.d/dwsLCD start 2>/dev/null
 			sleep 1
 		fi
 		;;
@@ -195,25 +205,33 @@ while : ; do
 		if [ "$inputvar" = "YES" ] ; then
 			clear
 			echo ; echo "[$ModelName].... Commit All Configures Now!!"
+			echo ; echo "[$ModelName].... DWSroaming, dwsLCD Stop...!!"
+			/etc/init.d/dwsLCD stop 2>/dev/null
+			/etc/init.d/DWSroaming stop 2>/dev/null
 			###################################################################
-			if [ `uci -q get wireless.radio0.txpower` ] ; then
-				uci delete wireless.radio0.txpower
+			if [ ! -z "$(get_config_new_org_value wireless.radio0.txpower)" ] ; then
+				add_config_new_command "delete wireless.radio0.txpower"
 				echo ; echo "[$ModelName].... Wlan-TxPower Option Deleted!!"
 				#sleep 1
 			fi
 			###################################################################
 			if [ -e $CONFIG_UPDATED ] ;  then
+				local runFreqGHz1
+				local runFreqMHz1
+				local channel
 				runFreqGHz1=$(grep $iface"_RunFreq1" $CONFIGPATH_org | sed 's/.*="\(.*\)"/\1/')
 				runFreqMHz1=$(echo "$runFreqGHz1*1000/1" | bc) # to MHz
 				#echo "Freq1 = $runFreqGHz1($runFreqMHz1)"
 				channel=$(getChannel $runFreqMHz1)
 				#echo "channel = $channel"
-				uci set wireless.radio0.channel=$channel
+				add_config_new_command "set wireless.radio0.channel=$channel"
 				rm -f $CONFIG_UPDATED
 				echo ; echo "[$ModelName].... Wlan-Frequency Updated!!"
 				#sleep 1
 			fi
 			###################################################################
+			apply_config_new_4_commit
+			clean_config_new
 			uci commit
 			#sleep 1
 			#/etc/init.d/collectd stop

@@ -37,7 +37,8 @@ menuinput() {
 
 	menucmd=$(cat <<END    
 $DIALOG --ascii-lines --clear --cr-wrap --title "[[ Network IP Configurations ]]" \
-	--menu "$3\nStat=[ SNR:$rSNR Freq:$rFreq AP=$rAP ]  Please menu select: \n" 22 76 13 \
+	--menu "$3\nWLAN=[ $rHWMODE ESSID:$rSSID ] \nStat=[ SNR:$rSNR Freq:$rFreq AP=$rAP ] \
+	\n$rDATE >> Please select menu: \n" 22 76 11 \
 	$1 \
 	2> $tempfile
 END
@@ -73,12 +74,13 @@ while : ; do
 
 	inputvar=""
 
-	readModelName
-
-	readCFG
+	readActual_Status
 	#######
 
-	readNET
+	readNewOrg_Network
+	#######
+
+	readActual_DateTimeUpTime
 	#######
 
 	menuinput '"1Wlan_IPaddr"  "WLAN IP Address _____________($cWip)"
@@ -108,7 +110,7 @@ while : ; do
 			[ "$inputvar" = "$cWip" ] && break
 			# Check valid IP v4
 			if isValidIPv4 "$inputvar"; then
-				uci set network.wlan.ipaddr="$inputvar"
+				add_config_new_command "set network.wlan.ipaddr=$inputvar"
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"
@@ -132,7 +134,7 @@ while : ; do
 			[ "$inputvar" = "$cWmask" ] && break
 			# Check valid IP v4
 			if isValidIPv4 "$inputvar"; then
-				uci set network.wlan.netmask="$inputvar"
+				add_config_new_command "set network.wlan.netmask=$inputvar"
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"
@@ -156,7 +158,7 @@ while : ; do
 			[ "$inputvar" = "$cWgway" ] && break
 			# Check string null or valid IP v4
 			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
-				uci set network.wlan.gateway="$inputvar"
+				add_config_new_command "set network.wlan.gateway=$inputvar"
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"
@@ -180,7 +182,7 @@ while : ; do
 			[ "$inputvar" = "$cLip" ] && break
 			# Check valid IP v4
 			if isValidIPv4 "$inputvar"; then
-				uci set network.lan.ipaddr="$inputvar"
+				add_config_new_command "set network.lan.ipaddr=$inputvar"
 				###
 				eMAC=$(/sbin/ifconfig | grep "eth0" | tr -s " " | cut -d " " -f5)
 				echo "$eMAC $inputvar" > /etc/ethers
@@ -208,7 +210,7 @@ while : ; do
 			[ "$inputvar" = "$cLmask" ] && break
 			# Check valid IP v4
 			if isValidIPv4 "$inputvar"; then
-				uci set network.lan.netmask="$inputvar"
+				add_config_new_command "set network.lan.netmask=$inputvar"
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"
@@ -232,7 +234,7 @@ while : ; do
 			[ "$inputvar" = "$cWdns" ] && break
 			# Check string null or valid IP v4
 			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
-				uci set network.wlan.dns="$inputvar"
+				add_config_new_command "set network.wlan.dns=$inputvar"
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"
@@ -256,7 +258,7 @@ while : ; do
 			[ "$inputvar" = "$cSlogip" ] && break
 			# Check string null or valid IP v4
 			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
-				uci set system.@system[0].log_ip="$inputvar"
+				add_config_new_command "set system.@system[0].log_ip=$inputvar"
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"

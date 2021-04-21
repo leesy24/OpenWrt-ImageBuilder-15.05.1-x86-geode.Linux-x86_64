@@ -10,52 +10,76 @@
 ##
 #####################################################################
 
-iw phy0 info > /tmp/dwsLCD_phy0
-
-iface=wlan0
+iface_index=0
 SerialPort=/dev/ttyUSB0
 #SendErrorPipe="2> /dev/null"
 SendErrorPipe=">/dev/kmsg 2>/dev/null"
 
-readCFG() {
-	cWssid=$(uci -q get wireless.@wifi-iface[0].ssid)
-	#cWencr=$(uci -q get wireless.@wifi-iface[0].encryption)
-	#cWkey=$(uci -q get wireless.@wifi-iface[0].key)
+readActual_Status() {
+	# Get IP of wlan
+	cWip=$(ifconfig wlan$iface_index 2> /dev/null | grep "inet addr" | awk '{print $2}' | cut -d":" -f2)
+	([ -z "$cWip" ]) && cWip=$(uci -q get network.wlan.ipaddr)
+	# limit 17 chars
+	cWip=$(echo "$cWip                 " | head -c17)
 
-	cWip=$(uci -q get network.wlan.ipaddr)
-	#cWmask=$(uci -q get network.wlan.netmask)
-	#cWgway=$(uci -q get network.wlan.gateway)
-	#cWdns=$(uci -q get network.wlan.dns)
+	iwinfo wlan$iface_index info 2> /dev/null > /tmp/iwinfo_info_wlan$iface_index
+	## if iwinfo command returned success
+	if [ $? -eq 0 ] ; then
+		cWssid=$(grep "ESSID" /tmp/iwinfo_info_wlan$iface_index | awk '{print $3}' | cut -d'"' -f2)
+		([ -z "$cWssid" ] || [ "$cWssid" = "unknown" ]) && {
+			cWssid=$(uci -q get wireless.@wifi-iface[0].ssid)
+		}
+		# limit 10 chars
+		cWssid=$(echo "$cWssid          " | head -c10)
 
-	rFreq=$(grep -E -m1 "(\* .... MHz \[$(uci -q get wireless.radio0.channel)\])" /tmp/dwsLCD_phy0 | \
-			awk '{print $2}' | \
-			sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
+		rFreq=$(grep "Channel" /tmp/iwinfo_info_wlan$iface_index | awk '{print $5}' | cut -c2-)
+		([ -z "$rFreq" ] || [ "$rFreq" = "unknown)" ]) && {
+			local chan=$(uci -q get wireless.radio0.channel)
+			rFreq=$(iw phy$iface_index info | grep -E -m1 "(\* ${chan:-....} MHz${chan:+|\\[$chan\\]})" | grep MHz | awk '{print $2}' | sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
+		}
+		# limit 7 chars
+		rFreq=$(echo "$rFreq       " | head -c7)
 
-	iwinfo $iface info 2> /dev/null > /tmp/dwsLCD_$iface
-	##
-	rSNR=$(grep Link /tmp/dwsLCD_$iface | awk '{print $6}' | cut -d'/' -f1)
-	([ -z "$rSNR" ] || [ "$rSNR" = "unknown" ]) && rSNR=0
+		rSNR=$(grep "Link" /tmp/iwinfo_info_wlan$iface_index | awk '{print $6}' | cut -d'/' -f1)
+		([ -z "$rSNR" ] || [ "$rSNR" = "unknown" ]) && rSNR=0
+		# limit 5 chars
+		rSNR=$(echo "$rSNR     " | head -c5)
 
-	rAP=$(grep Access /tmp/dwsLCD_$iface | awk '{ print $3 }')
-	if [ -z "$rAP" ] || [ "$rAP" = "00:00:00:00:00:00" ] ; then
-		rAP="Not-AP"
+		rAP=$(grep "Access Point" /tmp/iwinfo_info_wlan$iface_index | awk '{print $3}')
+		if [ -z "$rAP" ] || [ "$rAP" = "00:00:00:00:00:00" ] ; then
+			rAP="Not-AP"
+		else
+			rAP=$(echo $rAP | cut -c12-)
+		fi
+		# limit 6 char
+		rAP=$(echo "$rAP      " | head -c6)
 	else
-		rAP=$(echo $rAP | cut -c12-)
+	## iwinfo command returned fail
+		cWssid=$(uci -q get wireless.@wifi-iface[0].ssid)
+		# limit 10 chars
+		cWssid=$(echo "$cWssid          " | head -c10)
+		local chan=$(uci -q get wireless.radio0.channel)
+		rFreq=$(iw phy$iface_index info | grep -E -m1 "(\* ${chan:-....} MHz${chan:+|\\[$chan\\]})" | grep MHz | awk '{print $2}' | sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/")
+		# limit 7 chars
+		rFreq=$(echo "$rFreq       " | head -c7)
+		# limit 5 chars
+		rSNR="0    "
+		# limit 6 char
+		rAP="Not-AP"
 	fi
 
-	##
-	#rSSID=$(grep SSID /tmp/dwsLCD_$iface | awk '{print $3" "$4}')
-
 	upTime=$(uptime | cut -c2- | cut -d',' -f1)
-	upTime=$(echo "$upTime        " | cut -c -20)
-
-	#rDATE=$(date +%Y%m%e)
-	#rDATE="$rDATE $upTime"
-	#rDATE=$(echo "$rDATE" | sed 's/^ *//g' | cut -c -20)
+	# limit 20 chars
+	upTime=$(echo "$upTime                    " | head -c20)
 }
 
 legacyLCDInit() {
 	serial_send $SerialPort "\x1B\x43" $SendErrorPipe
+	## Display splash strings
+	serial_send $SerialPort "\x1B\x4C\x00\x00DASAN InfoTek       " $SendErrorPipe
+	serial_send $SerialPort "\x1B\x4C\x00\x01 Model:DWS4000      " $SendErrorPipe
+	serial_send $SerialPort "\x1B\x4C\x00\x02                    " $SendErrorPipe
+	serial_send $SerialPort "\x1B\x4C\x00\x03     www.dsintek.com" $SendErrorPipe
 }
 
 cfaLCDInit() {
@@ -64,7 +88,7 @@ cfaLCDInit() {
 	cfa_send $SerialPort "\x0e\d002\d100\d000" $SendErrorPipe
 	## Display splash strings
 	cfa_send $SerialPort "\x1f\d022\d000\d000DASAN InfoTek       " $SendErrorPipe
-	cfa_send $SerialPort "\x1f\d022\d000\d001                    " $SendErrorPipe
+	cfa_send $SerialPort "\x1f\d022\d000\d001 Model:DWS4000      " $SendErrorPipe
 	cfa_send $SerialPort "\x1f\d022\d000\d002                    " $SendErrorPipe
 	cfa_send $SerialPort "\x1f\d022\d000\d003     www.dsintek.com" $SendErrorPipe
 	## Store current state as boot state
@@ -138,29 +162,25 @@ while : ; do
 		fi
 	fi
 
-	readCFG
+	readActual_Status
 	###
 
 	if [ $CFA_DETECTED -eq 1 ] ; then
 		### Locate 0,0
-		cfa_send $SerialPort "\x1f\d022\d000\d000IP:$cWip                    " $SendErrorPipe
+		cfa_send $SerialPort "\x1f\d022\d000\d000IP:$cWip" $SendErrorPipe
 		### Locate 0,1
-		cfa_send $SerialPort "\x1f\d016\d000\d001ID:$cWssid              " $SendErrorPipe
-		### Locate 14,1
-		cfa_send $SerialPort "\x1f\d008\d014\d001$rAP      " $SendErrorPipe
+		cfa_send $SerialPort "\x1f\d022\d000\d001ID:$cWssid $rAP" $SendErrorPipe
 		### Locate 0,2
-		cfa_send $SerialPort "\x1f\d022\d000\d002FQ:$rFreq SNR:$rSNR                    " $SendErrorPipe
+		cfa_send $SerialPort "\x1f\d022\d000\d002FQ:$rFreq SNR:$rSNR" $SendErrorPipe
 		### Locate 0,3
-		cfa_send $SerialPort "\x1f\d022\d000\d003$upTime                    " $SendErrorPipe
+		cfa_send $SerialPort "\x1f\d022\d000\d003$upTime" $SendErrorPipe
 	else
 		### Locate 0,0
 		serial_send $SerialPort "\x1B\x4C\x00\x00IP:$cWip" $SendErrorPipe
 		### Locate 0,1
-		serial_send $SerialPort "\x1B\x4C\x00\x01ID:$cWssid " $SendErrorPipe
-		### Locate 14,1
-		serial_send $SerialPort "\x1B\x4C\x0E\x01$rAP" $SendErrorPipe
+		serial_send $SerialPort "\x1B\x4C\x00\x01ID:$cWssid $rAP" $SendErrorPipe
 		### Locate 0,2
-		serial_send $SerialPort "\x1B\x4C\x00\x02FQ:$rFreq SNR:$rSNR " $SendErrorPipe
+		serial_send $SerialPort "\x1B\x4C\x00\x02FQ:$rFreq SNR:$rSNR" $SendErrorPipe
 		### Locate 0,3
 		serial_send $SerialPort "\x1B\x4C\x00\x03$upTime" $SendErrorPipe
 	fi

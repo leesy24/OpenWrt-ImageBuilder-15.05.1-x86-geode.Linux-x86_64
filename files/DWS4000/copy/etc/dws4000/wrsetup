@@ -77,8 +77,9 @@ textinput() {
 menuinput() {
 
 	menucmd=$(cat <<END    
-$DIALOG --ascii-lines --clear --cr-wrap --title "[ $ModelName Roaming & Parprouted Configuration ]" \
-	--menu "\n$3\nPlease select:\n\n" 20 71 9 \
+$DIALOG --ascii-lines --clear --cr-wrap --title "[[ Roaming & Parprouted Configuration ]]" \
+	--menu "$3\nWLAN=[ $rHWMODE ESSID:$rSSID ] \nStat=[ SNR:$rSNR Freq:$rFreq AP=$rAP ] \
+	\n$rDATE >> Please select menu: \n" 22 76 11 \
 	$1 \
 	2> $tempfile
 END
@@ -114,7 +115,11 @@ while : ; do
 
 	inputvar=""
 
-	readModelName
+	readActual_Status
+	#######
+
+	readActual_DateTimeUpTime
+	#######
 
 	CUR_RunFreq1=$(grep $iface"_RunFreq1" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_RunFreq2=$(egrep $iface"_RunFreq2" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')

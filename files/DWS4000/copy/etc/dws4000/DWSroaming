@@ -63,7 +63,6 @@ get_channel() {
 change_channel() {
 	#echo "change_channel $1"
 	uci set wireless.radio$cStaIndex.channel=$1
-	uci commit
 	/etc/init.d/network reload >/dev/null
 }
 
