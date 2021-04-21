@@ -7,7 +7,7 @@
 
 define Profile/DWS4000
 	NAME:=DWS4000 Profile
-	VERSION:=v4.34
+	VERSION:=v4.35
 	PACKAGES:= \
 		avahi-daemon-service-http avahi-daemon-service-ssh avahi-nodbus-daemon \
 		bc \
