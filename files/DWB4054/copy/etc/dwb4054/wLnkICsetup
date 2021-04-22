@@ -72,7 +72,7 @@ menuinput() {
 	menucmd=$(cat <<END    
 $DIALOG --ascii-lines --clear --cr-wrap --title "[[ Link Integrity Check Configuration ]]" \
 	--menu "$3\nWLAN=[ $rHWMODE ESSID:$rSSID ] \nStat=[ SNR:$rSNR Freq:$rFreq STAs:$rSTA ] \
-	\n$rDATE >> Please select menu:\n\n" 22 76 11 \
+	\n$rDATE >> Please select menu: \n" 22 76 11 \
 	$1 \
 	2> $tempfile
 END
@@ -108,15 +108,10 @@ while : ; do
 
 	inputvar=""
 
-	readModelName
-
-	readCFG
+	readActual_Status
 	#######
 
-	readWIFI
-	#######
-
-	readDATE
+	readActual_DateTimeUpTime
 	#######
 
 	CUR_PingIP=$(grep "_PingIP" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
@@ -124,7 +119,7 @@ while : ; do
 	CUR_PingTO=$(grep "_PingTO" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 	CUR_PingFC=$(grep "_PingFC" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
 
-	echo "($CUR_PingIP) ($CUR_PingCI) ($CUR_PingTO) ($CUR_PingFC)"
+	#echo "($CUR_PingIP) ($CUR_PingCI) ($CUR_PingTO) ($CUR_PingFC)"
 
 	menuinput '"ReviewSTATs"  "Status Review .... Enter!"
 		"1_PingIP" 	"Configure Remote IP to ping ($CUR_PingIP)"

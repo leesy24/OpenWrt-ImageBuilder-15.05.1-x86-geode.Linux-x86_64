@@ -74,15 +74,13 @@ while : ; do
 
 	inputvar=""
 
-	readModelName
-
-	readCFG
+	readActual_Status
 	#######
 
-	readNET
+	readNewOrg_Network
 	#######
 
-	readDATE
+	readActual_DateTimeUpTime
 	#######
 
 	menuinput '"ReviewSTATs"  "Status Review .... Enter!"
@@ -114,7 +112,7 @@ while : ; do
 			[ "$inputvar" = "$cLip" ] && break
 			# Check valid IP v4
 			if isValidIPv4 "$inputvar"; then
-				uci set network.lan.ipaddr="$inputvar"
+				add_config_new_command "set network.lan.ipaddr=$inputvar"
 				###
 				eMAC=$(/sbin/ifconfig | grep "eth0" | tr -s " " | cut -d " " -f5)
 				echo "$eMAC $inputvar" > /etc/ethers
@@ -142,7 +140,7 @@ while : ; do
 			[ "$inputvar" = "$cLmask" ] && break
 			# Check valid IP v4
 			if isValidIPv4 "$inputvar"; then
-				uci set network.lan.netmask="$inputvar"
+				add_config_new_command "set network.lan.netmask=$inputvar"
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"
@@ -166,7 +164,7 @@ while : ; do
 			[ "$inputvar" = "$cLgway" ] && break
 			# Check string null or valid IP v4
 			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
-				uci set network.lan.gateway="$inputvar"
+				add_config_new_command "set network.lan.gateway=$inputvar"
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"
@@ -190,7 +188,7 @@ while : ; do
 			[ "$inputvar" = "$cLdns" ] && break
 			# Check string null or valid IP v4
 			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
-				uci set network.lan.dns="$inputvar"
+				add_config_new_command "set network.lan.dns=$inputvar"
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"

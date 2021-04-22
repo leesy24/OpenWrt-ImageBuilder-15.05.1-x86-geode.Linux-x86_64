@@ -84,28 +84,26 @@ while : ; do
 
 	inputvar=""
 
-	readModelName
-
-	readCFG
+	readActual_Status
 	#######
 
-	readWIFI
+	readNewOrg_WiFi
 	#######
 
-	readDATE
+	readActual_DateTimeUpTime
 	#######
 
 	if [ "$cWencr" = "none" ] ; then
 		menuinput '"ReviewSTATs"  "Status Review .... Enter!"
 			"1Wlan_Band"    "WLAN Band _______________________($cWband GHz)"
-			"2Wlan_Freq"    "WLAN Frequency __________________($cWfreq)"
+			"2Wlan_Freq"    "WLAN Frequency __________________($cWfreq GHz)"
 			"3Wlan_eSSID"   "WLAN eSSID/Wireless-Name ________($cWssid)"
 			"4Wlan_EncUSE"  "WLAN Encription [none/wep/psk2] _($cWencr)"
 			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
 	else
 		menuinput '"ReviewSTATs"  "Status Review .... Enter!"
 			"1Wlan_Band"    "WLAN Band _______________________($cWband GHz)"
-			"2Wlan_Freq"    "WLAN Frequency __________________($cWfreq)"
+			"2Wlan_Freq"    "WLAN Frequency __________________($cWfreq GHz)"
 			"3Wlan_eSSID"   "WLAN eSSID/Wireless-Name ________($cWssid)"
 			"4Wlan_EncUSE"  "WLAN Encription [none/wep/psk2] _($cWencr)"
 			"5Wlan_EncKEY"  "WLAN Encription [Key Code] ______($cWkey)"
@@ -134,12 +132,12 @@ while : ; do
 			[ "$inputvar" = "$cWband" ] && break
 			# Check input string is one of WiFi Band
 			if [ "$inputvar" = "2.4" ] ; then
-				uci set wireless.radio0.hwmode="11g"
-				uci set wireless.radio0.channel="auto"
+				add_config_new_command "set wireless.radio$iface_index.hwmode=11g"
+				add_config_new_command "set wireless.radio$iface_index.channel=auto"
 				break
 			elif [ "$inputvar" = "5" ] ; then
-				uci set wireless.radio0.hwmode="11a"
-				uci set wireless.radio0.channel="auto"
+				add_config_new_command "set wireless.radio$iface_index.hwmode=11a"
+				add_config_new_command "set wireless.radio$iface_index.channel=auto"
 				break
 			fi
 			errormsg="Check input value is WiFi Band!"
@@ -164,11 +162,11 @@ while : ; do
 			[ "$inputvar" = "$cWfreq" ] && break
 			# Check one of FreqTBL
 			[ -n "$inputvar" ] && [ "$inputvar" = "auto" ] && {
-                uci set wireless.radio0.channel="$inputvar"
-                break
-            }
+				add_config_new_command "set wireless.radio$iface_index.channel=$inputvar"
+				break
+			}
 			[ -n "$inputvar" ] && [ "$inputvar" = "$(echo "$FreqTBL" | grep -o -E -m1 "( $inputvar\([0-9]*\))" | cut -d' ' -f2 | cut -d'(' -f1)" ] && {
-				uci set wireless.radio0.channel="$(echo "$FreqTBL" | grep -o -E -m1 "($inputvar\([0-9]*\))" | cut -d'(' -f2 | cut -d')' -f1)"
+				add_config_new_command "set wireless.radio$iface_index.channel=$(echo "$FreqTBL" | grep -o -E -m1 "($inputvar\([0-9]*\))" | cut -d'(' -f2 | cut -d')' -f1)"
 				break
 			}
 			errormsg="Check input one of Freq table"
@@ -192,7 +190,7 @@ while : ; do
 			[ "$inputvar" = "$cWssid" ] && break
 			# Check input string is not null
 			if [ -n "$inputvar" ] ; then
-				uci set wireless.@wifi-iface[0].ssid="$inputvar"
+				add_config_new_command "set wireless.@wifi-iface[$iface_index].ssid=$inputvar"
 				break
 			fi
 			errormsg="Check input value is SSID!"
@@ -216,13 +214,13 @@ while : ; do
 			[ "$inputvar" = "$cWencr" ] && break
 			# Check encryption types
 			if [ "$inputvar" = "psk2+ccmp" ] ; then
-				uci set wireless.@wifi-iface[0].encryption="psk2+ccmp"
+				add_config_new_command "set wireless.@wifi-iface[$iface_index].encryption=psk2+ccmp"
 				break
 			elif [ "$inputvar" = "wep-open" ] ; then
-				uci set wireless.@wifi-iface[0].encryption="wep-open"
+				add_config_new_command "set wireless.@wifi-iface[$iface_index].encryption=wep-open"
 				break
 			elif [ -z "$inputvar" ] || [ "$inputvar" = "none" ] ; then
-				uci set wireless.@wifi-iface[0].encryption="none"
+				add_config_new_command "set wireless.@wifi-iface[$iface_index].encryption=none"
 				break
 			fi
 			errormsg="Check input value is one of encryption type!"
@@ -247,7 +245,7 @@ while : ; do
 				[ "$inputvar" = "$cWencr" ] && break
 				# Check input string is not null
 				if [ -n "$inputvar" ] ; then
-					uci set wireless.@wifi-iface[0].key="$inputvar"
+					add_config_new_command "set wireless.@wifi-iface[$iface_index].key=$inputvar"
 					break
 				fi
 			else # elif [ "$cWencr" = "wep-open" ] ; then
@@ -264,8 +262,8 @@ while : ; do
 				[ "$inputvar" = "$cWencr" ] && break
 				# Check input string is not null
 				if [ -n "$inputvar" ] && ([ ${#inputvar} -eq 5 ] || [ ${#inputvar} -eq 13 ])  ; then
-					uci set wireless.@wifi-iface[0].key="1"
-					uci set wireless.@wifi-iface[0].key1="s:$inputvar"
+					add_config_new_command "set wireless.@wifi-iface[$iface_index].key=1"
+					add_config_new_command "set wireless.@wifi-iface[$iface_index].key1=s:$inputvar"
 					break
 				fi
 			fi

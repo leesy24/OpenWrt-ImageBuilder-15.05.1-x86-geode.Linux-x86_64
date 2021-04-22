@@ -64,6 +64,8 @@ eval $menucmd
 
 ########################## begin
 
+init_config_org
+
 rm -f $tempfile
 
 mchoice="";
@@ -75,12 +77,12 @@ while : ; do
 
 	inputvar=""
 
-	readModelName
+	readActual_ModelName
 
-	readCFG
+	readActual_Status
 	#######
 
-	readDATE
+	readActual_DateTimeUpTime
 	#######
 
 	menuinput '"ReviewSTATs"  "Status Review .... Enter!"
@@ -138,12 +140,14 @@ while : ; do
 		if [ "$inputvar" = "YES" ] ; then
 			clear
 			echo ; echo "[$ModelName].... Commit All Configures Now!!"
-			###################################################################
-			uci commit
-			#sleep 1
 			echo ; echo "[$ModelName].... LnkIChecking, dwbLCD Stop...!!"
 			/etc/init.d/LnkIChecking stop 2>/dev/null
 			/etc/init.d/dwbLCD stop 2>/dev/null
+			###################################################################
+			apply_config_new_4_commit
+			clean_config_new
+			uci commit
+			#sleep 1
 			echo ; echo "[$ModelName].... All Interface Restart...!!"
 			/etc/init.d/network restart 2>/dev/null
 			sleep 1
@@ -163,9 +167,15 @@ while : ; do
 		if [ "$inputvar" = "YES" ] ; then
 			clear
 			echo ; echo "[$ModelName].... Commit All Configures Now!!"
+			echo ; echo "[$ModelName].... LnkIChecking, dwbLCD Stop...!!"
+			/etc/init.d/LnkIChecking stop 2>/dev/null
+			/etc/init.d/dwbLCD stop 2>/dev/null
 			###################################################################
+			apply_config_new_4_commit
+			clean_config_new
 			uci commit
 			#sleep 1
+			sync
 			echo ; echo "[$ModelName].... System Reboot Now!!"
 			reboot
 			while : ; do
