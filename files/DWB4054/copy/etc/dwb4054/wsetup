@@ -148,9 +148,12 @@ while : ; do
 			clean_config_new
 			uci commit
 			#sleep 1
+			init_config_org
+
 			echo ; echo "[$ModelName].... All Interface Restart...!!"
 			/etc/init.d/network restart 2>/dev/null
 			sleep 1
+
 			echo ; echo "[$ModelName].... LnkIChecking, dwbLCD Start...!!"
 			/etc/init.d/dwbLCD start 2>/dev/null
 			/etc/init.d/LnkIChecking start 2>/dev/null
@@ -176,6 +179,7 @@ while : ; do
 			uci commit
 			#sleep 1
 			sync
+
 			echo ; echo "[$ModelName].... System Reboot Now!!"
 			reboot
 			while : ; do

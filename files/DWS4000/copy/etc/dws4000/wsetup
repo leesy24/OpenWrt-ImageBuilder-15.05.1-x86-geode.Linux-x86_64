@@ -186,9 +186,12 @@ while : ; do
 			clean_config_new
 			uci commit
 			#sleep 1
+			init_config_org
+
 			echo ; echo "[$ModelName].... All Interface Restart...!!"
 			/etc/init.d/network restart 2>/dev/null
 			sleep 1
+
 			echo ; echo "[$ModelName].... DWSroaming, dwsLCD Start...!!"
 			/etc/init.d/DWSroaming start 2>/dev/null
 			/etc/init.d/dwsLCD start 2>/dev/null
@@ -236,10 +239,12 @@ while : ; do
 			#sleep 1
 			#/etc/init.d/collectd stop
 			#sync
+
 			echo ; echo "[$ModelName].... All Interface Restart...!!"
 			#sleep 1
 			sync
 			##clear
+
 			echo ; echo "[$ModelName].... System Reboot Now!!"
 			reboot
 			while : ; do
