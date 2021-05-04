@@ -6,8 +6,8 @@
 
 while : ; do
 
-	readSystem
-	readNetwork
+	readNewOrg_System
+	readNewOrg_Network
 
 	inputvar=""
 
@@ -35,7 +35,7 @@ while : ; do
 			[ "$inputvar" = "$cLip" ] && break
 			# Check valid IP v4
 			if isValidIPv4 "$inputvar"; then
-				uci set network.lan.ipaddr="$inputvar"
+				add_config_new_set_cmd network.lan.ipaddr="$inputvar"
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"
@@ -59,7 +59,7 @@ while : ; do
 			[ "$inputvar" = "$cLmask" ] && break
 			# Check valid IP v4
 			if isValidIPv4 "$inputvar"; then
-				uci set network.lan.netmask="$inputvar"
+				add_config_new_set_cmd network.lan.netmask="$inputvar"
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"

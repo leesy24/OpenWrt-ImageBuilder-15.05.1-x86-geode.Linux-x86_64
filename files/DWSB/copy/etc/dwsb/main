@@ -4,10 +4,16 @@
 ##
 . common
 
-while : ; do
+DUAL_STA_ROAMING_CONFIG_org="/etc/dwsb/dual_sta_roaming.cfg"
+DUAL_STA_ROAMING_CONFIG_tmp="/tmp/dual_sta_roaming.cfg"
+CH_ROAMING_0_CONFIG_org="/etc/dwsb/channel_roaming_0.cfg"
+CH_ROAMING_0_CONFIG_tmp="/tmp/channel_roaming_0.cfg"
+CH_ROAMING_1_CONFIG_org="/etc/dwsb/channel_roaming_1.cfg"
+CH_ROAMING_1_CONFIG_tmp="/tmp/channel_roaming_1.cfg"
 
-	readSystem
-	readNetwork
+init_config_org
+
+while : ; do
 
 	inputvar=""
 
@@ -64,22 +70,29 @@ while : ; do
 			)" [YES]/[no] \n" \
 			"NO"
 		if [ "$inputvar" = "YES" ] ; then
-			/etc/init.d/dwsbLCD stop
-			/etc/init.d/dwsbDualStaRoaming stop
-			/etc/init.d/dwsbChRoaming_1 stop
-			/etc/init.d/dwsbChRoaming_0 stop
+			/etc/init.d/dwsbLCD stop 2>/dev/null
+			/etc/init.d/dwsbDualStaRoaming stop 2>/dev/null
+			/etc/init.d/dwsbChRoaming_1 stop 2>/dev/null
+			/etc/init.d/dwsbChRoaming_0 stop 2>/dev/null
 
 			clear
-			echo ; echo "[$cHostname].... Commit All Configures Save Now!!"
+			echo ; echo "[$aHostname].... Commit All Configures Save Now!!"
+			[ -f $DUAL_STA_ROAMING_CONFIG_tmp ] && mv $DUAL_STA_ROAMING_CONFIG_tmp $DUAL_STA_ROAMING_CONFIG_org
+			[ -f $CH_ROAMING_0_CONFIG_tmp ] && mv $CH_ROAMING_0_CONFIG_tmp $CH_ROAMING_0_CONFIG_org
+			[ -f $CH_ROAMING_1_CONFIG_tmp ] && mv $CH_ROAMING_1_CONFIG_tmp $CH_ROAMING_1_CONFIG_org
+			apply_config_new_4_commit
+			clean_config_new
 			uci commit
-			echo ; echo "[$cHostname].... Restart Network Subsystem ...!!"
+			init_config_org
+
+			echo ; echo "[$aHostname].... Restart Network Subsystem ...!!"
 			/etc/init.d/network restart
 			sleep 5
 
-			/etc/init.d/dwsbChRoaming_0 start
-			/etc/init.d/dwsbChRoaming_1 start
-			/etc/init.d/dwsbDualStaRoaming start
-			/etc/init.d/dwsbLCD start
+			/etc/init.d/dwsbChRoaming_0 start 2>/dev/null
+			/etc/init.d/dwsbChRoaming_1 start 2>/dev/null
+			/etc/init.d/dwsbDualStaRoaming start 2>/dev/null
+			/etc/init.d/dwsbLCD start 2>/dev/null
 			sleep 5
 		fi
 		;;
@@ -91,15 +104,21 @@ while : ; do
 			)" [YES]/[no]\n" \
 			"NO"
 		if [ "$inputvar" = "YES" ] ; then
-			/etc/init.d/dwsbLCD stop
-			/etc/init.d/dwsbDualStaRoaming stop
-			/etc/init.d/dwsbChRoaming_1 stop
-			/etc/init.d/dwsbChRoaming_0 stop
+			/etc/init.d/dwsbLCD stop 2>/dev/null
+			/etc/init.d/dwsbDualStaRoaming stop 2>/dev/null
+			/etc/init.d/dwsbChRoaming_1 stop 2>/dev/null
+			/etc/init.d/dwsbChRoaming_0 stop 2>/dev/null
 
 			clear
-			echo ; echo "[$cHostname].... Commit All Configures Now!!"
+			echo ; echo "[$aHostname].... Commit All Configures Now!!"
+			[ -f $DUAL_STA_ROAMING_CONFIG_tmp ] && mv $DUAL_STA_ROAMING_CONFIG_tmp $DUAL_STA_ROAMING_CONFIG_org
+			[ -f $CH_ROAMING_0_CONFIG_tmp ] && mv $CH_ROAMING_0_CONFIG_tmp $CH_ROAMING_0_CONFIG_org
+			[ -f $CH_ROAMING_1_CONFIG_tmp ] && mv $CH_ROAMING_1_CONFIG_tmp $CH_ROAMING_1_CONFIG_org
+			apply_config_new_4_commit
+			clean_config_new
 			uci commit
-			echo ; echo "[$cHostname].... System Reboot Now!!"
+
+			echo ; echo "[$aHostname].... System Reboot Now!!"
 			reboot
 			while : ; do
 				sleep 1
@@ -116,7 +135,7 @@ while : ; do
 			"NO"
 		if [ "$inputvar" = "YES" ] ; then
 		  clear
-		  echo ; echo "[$cHostname].... System Reboot Now!!"
+		  echo ; echo "[$aHostname].... System Reboot Now!!"
 		  reboot -f
 		  while : ; do
 			sleep 1

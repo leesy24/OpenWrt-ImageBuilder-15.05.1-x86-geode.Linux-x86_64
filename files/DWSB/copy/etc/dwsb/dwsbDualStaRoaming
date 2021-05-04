@@ -73,11 +73,19 @@ fi
 
 #-----------------------------#
 ### Load dual station roaming configurations from file
-[ -e /etc/dwsb/dual_sta_roaming.cfg ] && {
-	cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
-	. /tmp/dual_sta_roaming.cfg
-}
+if [ ! -e /etc/dwsb/dual_sta_roaming.cfg ] ; then
+	# in case file not exist
+	log "File(/etc/dwsb/dual_sta_roaming.cfg) not exist. ---> exit"
+	exit 1
+fi
+. /etc/dwsb/dual_sta_roaming.cfg
+
 USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
+[ "$USE_DUALSTAROAM_MODE" != "Y" ] && {
+	log "Dual station Roaming mode disabled. ---> exit"
+	exit 1
+}
+
 SNRmin=$_SNRmin
 SNRdelta=$_SNRdelta
 PingIP1=$_PingIP1
@@ -87,11 +95,6 @@ PingFC=$_PingFC
 
 PingIP=$PingIP1
 #-----------------------------#
-
-[ "$USE_DUALSTAROAM_MODE" != "Y" ] && {
-	log "Dual station Roaming mode disabled. ---> exit"
-	exit 1
-}
 
 log "SNRmin=$SNRmin SNRdelta=$SNRdelta Ping IP1=$PingIP1 IP2=$PingIP2 TO=$PingTO FC=$PingFC"
 

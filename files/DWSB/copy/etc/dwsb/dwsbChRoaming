@@ -17,13 +17,13 @@ log() {
 }
 
 get_curWiFiMode() {
-	local disabled=$(uci -q get wireless.@wifi-iface[$cStaIndex].disabled)
-	local wds=$(uci -q get wireless.@wifi-iface[$cStaIndex].wds)
-	local mode=$(uci -q get wireless.@wifi-iface[$cStaIndex].mode)
+	local disabled=$(uci -q get wireless.@wifi-iface[$iface_index].disabled)
+	local wds=$(uci -q get wireless.@wifi-iface[$iface_index].wds)
+	local mode=$(uci -q get wireless.@wifi-iface[$iface_index].mode)
 	local ret_mode
-	[ "$disabled" = "1" ] && {
+	if [ "$disabled" = "1" ]; then
 		ret_mode="Disabled"
-	} || {
+	else
 		if [ "$mode" = "ap" ]; then
 			[ "$wds" = "1" ] && {
 				ret_mode="APW"
@@ -40,25 +40,29 @@ get_curWiFiMode() {
 			# in case [ "$mode" != "ap" ] && [ "$mode" != "sta" ]
 			ret_mode=$mode
 		fi
-	}
+	fi
 	echo $ret_mode
 }
 
 get_actSSID() {
-	iw dev wlan$cStaIndex link 2> /dev/null | grep "SSID:" | awk '{ print $2 }'
+	iw dev wlan$iface_index link 2> /dev/null | grep "SSID:" | awk '{print $2}'
+	# iwinfo wlan$iface_index info 2> /dev/null | grep "ESSID" | awk '{print $3}' | cut -d'"' -f2
 }
 
 get_curSSID() {
-	uci -q get wireless.@wifi-iface[$cStaIndex].ssid
+	uci -q get wireless.@wifi-iface[$iface_index].ssid
 }
 
 get_actFreqMHz() {
-	iw dev wlan$cStaIndex link 2> /dev/null | grep "freq:" | awk '{ print $2 }'
+	iw dev wlan$iface_index link 2> /dev/null | grep "freq:" | awk '{print $2}'
+	# iwinfo wlan$iface_index info 2> /dev/null | grep "Channel" | awk '{print $5}' | cut -c2-)
 }
 
 get_curFreqMHz() {
+	[ ! -f /tmp/iw_info_phy$iface_index ] && iw phy$iface_index info 2>/dev/null > /tmp/iw_info_phy$iface_index
+
 	local freq
-	freq=$(grep -E -m1 "(\* .... MHz \[$(uci -q get wireless.radio$cStaIndex.channel)\])" /tmp/dwsbChRoaming_phy$cStaIndex | \
+	freq=$(grep -E -m1 "(\* .... MHz \[$(uci -q get wireless.radio$iface_index.channel)\])" /tmp/iw_info_phy$iface_index | \
 		awk '{print $2}')
 	[ -z "$freq" ] && freq="0000"
 	echo $freq
@@ -71,42 +75,45 @@ get_MHz2GHz() {
 
 get_actSNR() {
 	local SNR
-	SNR=$(iwinfo wlan$cStaIndex info 2> /dev/null | grep Link | awk '{print $6}' | cut -d'/' -f1)
+	SNR=$(iwinfo wlan$iface_index info 2> /dev/null | grep "Link" | awk '{print $6}' | cut -d'/' -f1)
 	[ -z "$SNR" ] && SNR=-2
 	[ "$SNR" = "unknown" ] && SNR=-1
 	echo $SNR
 }
 
 get_RXpkts() {
-	ifconfig wlan$cStaIndex | grep "RX packets" | awk '{ print $2 }' | cut -c9-
+	ifconfig wlan$iface_index | grep "RX packets" | awk '{print $2}' | cut -c9-
 }
 
 # $1 = frequency in MHz
 get_channel() {
-	grep -E -m1 "(\* $1 MHz \[[0-9]*\])" /tmp/dwsbChRoaming_phy$cStaIndex | \
+	[ ! -f /tmp/iw_info_phy$iface_index ] && iw phy$iface_index info 2>/dev/null > /tmp/iw_info_phy$iface_index
+
+	grep -E -m1 "(\* $1 MHz \[[0-9]*\])" /tmp/iw_info_phy$iface_index | \
 		cut -d'[' -f2 | cut -d']' -f1
 }
 
-# $1: new channel
+# $1: target channel
 change_channel() {
 	#echo "change_channel $1"
-	uci set wireless.radio$cStaIndex.channel=$1
-	uci commit
-	/etc/init.d/network reload >/dev/null
+	uci set wireless.radio$iface_index.channel=$1
+	#/etc/init.d/network reload >/dev/null
+	wifi reload radio$iface_index >/dev/null
 }
 
-# $1: new frequency in MHz
+# $1: target SSID
+# $2: target frequency in MHz
 change_freq() {
-	local targetFreq=$1
-	local targetCh
-	# log "change_freq():targetFreq=$targetFreq"
-
-	targetCh=$(get_channel $targetFreq)
+	local targetSSID=$1
+	local targetFreqMHz=$2
+	# log "change_freq():targetFreqMHz=$targetFreqMHz"
+	local targetCh=$(get_channel $targetFreqMHz)
 	# log "change_freq():targetCh=$targetCh"
 	# check string is null
 	[ -z "$targetCh" ] && return 1 
 
 	change_channel $targetCh
+	# must be sleep for WiFi stable
 	sleep 1
 
 	local timer=0
@@ -114,25 +121,34 @@ change_freq() {
 	#local timeout=50 # 5secs <- 100msec x 50
 	#local timeout=100 # 10secs <- 100msec x 100
 	local actSSID
-	local actFreq
+	local actFreqMHz
 	while [ $timer -lt $timeout ] ; do
 		msleep 100
 
 		actSSID=$(get_actSSID)
 		# log "change_freq():Act SSID=$actSSID ($timer)"
-		[ "$actSSID" = "$curSSID" ] && {
-			actFreq=$(get_actFreqMHz)
-			# log "change_freq():Act freq.=$actFreq"
-			[ "$actFreq" = "$targetFreq" ] && return 0
-			# check string is not null, mean is not equal with target Freq.
-			[ -n "$actFreq" ] && {
-				/etc/init.d/network restart
+		[ "$actSSID" = "$targetSSID" ] && {
+			actFreqMHz=$(get_actFreqMHz)
+			# log "change_freq():Act freq.=$actFreqMHz"
+			# Check actual freq is equal with target freq.
+			[ "$actFreqMHz" = "$targetFreqMHz" ] && return 0
+			#log "change_freq():Act freq. is different with target($actFreqMHz, $targetFreqMHz)"
+			# check string is not null, mean, WiFi associated with different Freq.
+			[ -n "$actFreqMHz" ] && {
+				[ $timer -ge $((timeout-1)) ] && return 1
+				#/etc/init.d/network restart
+				wifi down radio$iface_index >/dev/null
+				wifi up radio$iface_index >/dev/null
+				# must be sleep for WiFi stable
 				sleep 1
-				timer=0
+				# set timer to try only one time
+				timer=$((timeout-2))
+				#log "change_freq():timer=$timer"
 			}
 		}
 
 		timer=$((timer+1))
+		#log "change_freq():timer=$timer"
 	done
 
 	return 1
@@ -142,14 +158,14 @@ change_freq() {
 ### Start of main script
 ########################
 
-cStaIndex=$1
-if [ $cStaIndex -eq 0 ] ; then
-	cStaIndexStr="1st"
-elif [ $cStaIndex -eq 1 ] ; then
-	cStaIndexStr="2nd"
+iface_index=$1
+if [ $iface_index -eq 0 ] ; then
+	iface_index_str="1st"
+elif [ $iface_index -eq 1 ] ; then
+	iface_index_str="2nd"
 else
-	# in case not [ $cStaIndex -eq 0 ] || [ $cStaIndex -eq 1 ]
-	log "Station index($cStaIndex) not valid. ---> exit"
+	# in case not [ $iface_index -eq 0 ] || [ $iface_index -eq 1 ]
+	log "Station index($iface_index) not valid. ---> exit"
 	exit 1
 fi
 
@@ -163,20 +179,19 @@ fi
 
 #-----------------------------#
 ### Load channel roaming configuration from file
-if [ ! -e /etc/dwsb/channel_roaming_$cStaIndex.cfg ] ; then
+if [ ! -e /etc/dwsb/channel_roaming_$iface_index.cfg ] ; then
 	# in case file not exist
-	log "File(/etc/dwsb/channel_roaming_$cStaIndex.cfg) not exist. ---> exit"
+	log "File(/etc/dwsb/channel_roaming_$iface_index.cfg) not exist. ---> exit"
 	exit 1
 fi
-
-cp /etc/dwsb/channel_roaming_$cStaIndex.cfg /tmp/channel_roaming_$cStaIndex.cfg
-. /tmp/channel_roaming_$cStaIndex.cfg
+. /etc/dwsb/channel_roaming_$iface_index.cfg
 
 USE_CHANNELROAM_MODE=$_USE_CHANNELROAM_MODE
 [ "$USE_CHANNELROAM_MODE" != "Y" ] && {
-	log "Channel Roaming mode for $cStaIndexStr Station disabled. ---> exit"
+	log "Channel Roaming mode for $iface_index_str Station disabled. ---> exit"
 	exit 1
 }
+
 SNRmin=$_SNRmin
 RunFreqGHz1=$_RunFreq1 # in GHz
 RunFreqGHz2=$_RunFreq2 # in GHz
@@ -189,9 +204,7 @@ PingIP2=$_PingIP2
 #-----------------------------#
 log "F1=$RunFreqGHz1 F2=$RunFreqGHz2 SNRmin=$SNRmin Ping IP1=$PingIP1 IP2=$PingIP2 TO="$PingTO"msec FC=$PingFC"
 
-iw phy$cStaIndex info > /tmp/dwsbChRoaming_phy$cStaIndex
-
-rm -f /tmp/.force_Ch_Roaming_$cStaIndex
+rm -f /tmp/.force_Ch_Roaming_$iface_index
 
 # [ -z "$USE_PARPROUTED" ] && USE_PARPROUTED="N"
 # [ $USE_PARPROUTED = "Y" ] && sysctl -wq net.ipv4.conf.all.proxy_arp=0 || sysctl -wq net.ipv4.conf.all.proxy_arp=1
@@ -211,10 +224,10 @@ log "Cur SSID=$curSSID,Cur freq.=$curFreqGHz,Act freq.=$(get_MHz2GHz $actFreqMHz
 # Check current Freq must RunFreq1 or 2.
 if [ $curFreqMHz -ne $RunFreqMHz1 ] && [ $curFreqMHz -ne $RunFreqMHz2 ]; then
 	log "Cur freq. Unknown: $curFreqGHz->$RunFreqGHz1"
-	change_freq $RunFreqMHz1
+	change_freq $curSSID $RunFreqMHz1
 	if [ $? -ne 0 ]; then
 		log "Cur freq. Unknown: $curFreqGHz->$RunFreqGHz2"
-		change_freq $RunFreqMHz2
+		change_freq $curSSID $RunFreqMHz2
 	fi
 	curFreqMHz=$(get_curFreqMHz) # to MHz
 	curFreqGHz=$(get_MHz2GHz $curFreqMHz) # in GHz
@@ -266,16 +279,18 @@ while : ; do
 	}
 
 	# Check need to roam
-	if [ $curSNRerr -eq 1 ] || [ $curPingFC -ge $PingFC ] || [ $curPingFC -le $((-2-PingFC)) ] || [ -e /tmp/.force_Ch_Roaming_$cStaIndex ] ; then
+	if [ $curSNRerr -eq 1 ] || [ $curPingFC -ge $PingFC ] || [ $curPingFC -le $((-2-PingFC)) ] || [ -e /tmp/.force_Ch_Roaming_$iface_index ] ; then
 		# [ $USE_PARPROUTED = "Y" ] && /etc/init.d/parprouted stop
 
-		[ -e /tmp/.force_Ch_Roaming_$cStaIndex ] && log "Forced Roaming: "
+		[ -e /tmp/.force_Ch_Roaming_$iface_index ] && log "Forced Roaming: "
 		[ $curPingFC -ge $PingFC ] && log "Ping($curPingFC) failed Roaming: "
 		[ $curPingFC -le $((-2-PingFC)) ] && log "Early Ping($curPingFC) failed Roaming: "
 		[ $curSNRerr -eq 1 ] && log "SNR($actSNR) error Roaming: "
 
 		log "Cur freq.=$curFreqMHz"
-		
+
+		local targetFreqMHz
+
 		if [ $curFreqMHz -eq $RunFreqMHz1 ] ; then
 			targetFreqMHz=$RunFreqMHz2
 			log "Target freq.=$targetFreqMHz"
@@ -289,7 +304,7 @@ while : ; do
 
 		while : ; do
 			##########################
-			change_freq $targetFreqMHz
+			change_freq $curSSID $targetFreqMHz
 			########################## 
 
 			# Check return value of change_freq() OK
@@ -326,7 +341,7 @@ while : ; do
 		RXpkts=$(get_RXpkts)
 		curPingFC=-2 # set to wait early n ping success
 
-		[ -e /tmp/.force_Ch_Roaming_$cStaIndex ] && rm -f /tmp/.force_Ch_Roaming_$cStaIndex
+		[ -e /tmp/.force_Ch_Roaming_$iface_index ] && rm -f /tmp/.force_Ch_Roaming_$iface_index
 	fi
 
 	msleep 100 ##2

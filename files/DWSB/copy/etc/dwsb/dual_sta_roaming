@@ -4,35 +4,33 @@
 ##
 . common
 
-cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
+CONFIG_org="/etc/dwsb/dual_sta_roaming.cfg"
+CONFIG_tmp="/tmp/dual_sta_roaming.cfg"
 
-CONFIGPATH_org="/etc/dwsb/dual_sta_roaming.cfg"
-CONFIGPATH="/tmp/dual_sta_roaming.cfg"
-CONFIG_UPDATED="/tmp/.dual_sta_roaming.cfg.updated"
-
+# $1 = variable
+# $2 = value
 save_value() {
-	egrep -v '^$' $CONFIGPATH | egrep -v "^"$1 > $CONFIGPATH.new
-	echo $1"=\"$inputvar\"" >> $CONFIGPATH.new
-	echo >> $CONFIGPATH.new
-	rm -f $CONFIGPATH
-	mv $CONFIGPATH.new $CONFIGPATH
-
-	cp $CONFIGPATH $CONFIGPATH_org
-	sync
+	egrep -v '^$' $CONFIG_tmp | egrep -v "^"$1 > $CONFIG_tmp.new
+	echo $1"=\"$2\"" >> $CONFIG_tmp.new
+	echo >> $CONFIG_tmp.new
+	rm -f $CONFIG_tmp
+	mv $CONFIG_tmp.new $CONFIG_tmp
 }
+
+### start of script
+
+# make temp. config file for updating config file, if temp. config file is not exists.
+[ ! -f $CONFIG_tmp ] && cp $CONFIG_org $CONFIG_tmp
 
 while : ; do
 
-	readSystem
-	readNetwork
-
-	CUR_USE_DUALSTAROAM_MODE=$(grep "_USE_DUALSTAROAM_MODE" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
-	CUR_SNRmin=$(grep "_SNRmin" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
-	CUR_SNRdelta=$(grep "_SNRdelta" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
-	CUR_PingIP1=$(grep "_PingIP1" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
-	CUR_PingIP2=$(grep "_PingIP2" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
-	CUR_PingTO=$(grep "_PingTO" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
-	CUR_PingFC=$(grep "_PingFC" $CONFIGPATH | sed 's/.*="\(.*\)"/\1/')
+	CUR_USE_DUALSTAROAM_MODE=$(grep "_USE_DUALSTAROAM_MODE" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
+	CUR_SNRmin=$(grep "_SNRmin" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
+	CUR_SNRdelta=$(grep "_SNRdelta" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingIP1=$(grep "_PingIP1" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingIP2=$(grep "_PingIP2" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingTO=$(grep "_PingTO" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingFC=$(grep "_PingFC" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
 
 	### echo "($CUR_USE_DUALSTAROAM_MODE) ($CUR_SNRmin) ($CUR_SNRdelta) ($CUR_PingIP1) ($CUR_PingIP2) ($CUR_PingTO) ($CUR_PingFC)"
 
@@ -74,7 +72,7 @@ while : ; do
 			[ "$inputvar" = "$CUR_USE_DUALSTAROAM_MODE" ] && break
 			# Check string null or Y or N
 			([ -z "$inputvar" ] || [ $inputvar = "Y" ] || [ $inputvar = "N" ]) && {
-				save_value "_USE_DUALSTAROAM_MODE"
+				save_value _USE_DUALSTAROAM_MODE $inputvar
 				break
 			}
 			errormsg="Check input value is Y or N or empty!"
@@ -96,7 +94,7 @@ while : ; do
 			[ "$inputvar" = "$CUR_SNRmin" ] && break
 			# Check 0 < value < 70
 			[ -n "$inputvar" ] && [ $inputvar -gt 0 ] 2>/dev/null && [ $inputvar -lt 70 ] 2>/dev/null && {
-				save_value "_SNRmin"
+				save_value _SNRmin $inputvar
 				break
 			}
 			errormsg="Check input value NN is 0 < NN < 70"
@@ -118,7 +116,7 @@ while : ; do
 			[ "$inputvar" = "$CUR_SNRdelta" ] && break
 			# Check 0 < value < 70
 			[ -n "$inputvar" ] && [ $inputvar -ge 0 ] 2>/dev/null && [ $inputvar -le 35 ] 2>/dev/null && {
-				save_value "_SNRdelta"
+				save_value _SNRdelta $inputvar
 				break
 			}
 			errormsg="Check input value NN is 0 <= NN <= 35"
@@ -143,7 +141,7 @@ while : ; do
 			[ "$inputvar" = "$CUR_PingIP1" ] && break
 			# Check string null or valid IP v4
 			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
-				save_value "_PingIP1"
+				save_value _PingIP1 $inputvar
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"
@@ -168,7 +166,7 @@ while : ; do
 			[ "$inputvar" = "$CUR_PingIP2" ] && break
 			# Check string null or valid IP v4
 			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
-				save_value "_PingIP2"
+				save_value _PingIP2 $inputvar
 				break
 			fi
 			errormsg="Check input value is IP v4 format!"
@@ -192,7 +190,7 @@ while : ; do
 			[ "$inputvar" = "$CUR_PingTO" ] && break
 			# Check greater than zero
 			[ $inputvar -gt 0 ] 2>/dev/null && {
-				save_value "_PingTO"
+				save_value _PingTO $inputvar
 				break
 			}
 			errormsg="Check input value is greater than 0!"
@@ -217,7 +215,7 @@ while : ; do
 			[ "$inputvar" = "$CUR_PingFC" ] && break
 			# Check string null or greater and equal than zero
 			([ -z "$inputvar" ] || [ $inputvar -ge 0 ] 2>/dev/null || [ $inputvar -le 5 ] 2>/dev/null) && {
-				save_value "_PingFC"
+				save_value _PingFC $inputvar
 				break
 			}
 			errormsg="Check input value is empty or greater and equal than 0 and little equal 5 !"
@@ -236,7 +234,7 @@ while : ; do
 		[ $retval -ne 0 ] && break
 		[ "$inputvar" = "Y" ] && {
 			clear
-			echo ; echo "[$cHostname]... Roaming New Station Now!!"
+			echo ; echo "[$aHostname]... Roaming New Station Now!!"
 			touch /tmp/.force_Dual_Sta_Roaming
 			sleep 1 # sleep 1 second
 
@@ -250,9 +248,9 @@ while : ; do
 
 			if [ -e /tmp/.force_Dual_Sta_Roaming ] ; then
 				rm -f /tmp/.force_Dual_Sta_Roaming
-				echo ; echo "[$cHostname]... Error! Roaming New Station!"
+				echo ; echo "[$aHostname]... Error! Roaming New Station!"
 			else
-				echo ; echo "[$cHostname]... Success! Roaming New Station."
+				echo ; echo "[$aHostname]... Success! Roaming New Station."
 			fi
 
 			sleep 1 # sleep 1 second

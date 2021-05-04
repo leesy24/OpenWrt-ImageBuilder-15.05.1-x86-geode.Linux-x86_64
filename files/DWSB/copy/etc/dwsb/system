@@ -6,15 +6,15 @@
 
 while : ; do
 
-	readSystem
-	readNetwork
+	readNewOrg_System
+	readNewOrg_Network
 
 	inputvar=""
 
 	menuinput "System Configure" \
 		'"1Hostname"   "Host Name ___________________($cHostname)"
-		"2DateConfig"  "Date ________________________($aDate)"
-		"3TimeConfig"  "Time ________________________($aTime)"
+		"2DateConfig"  "Date ________________________($cDate)"
+		"3TimeConfig"  "Time ________________________($cTime)"
 		"X_ExitCancel" "Exit or Cancel to upper Menu"'
 
 	case $inputvar in
@@ -36,7 +36,7 @@ while : ; do
 			[ "$inputvar" = "$cHostname" ] && break
 			# Check input string is not null
 			if [ -n "$inputvar" ] ; then
-				uci set system.@system[0].hostname="$inputvar"
+				add_config_new_set_cmd system.@system[0].hostname="$inputvar"
 				break
 			fi
 			errormsg="Check input value is Host Name format!"
@@ -60,7 +60,9 @@ while : ; do
 			[ "$inputvar" = "$aDate" ] && break
 			# Check valid Date
 			if isValidDate "$inputvar"; then
-				date +%Y-%m-%d -s $inputvar
+				local time=$(date +%T)
+				date +%Y-%m-%d -s $inputvar >/dev/null
+				date +%T -s $time >/dev/null
 				break
 			fi
 			errormsg="Check input value is Date format (YYYY-MM-DD)!"
@@ -84,7 +86,7 @@ while : ; do
 			[ "$inputvar" = "$aTime" ] && break
 			# Check valid Time
 			if isValidTime "$inputvar"; then
-				date +%T -s $inputvar
+				date +%T -s $inputvar >/dev/null
 				break
 			fi
 			errormsg="Check input value is Time format (HH:MM:SS)!"
