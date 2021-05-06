@@ -63,9 +63,9 @@ get_curWiFiMode() {
 ### Check two WiFi mode are Stations (or with WDS)
 curWiFiMode1=$(get_curWiFiMode 0)
 curWiFiMode2=$(get_curWiFiMode 1)
-if  ([ "$curWiFiMode1" != "ST" ] && [ "$curWiFiMode1" != "STW" ]) \
+if  (([ "$curWiFiMode1" != "ST" ] && [ "$curWiFiMode1" != "STW" ]) \
 	|| \
-	([ "$curWiFiMode2" != "ST" ] && [ "$curWiFiMode2" != "STW" ]) ; then
+	([ "$curWiFiMode2" != "ST" ] && [ "$curWiFiMode2" != "STW" ])); then
 	# in case two WiFi mode are not Stations
 	log "Two WiFi mode($curWiFiMode1,$curWiFiMode2) are not Stations. ---> exit"
 	exit 1
@@ -73,7 +73,7 @@ fi
 
 #-----------------------------#
 ### Load dual station roaming configurations from file
-if [ ! -e /etc/dwsb/dual_sta_roaming.cfg ] ; then
+if [ ! -e /etc/dwsb/dual_sta_roaming.cfg ]; then
 	# in case file not exist
 	log "File(/etc/dwsb/dual_sta_roaming.cfg) not exist. ---> exit"
 	exit 1
@@ -93,7 +93,7 @@ PingIP2=$_PingIP2
 PingTO=$_PingTO
 PingFC=$_PingFC
 
-PingIP=$PingIP1
+PingIP=""
 #-----------------------------#
 
 log "SNRmin=$SNRmin SNRdelta=$SNRdelta Ping IP1=$PingIP1 IP2=$PingIP2 TO=$PingTO FC=$PingFC"
@@ -196,11 +196,11 @@ while : ; do
 	}
 	##log ">> DWassoSNR0 = $DWassoSNR0  >> DWassoSNR1 = $DWassoSNR1 "
 
-### if [ $SNRmin -gt 0 ] && [ $SNRmin -lt 50 ] && [ $SNRdelta -gt 5 ] && [ $SNRdelta -lt 50 ] ; then
+### if [ $SNRmin -gt 0 ] && [ $SNRmin -lt 50 ] && [ $SNRdelta -gt 5 ] && [ $SNRdelta -lt 50 ]; then
 ########################################################################################################
 	### Check need to force roaming
-	if [ -e /tmp/.force_Dual_Sta_Roaming ] ; then
-		if [ "$DW_WLact" = "wlan0" ] ; then
+	if [ -e /tmp/.force_Dual_Sta_Roaming ]; then
+		if [ "$DW_WLact" = "wlan0" ]; then
 			log "Forced roaming ---> Wlan0==>Wlan1"
 			/usr/sbin/brctl delif br-lan wlan0  ##-
 			/usr/sbin/brctl addif br-lan wlan1  ##+
@@ -225,12 +225,12 @@ while : ; do
 	fi
 
 	### Check Station associated both
-	if [ $DWassoWC0 -ne 0 ] && [ $DWassoWC1 -ne 0 ] ; then  ############# Dual--ASSO
+	if ([ $DWassoWC0 -ne 0 ] && [ $DWassoWC1 -ne 0 ]); then  ############# Dual--ASSO
 		### Check SNR larger than 10dBm any station
-		if [ $DWassoSNR0 -gt 10 ] || [ $DWassoSNR1 -gt 10 ] ; then  ## Dual--ACT :: DW_WLactCNT==2
+		if ([ $DWassoSNR0 -gt 10 ] || [ $DWassoSNR1 -gt 10 ]); then  ## Dual--ACT :: DW_WLactCNT==2
 		############( ONE-of-SNR_>>_minMINminMIN )################
-			if [ $DW_WLactCNT -ge 2 ] ; then  						## Dual--ACT :: DW_WLactCNT==2
-				if [ $DWassoSNR0 -ge $DWassoSNR1 ] ; then
+			if [ $DW_WLactCNT -ge 2 ]; then  						## Dual--ACT :: DW_WLactCNT==2
+				if [ $DWassoSNR0 -ge $DWassoSNR1 ]; then
 					log "Enable wlan0 $DWassoSNR0 $DWassoSNR1 PingIP=$PingIP1"
 					/usr/sbin/brctl delif br-lan wlan1  ##-
 					/usr/sbin/brctl addif br-lan wlan0  ##+
@@ -245,132 +245,125 @@ while : ; do
 					sleep 5 # sleep 5secs to wait until network stable
 					PingIP=$PingIP2
 				fi
+			elif [ $DW_WLactCNT -eq 0 ]; then  					## None--ACT :: DW_WLactCNT==0
+				log "Enable wlan0 and wlan1 $DWassoSNR0 $DWassoSNR1 PingIP=null"
+				/usr/sbin/brctl addif br-lan wlan0  ##+
+				/usr/sbin/brctl addif br-lan wlan1  ##+
+				##
+				sleep 5 # sleep 5secs to wait until network stable
+				PingIP=""
 			else
-				if [ $DW_WLactCNT -eq 0 ] ; then  					## None--ACT :: DW_WLactCNT==0
-					log "Enable wlan0 and wlan1 $DWassoSNR0 $DWassoSNR1 PingIP=$PingIP1"
-					/usr/sbin/brctl addif br-lan wlan0  ##+
-					/usr/sbin/brctl addif br-lan wlan1  ##+
-					##
-					sleep 5 # sleep 5secs to wait until network stable
-					PingIP=$PingIP1
-				else
-					########################################		## One---ACT :: DW_WLactCNT==1
-					if [ $SNRmin -gt 0 ] ; then
-						DWassoSNR0x2=$((DWassoSNR0+SNRdelta))  ##$((DWassoSNR0+(DWassoSNR0/3)))
-						DWassoSNR1x2=$((DWassoSNR1+SNRdelta))  ##$((DWassoSNR1+(DWassoSNR1/3)))
-						if [ $DWassoSNR1 -lt $SNRmin ] && [ $DWassoSNR0 -gt $DWassoSNR1x2 ] ; then 
-							if [ "$DW_WLact" != "wlan0" ] ; then
-								log "SNR $DWassoSNR0 $DWassoSNR1 ---> Wlan1==>Wlan0 PingIP=$PingIP1"
+				########################################		## One---ACT :: DW_WLactCNT==1
+				if [ $SNRmin -gt 0 ]; then
+					DWassoSNR0x2=$((DWassoSNR0+SNRdelta))  ##$((DWassoSNR0+(DWassoSNR0/3)))
+					DWassoSNR1x2=$((DWassoSNR1+SNRdelta))  ##$((DWassoSNR1+(DWassoSNR1/3)))
+					if ([ $DWassoSNR1 -lt $SNRmin ] && [ $DWassoSNR0 -gt $DWassoSNR1x2 ]); then 
+						if [ "$DW_WLact" != "wlan0" ]; then
+							log "SNR $DWassoSNR0 $DWassoSNR1 ---> Wlan1==>Wlan0 PingIP=$PingIP1"
+							/usr/sbin/brctl delif br-lan wlan1  ##-
+							/usr/sbin/brctl addif br-lan wlan0  ##+
+							##
+							sleep 5 # sleep 5secs to wait until network stable
+							PingIP=$PingIP1
+							continue ##------------------------------>>>
+						fi
+					fi
+					if ([ $DWassoSNR0 -lt $SNRmin ] && [ $DWassoSNR1 -gt $DWassoSNR0x2 ]); then 
+						if [ "$DW_WLact" != "wlan1" ]; then
+							log "SNR $DWassoSNR0 $DWassoSNR1 ---> Wlan0==>Wlan1 PingIP=$PingIP2"
+							/usr/sbin/brctl delif br-lan wlan0  ##-
+							/usr/sbin/brctl addif br-lan wlan1  ##+
+							##
+							sleep 5 # sleep 5secs to wait until network stable
+							PingIP=$PingIP2
+							continue ##------------------------------>>>
+						fi
+					fi
+				fi
+				########################################
+				########################################----------------(PingFC==="3")
+				if ([ -n "$PingIP" ] && [ $PingFC -gt 0 ] && [ $PingFC -lt 5 ]); then
+					Acnt=0
+					Fcnt=0
+					for i in 1 2 3 4 5 ## 6 7 8 9 10
+					do
+						# Check AP IP via fping 
+						fping -4 -b0 -t$PingTO -r1 -q $PingIP && {
+							# fping returned success
+							Acnt=$((Acnt+1))
+						} || {
+							# fping returned fail
+							Fcnt=$((Fcnt+1))
+						}
+						[ $i -lt 5 ] && msleep 10
+					done
+					####
+					if [ $Fcnt -gt $PingFC ]; then     ##--(Fcnt==="4~5")
+						if [ $Fp_aliveCNT -gt 1 ]; then  ##-----------------X2-Looped!!
+							if [ "$DW_WLact" != "wlan0" ]; then
+								log "Ping-Failed $Fcnt ---> Wlan1==>Wlan0 PingIP=$PingIP1"
 								/usr/sbin/brctl delif br-lan wlan1  ##-
 								/usr/sbin/brctl addif br-lan wlan0  ##+
 								##
 								sleep 5 # sleep 5secs to wait until network stable
 								PingIP=$PingIP1
-								continue ##------------------------------>>>
-							fi
-						fi
-						if [ $DWassoSNR0 -lt $SNRmin ] && [ $DWassoSNR1 -gt $DWassoSNR0x2 ] ; then 
-							if [ "$DW_WLact" != "wlan1" ] ; then
-								log "SNR $DWassoSNR0 $DWassoSNR1 ---> Wlan0==>Wlan1 PingIP=$PingIP2"
+							else
+								log "Ping-Failed $Fcnt ---> Wlan0==>Wlan1 PingIP=$PingIP2"
 								/usr/sbin/brctl delif br-lan wlan0  ##-
 								/usr/sbin/brctl addif br-lan wlan1  ##+
 								##
 								sleep 5 # sleep 5secs to wait until network stable
 								PingIP=$PingIP2
-								continue ##------------------------------>>>
 							fi
+							##----------!
+							Fp_aliveCNT=0
+							##----------!!-----(After-Exec--PingRoaming)!!
 						fi
-					fi
-					########################################
-					########################################----------------(PingFC==="3")
-					if [ $PingFC -gt 0 ] && [ $PingFC -lt 5 ] ; then
-						Acnt=0
-						Fcnt=0
-						for i in 1 2 3 4 5 ## 6 7 8 9 10
-						do
-							# Check AP IP via fping 
-							fping -4 -b0 -t$PingTO -r1 -q $PingIP && {
-								# fping returned success
-								Acnt=$((Acnt+1))
-							} || {
-								# fping returned fail
-								Fcnt=$((Fcnt+1))
-							}
-							[ $i -lt 5 ] && msleep 10
-						done
-						####
-						if [ $Fcnt -gt $PingFC ] ; then     ##--(Fcnt==="4~5")
-							if [ $Fp_aliveCNT -gt 1 ] ; then  ##-----------------X2-Looped!!
-								if [ "$DW_WLact" != "wlan0" ] ; then
-									log "Ping-Failed $Fcnt ---> Wlan1==>Wlan0 PingIP=$PingIP1"
-									/usr/sbin/brctl delif br-lan wlan1  ##-
-									/usr/sbin/brctl addif br-lan wlan0  ##+
-									##
-									sleep 5 # sleep 5secs to wait until network stable
-									PingIP=$PingIP1
-								else
-									log "Ping-Failed $Fcnt ---> Wlan0==>Wlan1 PingIP=$PingIP2"
-									/usr/sbin/brctl delif br-lan wlan0  ##-
-									/usr/sbin/brctl addif br-lan wlan1  ##+
-									##
-									sleep 5 # sleep 5secs to wait until network stable
-									PingIP=$PingIP2
-								fi
-								##----------!
-								Fp_aliveCNT=0
-								##----------!!-----(After-Exec--PingRoaming)!!
-							fi
-							Fp_ToutCNT=$((Fp_ToutCNT+1))
-							if [ $Fp_ToutCNT -gt 9999 ] ; then
-								Fp_ToutCNT=100
-							fi
-						else
-							Fp_aliveCNT=$((Fp_aliveCNT+1))
-							if [ $Fp_aliveCNT -gt 9999 ] ; then
-								Fp_aliveCNT=100
-							fi
-							Fp_ToutCNT=0  ##---------Fp_ToutCNT::NotUSEed~~Yet~~
+						Fp_ToutCNT=$((Fp_ToutCNT+1))
+						if [ $Fp_ToutCNT -gt 9999 ]; then
+							Fp_ToutCNT=100
 						fi
+					else
+						Fp_aliveCNT=$((Fp_aliveCNT+1))
+						if [ $Fp_aliveCNT -gt 9999 ]; then
+							Fp_aliveCNT=100
+						fi
+						Fp_ToutCNT=0  ##---------Fp_ToutCNT::NotUSEed~~Yet~~
 					fi
-					########################################
 				fi
+				########################################
 			fi
 		fi
-		
-	else
-	### In case Station associated not both
+	elif ([ $DWassoWC0 -eq 0 ] && [ $DWassoWC1 -eq 0 ]); then  ############# None------ASSO
 	### else of [ $DWassoWC0 -ne 0 ] && [ $DWassoWC1 -ne 0 ]
-		if [ $DWassoWC0 -eq 0 ] && [ $DWassoWC1 -eq 0 ] ; then  ############# None------ASSO
-			if [ $DW_WLactCNT -lt 2 ] ; then
-				log "00000000000000000000000000000000000> Wlan0 and Wlan1 PingIP=$PingIP1"
-				/usr/sbin/brctl addif br-lan wlan0  ##+
-				/usr/sbin/brctl addif br-lan wlan1  ##+
-				##
-				sleep 5 # sleep 5secs to wait until network stable
-				PingIP=$PingIP1
-			fi
-		else
-			################################################	############# ONE-------ASSO
-			if [ $DWassoWC0 -ne 0 ] && [ $DWassoWC1 -eq 0 ] ; then  ###### wlan0--ASSO
-				if [ "$DW_WLact" != "wlan0" ] ; then
-					log "00000000000000000000000000000000000> Wlan0 PingIP=$PingIP1"
-					/usr/sbin/brctl delif br-lan wlan1  ##-
-					/usr/sbin/brctl addif br-lan wlan0  ##+
-					##
-					sleep 5 # sleep 5secs to wait until network stable
-					PingIP=$PingIP1
-				fi
-			fi
-			if [ $DWassoWC0 -eq 0 ] && [ $DWassoWC1 -ne 0 ] ; then  ###### wlan1--ASSO
-				if [ "$DW_WLact" != "wlan1" ] ; then
-					log "00000000000000000000000000000000000> Wlan1 PingIP=$PingIP2"
-					/usr/sbin/brctl delif br-lan wlan0  ##-
-					/usr/sbin/brctl addif br-lan wlan1  ##+
-					##
-					sleep 5 # sleep 5secs to wait until network stable
-					PingIP=$PingIP2
-				fi
-			fi
+		### In case Station not associated both
+		if [ $DW_WLactCNT -lt 2 ]; then
+			log "00000000000000000000000000000000000> Wlan0 and Wlan1 PingIP=null"
+			/usr/sbin/brctl addif br-lan wlan0  ##+
+			/usr/sbin/brctl addif br-lan wlan1  ##+
+			##
+			sleep 5 # sleep 5secs to wait until network stable
+			PingIP=""
+		fi
+	elif ([ $DWassoWC0 -ne 0 ] && [ $DWassoWC1 -eq 0 ]); then  ###### wlan0--ASSO
+		################################################	############# ONE@0-------ASSO
+		if [ "$DW_WLact" != "wlan0" ]; then
+			log "00000000000000000000000000000000000> Wlan0 PingIP=$PingIP1"
+			/usr/sbin/brctl delif br-lan wlan1  ##-
+			/usr/sbin/brctl addif br-lan wlan0  ##+
+			##
+			sleep 5 # sleep 5secs to wait until network stable
+			PingIP=$PingIP1
+		fi
+	elif ([ $DWassoWC0 -eq 0 ] && [ $DWassoWC1 -ne 0 ]); then  ###### wlan1--ASSO
+		################################################	############# ONE@1-------ASSO
+		if [ "$DW_WLact" != "wlan1" ]; then
+			log "00000000000000000000000000000000000> Wlan1 PingIP=$PingIP2"
+			/usr/sbin/brctl delif br-lan wlan0  ##-
+			/usr/sbin/brctl addif br-lan wlan1  ##+
+			##
+			sleep 5 # sleep 5secs to wait until network stable
+			PingIP=$PingIP2
 		fi
 	fi
 ####(while : ; do)
