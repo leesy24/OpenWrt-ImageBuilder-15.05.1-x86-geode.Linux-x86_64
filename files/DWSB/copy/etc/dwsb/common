@@ -150,9 +150,15 @@ readActual_Wifi() {
 	local disabled=$(uci -q get wireless.@wifi-iface[0].disabled)
 	local wds=$(uci -q get wireless.@wifi-iface[0].wds)
 	local mode_0=$(uci -q get wireless.@wifi-iface[0].mode)
-	[ "$disabled" = "1" ] && {
-		aFstStat="Disable"
-	} || {
+	if [ "$disabled" = "1" ]; then
+		mode_0=""
+		aFstStat="Disabled"
+		mode_0=""
+		aFstSSID="----"
+		aFstFreq="-----"
+		aFstSNR="--"
+		aFstPeer="-----"
+	else
 		[ "$mode_0" = "ap" ] && {
 			[ "$wds" = "1" ] && {
 				aFstStat="APW"
@@ -170,40 +176,45 @@ readActual_Wifi() {
 		[ "$mode_0" != "ap" ] && [ "$mode_0" != "sta" ] && {
 			aFstStat=$mode_0
 		}
-	}
-	aFstSSID=$(uci -q get wireless.@wifi-iface[0].ssid)
-	iwinfo wlan0 info 2>/dev/null > /tmp/iwinfo_info_wlan0
-	iwinfo wlan0 assoclist 2>/dev/null > /tmp/iwinfo_assoclist_wlan0
-	local chan=$(grep "Channel" /tmp/iwinfo_info_wlan0 | awk '{print $4}')
-	([ -z "$chan" ] || [ "$chan" = "unknown" ]) && {
-		chan=$(uci -q get wireless.radio0.channel)
-	}
-	[ "$chan" = "auto" ] && {
-		aFstFreq="Auto"
-	} || {
-		aFstFreq=$(getFrequencyGHz 0 $chan)
-	}
-	# aFstSNR=$(grep "SNR" /tmp/iwinfo_assoclist_wlan0 | awk -F'[()]' '{print $2}' | awk '{print $2}')
-	# [ -z "$aFstSNR" ] && aFstSNR=0
-	aFstSNR=$(grep "Link" /tmp/iwinfo_info_wlan0 | awk '{print $6}' | cut -d'/' -f1)
-	([ -z "$aFstSNR" ] || [ "$aFstSNR" = "unknown" ]) && aFstSNR=0
-	[ "$mode_0" = "ap" ] && {
-		local cnt=$(grep -cE "^([0-9A-F]{2}:){5}[0-9A-F]{2}" /tmp/iwinfo_assoclist_wlan0)
-		[ -z "$cnt" ] && cnt=0
-		aFstPeer="Cnt:$cnt"
-	}
-	[ "$mode_0" = "sta" ] && {
-		local ap=$(grep "Access" /tmp/iwinfo_info_wlan0 | awk '{print $3}')
-		([ -z "$ap" ] || [ "$ap" = "00:00:00:00:00:00" ]) && ap="Not-Associated"
-		aFstPeer="$ap"
-	}
+		aFstSSID=$(uci -q get wireless.@wifi-iface[0].ssid)
+		iwinfo wlan0 info 2>/dev/null > /tmp/iwinfo_info_wlan0
+		iwinfo wlan0 assoclist 2>/dev/null > /tmp/iwinfo_assoclist_wlan0
+		local chan=$(grep "Channel" /tmp/iwinfo_info_wlan0 | awk '{print $4}')
+		([ -z "$chan" ] || [ "$chan" = "unknown" ]) && {
+			chan=$(uci -q get wireless.radio0.channel)
+		}
+		[ "$chan" = "auto" ] && {
+			aFstFreq="Auto"
+		} || {
+			aFstFreq=$(getFrequencyGHz 0 $chan)
+		}
+		# aFstSNR=$(grep "SNR" /tmp/iwinfo_assoclist_wlan0 | awk -F'[()]' '{print $2}' | awk '{print $2}')
+		# [ -z "$aFstSNR" ] && aFstSNR=0
+		aFstSNR=$(grep "Link" /tmp/iwinfo_info_wlan0 | awk '{print $6}' | cut -d'/' -f1)
+		([ -z "$aFstSNR" ] || [ "$aFstSNR" = "unknown" ]) && aFstSNR=0
+		[ "$mode_0" = "ap" ] && {
+			local cnt=$(grep -cE "^([0-9A-F]{2}:){5}[0-9A-F]{2}" /tmp/iwinfo_assoclist_wlan0)
+			[ -z "$cnt" ] && cnt=0
+			aFstPeer="Cnt:$cnt"
+		}
+		[ "$mode_0" = "sta" ] && {
+			local ap=$(grep "Access" /tmp/iwinfo_info_wlan0 | awk '{print $3}')
+			([ -z "$ap" ] || [ "$ap" = "00:00:00:00:00:00" ]) && ap="Not-Associated"
+			aFstPeer="$ap"
+		}
+	fi
 
 	disabled=$(uci -q get wireless.@wifi-iface[1].disabled)
 	wds=$(uci -q get wireless.@wifi-iface[1].wds)
 	local mode_1=$(uci -q get wireless.@wifi-iface[1].mode)
-	[ "$disabled" = "1" ] && {
-		aSndStat="Disable"
-	} || {
+	if [ "$disabled" = "1" ]; then
+		mode_1=""
+		aSndStat="Disabled"
+		aSndSSID="----"
+		aSndFreq="-----"
+		aSndSNR="--"
+		aSndPeer="-----"
+	else
 		[ "$mode_1" = "ap" ] && {
 			[ "$wds" = "1" ] && {
 				aSndStat="APW"
@@ -221,41 +232,43 @@ readActual_Wifi() {
 		[ "$mode_1" != "ap" ] && [ "$mode_1" != "sta" ] && {
 			aSndStat=$mode_1
 		}
-	}
-	aSndSSID=$(uci -q get wireless.@wifi-iface[1].ssid)
-	iwinfo wlan1 info 2>/dev/null > /tmp/iwinfo_info_wlan1
-	iwinfo wlan1 assoclist 2>/dev/null > /tmp/iwinfo_assoclist_wlan1
-	chan=$(grep "Channel" /tmp/iwinfo_info_wlan1 | awk '{print $4}')
-	([ -z "$chan" ] || [ "$chan" = "unknown" ]) && {
-		chan=$(uci -q get wireless.radio1.channel)
-	}
-	[ "$chan" = "auto" ] && {
-		aSndFreq="Auto"
-	} || {
-		aSndFreq=$(getFrequencyGHz 1 $chan)
-	}
-	# aSndSNR=$(iwinfo wlan1 assoclist 2>/dev/null | grep SNR | awk -F'[()]' '{print $2}' | awk '{print $2}')
-	# [ -z "$aSndSNR" ] && aSndSNR=0
-	aSndSNR=$(grep "Link" /tmp/iwinfo_info_wlan1 | awk '{print $6}' | cut -d'/' -f1)
-	([ -z "$aSndSNR" ] || [ "$aSndSNR" = "unknown" ]) && aSndSNR=0
-	[ "$mode_1" = "ap" ] && {
-		local cnt=$(grep -cE "^([0-9A-F]{2}:){5}[0-9A-F]{2}" /tmp/iwinfo_assoclist_wlan1)
-		[ -z "$cnt" ] && cnt=0
-		aSndPeer="Cnt:$cnt"
-	}
-	[ "$mode_1" = "sta" ] && {
-		local ap=$(grep "Access" /tmp/iwinfo_info_wlan1 | awk '{print $3}')
-		([ -z "$ap" ] || [ "$ap" = "00:00:00:00:00:00" ]) && ap="Not-Associated"
-		aSndPeer="$ap"
-	}
+		aSndSSID=$(uci -q get wireless.@wifi-iface[1].ssid)
+		iwinfo wlan1 info 2>/dev/null > /tmp/iwinfo_info_wlan1
+		iwinfo wlan1 assoclist 2>/dev/null > /tmp/iwinfo_assoclist_wlan1
+		chan=$(grep "Channel" /tmp/iwinfo_info_wlan1 | awk '{print $4}')
+		([ -z "$chan" ] || [ "$chan" = "unknown" ]) && {
+			chan=$(uci -q get wireless.radio1.channel)
+		}
+		[ "$chan" = "auto" ] && {
+			aSndFreq="Auto"
+		} || {
+			aSndFreq=$(getFrequencyGHz 1 $chan)
+		}
+		# aSndSNR=$(iwinfo wlan1 assoclist 2>/dev/null | grep SNR | awk -F'[()]' '{print $2}' | awk '{print $2}')
+		# [ -z "$aSndSNR" ] && aSndSNR=0
+		aSndSNR=$(grep "Link" /tmp/iwinfo_info_wlan1 | awk '{print $6}' | cut -d'/' -f1)
+		([ -z "$aSndSNR" ] || [ "$aSndSNR" = "unknown" ]) && aSndSNR=0
+		[ "$mode_1" = "ap" ] && {
+			local cnt=$(grep -cE "^([0-9A-F]{2}:){5}[0-9A-F]{2}" /tmp/iwinfo_assoclist_wlan1)
+			[ -z "$cnt" ] && cnt=0
+			aSndPeer="Cnt:$cnt"
+		}
+		[ "$mode_1" = "sta" ] && {
+			local ap=$(grep "Access" /tmp/iwinfo_info_wlan1 | awk '{print $3}')
+			([ -z "$ap" ] || [ "$ap" = "00:00:00:00:00:00" ]) && ap="Not-Associated"
+			aSndPeer="$ap"
+		}
+	fi
 
 	#-----------------------------#
 	### Load dual station roaming configurations from file
-	[ -e /etc/dwsb/dual_sta_roaming.cfg ] && {
-		cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
-		. /tmp/dual_sta_roaming.cfg
-	}
-	USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
+	if [ -e /etc/dwsb/dual_sta_roaming.cfg ]; then
+		. /etc/dwsb/dual_sta_roaming.cfg
+		USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
+	else
+		USE_DUALSTAROAM_MODE="N"
+	fi
+
 	#-----------------------------#
 	## Set default first Network active
 	aFstActive=""

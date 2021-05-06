@@ -70,8 +70,13 @@ while : ; do
 			[ $retval -ne 0 ] && break
 			# Check changed
 			[ "$inputvar" = "$CUR_USE_DUALSTAROAM_MODE" ] && break
-			# Check string null or Y or N
-			([ -z "$inputvar" ] || [ $inputvar = "Y" ] || [ $inputvar = "N" ]) && {
+			# Check string is null
+			[ -z "$inputvar" ] && {
+				save_value _USE_DUALSTAROAM_MODE "N"
+				break
+			}
+			# Check string is Y or N
+			([ "$inputvar" = "Y" ] || [ "$inputvar" = "N" ]) && {
 				save_value _USE_DUALSTAROAM_MODE $inputvar
 				break
 			}

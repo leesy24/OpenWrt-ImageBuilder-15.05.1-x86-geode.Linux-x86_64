@@ -5,9 +5,13 @@
 . common
 
 cWiFiIndex=$1
-[ "$cWiFiIndex" = "0" ] && cWiFiIndexStr="First"
-[ "$cWiFiIndex" = "1" ] && cWiFiIndexStr="Second"
-[ "$cWiFiIndex" != "0" ] && [ "$cWiFiIndex" != "1" ] && cWiFiIndexStr="Unknown"
+if [ "$cWiFiIndex" = "0" ]; then
+	cWiFiIndexStr="First"
+elif [ "$cWiFiIndex" = "1" ]; then
+	cWiFiIndexStr="Second"
+else
+	cWiFiIndexStr="Unknown"
+fi
 
 Freq24TBL="\
 auto\n\
@@ -27,11 +31,11 @@ while : ; do
 
 	inputvar=""
 
-	if [ "$cWdisabled" = "1" ] ; then
+	if [ "$cWdisabled" = "1" ]; then
 		menuinput "$cWiFiIndexStr WiFi Configure" \
 			'"1WiFi_Mode"   "WiFi disable/AP/ST/WDS __________($cWstat)"
 			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
-	elif [ "$cWencr" = "none" ] ; then
+	elif [ "$cWencr" = "none" ]; then
 		menuinput "$cWiFiIndexStr WiFi Configure" \
 			'"1WiFi_Mode"   "WiFi disable/AP/ST/WDS __________($cWstat)"
 			"2WiFi_Band"    "WiFi Band _______________________($cWband GHz)"
@@ -71,25 +75,25 @@ while : ; do
 			# Check changed
 			[ "$inputvar" = "$cWstat" ] && break
 			# Check input string is one of WiFi Mode
-			if [ "$inputvar" = "Disable" ] ; then
+			if [ "$inputvar" = "Disable" ]; then
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].disabled="1"
 				break
-			elif [ "$inputvar" = "AP" ] ; then
+			elif [ "$inputvar" = "AP" ]; then
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].disabled="0"
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].wds="0"
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].mode="ap"
 				break
-			elif [ "$inputvar" = "APW" ] ; then
+			elif [ "$inputvar" = "APW" ]; then
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].disabled="0"
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].wds="1"
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].mode="ap"
 				break
-			elif [ "$inputvar" = "ST" ] ; then
+			elif [ "$inputvar" = "ST" ]; then
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].disabled="0"
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].wds="0"
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].mode="sta"
 				break
-			elif [ "$inputvar" = "STW" ] ; then
+			elif [ "$inputvar" = "STW" ]; then
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].disabled="0"
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].wds="1"
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].mode="sta"
@@ -115,11 +119,11 @@ while : ; do
 			# Check changed
 			[ "$inputvar" = "$cWband" ] && break
 			# Check input string is one of WiFi Mode
-			if [ "$inputvar" = "2.4" ] ; then
+			if [ "$inputvar" = "2.4" ]; then
 				add_config_new_set_cmd wireless.radio$cWiFiIndex.hwmode="11g"
 				add_config_new_set_cmd wireless.radio$cWiFiIndex.channel="auto"
 				break
-			elif [ "$inputvar" = "5" ] ; then
+			elif [ "$inputvar" = "5" ]; then
 				add_config_new_set_cmd wireless.radio$cWiFiIndex.hwmode="11a"
 				add_config_new_set_cmd wireless.radio$cWiFiIndex.channel="auto"
 				break
@@ -144,16 +148,20 @@ while : ; do
 			[ $retval -ne 0 ] && break
 			# Check changed
 			[ "$inputvar" = "$cWfreq" ] && break
-			# Check one of FreqTBL
-			[ -n "$inputvar" ] && [ "$inputvar" = "auto" ] && {
-                add_config_new_set_cmd wireless.radio$cWiFiIndex.channel="$inputvar"
-                break
-            }
-			[ -n "$inputvar" ] && [ "$inputvar" = "$(echo "$FreqTBL" | grep -o -E -m1 "( $inputvar\([0-9]*\))" | cut -d' ' -f2 | cut -d'(' -f1)" ] && {
-				add_config_new_set_cmd wireless.radio$cWiFiIndex.channel="$(echo "$FreqTBL" | grep -o -E -m1 "($inputvar\([0-9]*\))" | cut -d'(' -f2 | cut -d')' -f1)"
-				break
-			}
-			errormsg="Check input one of Freq table"
+			# Check input string is not null
+			if [ -n "$inputvar" ]; then
+				if [ "$inputvar" = "auto" ]; then
+					add_config_new_set_cmd wireless.radio$cWiFiIndex.channel="$inputvar"
+					break
+				else
+				# Check input string is one of FreqTBL
+					if [ "$inputvar" = "$(echo "$FreqTBL" | grep -o -E -m1 "( $inputvar\([0-9]*\))" | cut -d' ' -f2 | cut -d'(' -f1)" ]; then
+						add_config_new_set_cmd wireless.radio$cWiFiIndex.channel="$(echo "$FreqTBL" | grep -o -E -m1 "( $inputvar\([0-9]*\))" | cut -d'(' -f2 | cut -d')' -f1)"
+						break
+					fi
+				fi
+			fi
+			errormsg="Check input is one of Freq table!"
 		done
 		;;
 
@@ -163,7 +171,7 @@ while : ; do
 		while :; do
 			textinput \
 				 "Please enter AP SSID/Name ...\n\n"$(
-				)"Examples:\n"$(
+				)"Examples: must input less and equal than 4 chars\n"$(
 	 			)" ex1)AP01  ex2)APnn\n"$(
 				)"\n$errormsg\n" \
 				"$inputvar"
@@ -172,12 +180,12 @@ while : ; do
 			[ $retval -ne 0 ] && break
 			# Check changed
 			[ "$inputvar" = "$cWssid" ] && break
-			# Check input string is not null
-			if [ -n "$inputvar" ] ; then
+			# Check input string is not null and less or equal than 4 chars
+			if ([ -n "$inputvar" ] && [ ${#inputvar} -le 4 ]); then
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].ssid="$inputvar"
 				break
 			fi
-			errormsg="Check input value is SSID!"
+			errormsg="Check input value is less or equal than 4 chars SSID !"
 		done
 		;;
 
@@ -197,10 +205,10 @@ while : ; do
 			# Check changed
 			[ "$inputvar" = "$cWinlimit" ] && break
 			# Check string greater than zero
-			[ $inputvar -gt 0 ] 2>/dev/null && {
+			if ([ -n "$inputvar" ] && [ $inputvar -gt 0 ]); then
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].max_inactivity="$inputvar"
 				break
-			}
+			fi
 			errormsg="Check input value is greater than 0!"
 		done
 		;;
@@ -221,14 +229,14 @@ while : ; do
 			# Check changed
 			[ "$inputvar" = "$cWencr" ] && break
 			# Check encryption types
-			if [ "$inputvar" = "psk2+ccmp" ] ; then
-				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].encryption="psk2+ccmp"
+			if ([ -z "$inputvar" ] || [ "$inputvar" = "none" ]); then
+				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].encryption="none"
 				break
-			elif [ "$inputvar" = "wep-open" ] ; then
+			elif [ "$inputvar" = "wep-open" ]; then
 				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].encryption="wep-open"
 				break
-			elif [ -z "$inputvar" ] || [ "$inputvar" = "none" ] ; then
-				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].encryption="none"
+			elif [ "$inputvar" = "psk2+ccmp" ]; then
+				add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].encryption="psk2+ccmp"
 				break
 			fi
 			errormsg="Check input value is one of encryption type!"
@@ -242,8 +250,8 @@ while : ; do
 			if [ "$cWencr" = "psk2+ccmp" ] ; then
 				textinput \
 					 "Please enter Wireless LAN Encription-Key-Code...\n\n"$(
-					)"Examples: must input more and equal than 8 chars\n"$(
-	 				)" ex1)12345678  ex2)1234567890123\n"$(
+					)"Examples: must input greater or equal than 8 chars\n"$(
+	 				)" ex1)12345678  ex2)1234567890  ex2)1234567890123\n"$(
 					)"\n$errormsg\n" \
 					"$inputvar"
 				retval=$?
@@ -252,10 +260,11 @@ while : ; do
 				# Check changed
 				[ "$inputvar" = "$cWencr" ] && break
 				# Check input string is not null
-				if [ -n "$inputvar" ] ; then
+				if ([ -n "$inputvar" ] && [ ${#inputvar} -ge 8 ]); then
 					add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].key="$inputvar"
 					break
 				fi
+				errormsg="Check input key code and size is greater or equal than 8 chars!"
 			else # elif [ "$cWencr" = "wep-open" ] ; then
 				textinput \
 					 "Please enter Wireless LAN Encription-Key-Code...\n\n"$(
@@ -269,13 +278,13 @@ while : ; do
 				# Check changed
 				[ "$inputvar" = "$cWencr" ] && break
 				# Check input string is not null
-				if [ -n "$inputvar" ] && ([ ${#inputvar} -eq 5 ] || [ ${#inputvar} -eq 13 ])  ; then
+				if ([ -n "$inputvar" ] && ([ ${#inputvar} -eq 5 ] || [ ${#inputvar} -eq 13 ])); then
 					add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].key="1"
 					add_config_new_set_cmd wireless.@wifi-iface[$cWiFiIndex].key1="s:$inputvar"
 					break
 				fi
+				errormsg="Check input key code and size is 5 or 13 chars!"
 			fi
-			errormsg="Check input key code and size is 5 or 13!"
 		done
 		;;
 
