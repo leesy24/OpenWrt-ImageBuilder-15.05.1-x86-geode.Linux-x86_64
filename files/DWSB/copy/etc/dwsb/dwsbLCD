@@ -18,11 +18,12 @@ exec 2>/dev/null
 
 #-----------------------------#
 ### Load dual station roaming configurations from file
-[ -e /etc/dwsb/dual_sta_roaming.cfg ] && {
-	cp /etc/dwsb/dual_sta_roaming.cfg /tmp/dual_sta_roaming.cfg
-	. /tmp/dual_sta_roaming.cfg
-}
-USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
+if [ -e /etc/dwsb/dual_sta_roaming.cfg ]; then
+	. /etc/dwsb/dual_sta_roaming.cfg
+	USE_DUALSTAROAM_MODE=$_USE_DUALSTAROAM_MODE
+else
+	USE_DUALSTAROAM_MODE="N"
+fi
 #-----------------------------#
 
 iface_index_1st=0
@@ -65,6 +66,7 @@ readLines() {
 	local fstCnt
 	local fstAP
 	if [ "$fstDisabled" = "1" ]; then
+		fstImode=""
 		fstMode="Disabled"
 	else
 		iwinfo wlan$iface_index_1st info 2>/dev/null > /tmp/iwinfo_info_wlan$iface_index_1st
@@ -113,6 +115,7 @@ readLines() {
 	local sndCnt
 	local sndAP
 	if [ "$sndDisabled" = "1" ]; then
+		sndImode=""
 		sndMode="Disabled"
 	else
 		iwinfo wlan$iface_index_2nd info 2>/dev/null > /tmp/iwinfo_info_wlan$iface_index_2nd
