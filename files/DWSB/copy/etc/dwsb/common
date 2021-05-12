@@ -301,26 +301,26 @@ readNewOrg_Wifi() {
 	fi
 	cWdisabled=$(get_config_new_org_value wireless.@wifi-iface[$1].disabled)
 	local wds=$(get_config_new_org_value wireless.@wifi-iface[$1].wds)
-	local mode=$(get_config_new_org_value wireless.@wifi-iface[$1].mode)
+	cWmode=$(get_config_new_org_value wireless.@wifi-iface[$1].mode)
 	[ "$cWdisabled" = "1" ] && {
 		cWstat="Disable"
 	} || {
-		[ "$mode" = "ap" ] && {
+		[ "$cWmode" = "ap" ] && {
 			[ "$wds" = "1" ] && {
 				cWstat="APW"
 			} || {
 				cWstat="AP"
 			}
 		}
-		[ "$mode" = "sta" ] && {
+		[ "$cWmode" = "sta" ] && {
 			[ "$wds" = "1" ] && {
 				cWstat="STW"
 			} || {
 				cWstat="ST"
 			}
 		}
-		[ "$mode" != "ap" ] && [ "$mode" != "sta" ] && {
-			cWstat=$mode
+		[ "$cWmode" != "ap" ] && [ "$cWmode" != "sta" ] && {
+			cWstat=$cWmode
 		}
 	}
     local chan=$(get_config_new_org_value wireless.radio$1.channel)
