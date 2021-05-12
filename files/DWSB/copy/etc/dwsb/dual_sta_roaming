@@ -119,7 +119,7 @@ while : ; do
 			[ $retval -ne 0 ] && break
 			# Check changed
 			[ "$inputvar" = "$CUR_SNRdelta" ] && break
-			# Check 0 < value < 70
+			# Check 0 <= value <= 70
 			[ -n "$inputvar" ] && [ $inputvar -ge 0 ] 2>/dev/null && [ $inputvar -le 35 ] 2>/dev/null && {
 				save_value _SNRdelta $inputvar
 				break
@@ -183,7 +183,7 @@ while : ; do
 		errormsg=""
 		while :; do
 			textinput \
-				"Please enter Time Out to ping AP IP in milli-second(> 0)\n\n"$(
+				"Please enter ping Time Out in milli-second(0 < TO <= 1000)\n\n"$(
 				)"Examples:\n"$(
 				)" 1  7  10  20\n"$(
 				)"\n$errormsg\n" \
@@ -194,11 +194,11 @@ while : ; do
 			# Check changed
 			[ "$inputvar" = "$CUR_PingTO" ] && break
 			# Check greater than zero
-			[ $inputvar -gt 0 ] 2>/dev/null && {
+			([ $inputvar -gt 0 ] 2>/dev/null && [ $inputvar -le 1000 ] 2>/dev/null) && {
 				save_value _PingTO $inputvar
 				break
 			}
-			errormsg="Check input value is greater than 0!"
+			errormsg="Check input value is greater than 0 and little equal than 1000 !"
 		done
 		;;
 
@@ -207,7 +207,7 @@ while : ; do
 		errormsg=""
 		while :; do
 			textinput \
-				"Please enter Fail Count(0 < c <= 5) to ping AP IP\n"$(
+				"Please enter ping Fail Count(0 < FC <= 5) to run roaming\n"$(
 				)" Ping disabled when zero or empty\n\n"$(
 				)"Examples:\n"$(
 				)" 1  2  3  4  5\n"$(
@@ -218,12 +218,12 @@ while : ; do
 			[ $retval -ne 0 ] && break
 			# Check changed
 			[ "$inputvar" = "$CUR_PingFC" ] && break
-			# Check string null or greater and equal than zero
-			([ -z "$inputvar" ] || [ $inputvar -ge 0 ] 2>/dev/null || [ $inputvar -le 5 ] 2>/dev/null) && {
+			# Check string null or greater equal than zero and little equal than 5
+			([ -z "$inputvar" ] || ([ $inputvar -ge 0 ] 2>/dev/null && [ $inputvar -le 5 ] 2>/dev/null)) && {
 				save_value _PingFC $inputvar
 				break
 			}
-			errormsg="Check input value is empty or greater and equal than 0 and little equal 5 !"
+			errormsg="Check input value is empty or greater equal than 0 and little equal than 5 !"
 		done
 		;;
 
