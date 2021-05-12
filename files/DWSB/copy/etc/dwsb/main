@@ -130,9 +130,9 @@ while : ; do
 					"2LanConfig"          ">> LAN Network ____________________Configure <<"
 					"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
 					"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
-					"6SaveCommit"         "Commit All Configure Save!"
-					"7SaveReboot"         "Save(commit) & ReBOOT....!"
-					"8JustREBOOT"         "==============>ReBOOT....!"'
+					"5aveCommit"         "Commit All Configure Save!"
+					"6SaveReboot"         "Save(commit) & ReBOOT....!"
+					"7JustREBOOT"         "==============>ReBOOT....!"'
 			fi
 		else
 			if [ "$cWmode_1" = "sta" ]; then
@@ -154,9 +154,9 @@ while : ; do
 					"2LanConfig"          ">> LAN Network ____________________Configure <<"
 					"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
 					"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
-					"6SaveCommit"         "Commit All Configure Save!"
-					"7SaveReboot"         "Save(commit) & ReBOOT....!"
-					"8JustREBOOT"         "==============>ReBOOT....!"'
+					"5SaveCommit"         "Commit All Configure Save!"
+					"6SaveReboot"         "Save(commit) & ReBOOT....!"
+					"7JustREBOOT"         "==============>ReBOOT....!"'
 			fi
 		fi
 	fi
