@@ -49,6 +49,7 @@ define Profile/DWSB
 		lftp \
 		libiwinfo-lua \
 		libncurses \
+		lm-sensors \
 		luci-base luci-mod-admin-full luci-theme-bootstrap \
 		-mkdosfs \
 		-odhcp6c -odhcpd \
