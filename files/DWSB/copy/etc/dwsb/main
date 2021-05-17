@@ -130,7 +130,7 @@ while : ; do
 					"2LanConfig"          ">> LAN Network ____________________Configure <<"
 					"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
 					"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
-					"5aveCommit"         "Commit All Configure Save!"
+					"5SaveCommit"         "Commit All Configure Save!"
 					"6SaveReboot"         "Save(commit) & ReBOOT....!"
 					"7JustREBOOT"         "==============>ReBOOT....!"'
 			fi
