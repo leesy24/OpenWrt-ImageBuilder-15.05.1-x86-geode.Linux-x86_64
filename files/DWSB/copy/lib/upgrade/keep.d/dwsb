@@ -1,3 +1,5 @@
 /etc/dwsb/channel_roaming_0.cfg
 /etc/dwsb/channel_roaming_1.cfg
 /etc/dwsb/dual_sta_roaming.cfg
+/etc/dwsb/link_int_checking_0.cfg
+/etc/dwsb/link_int_checking_1.cfg

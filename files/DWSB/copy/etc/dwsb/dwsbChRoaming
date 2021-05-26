@@ -165,7 +165,7 @@ elif [ $iface_index -eq 1 ] ; then
 	iface_index_str="2nd"
 else
 	# in case not [ $iface_index -eq 0 ] || [ $iface_index -eq 1 ]
-	log "Station index($iface_index) not valid. ---> exit"
+	log "Interface index($iface_index) is not valid. ---> exit"
 	exit 1
 fi
 

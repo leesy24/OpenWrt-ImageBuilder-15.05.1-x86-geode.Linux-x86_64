@@ -10,6 +10,10 @@ CH_ROAMING_0_CONFIG_org="/etc/dwsb/channel_roaming_0.cfg"
 CH_ROAMING_0_CONFIG_tmp="/tmp/channel_roaming_0.cfg"
 CH_ROAMING_1_CONFIG_org="/etc/dwsb/channel_roaming_1.cfg"
 CH_ROAMING_1_CONFIG_tmp="/tmp/channel_roaming_1.cfg"
+LNKI_CHECKING_0_CONFIG_org="/etc/dwsb/link_int_checking_0.cfg"
+LNKI_CHECKING_0_CONFIG_tmp="/tmp/link_int_checking_0.cfg"
+LNKI_CHECKING_1_CONFIG_org="/etc/dwsb/link_int_checking_1.cfg"
+LNKI_CHECKING_1_CONFIG_tmp="/tmp/link_int_checking_1.cfg"
 
 init_config_org
 
@@ -29,8 +33,8 @@ while : ; do
 			'"ReviewStatus"       "Review Status .... Enter!"
 			"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
 			"2LanConfig"          ">> LAN Network ____________________Configure <<"
-			"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
-			"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
+			"3FirstWiFiConfig"    ">> 1st Wireless Network (Disable) _Configure <<"
+			"4SecondWiFiConfig"   ">> 2nd Wireless Network (Disable) _Configure <<"
 			"5SaveCommit"         "Commit All Configure Save!"
 			"6SaveReboot"         "Save(commit) & ReBOOT....!"
 			"7ustREBOOT"         "==============>ReBOOT....!"'
@@ -40,20 +44,30 @@ while : ; do
 				'"ReviewStatus"       "Review Status .... Enter!"
 				"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
 				"2LanConfig"          ">> LAN Network ____________________Configure <<"
-				"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
-				"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
+				"3FirstWiFiConfig"    ">> 1st Wireless Network (Station) _Configure <<"
+				"4SecondWiFiConfig"   ">> 2nd Wireless Network (Disable) _Configure <<"
 				"5ChRoamFirstConfig"  ">> Channel Roaming 1st Station ____Configure <<"
 				"6SaveCommit"         "Commit All Configure Save!"
 				"7SaveReboot"         "Save(commit) & ReBOOT....!"
 				"8JustREBOOT"         "==============>ReBOOT....!"'
-		# elif [ "$cWmode_0" = "ap" ]; then
+		elif [ "$cWmode_0" = "ap" ]; then
+			menuinput "Status Overview" \
+				'"ReviewStatus"       "Review Status .... Enter!"
+				"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
+				"2LanConfig"          ">> LAN Network ____________________Configure <<"
+				"3FirstWiFiConfig"    ">> 1st Wireless Network (AP) ______Configure <<"
+				"4SecondWiFiConfig"   ">> 2nd Wireless Network (Disable) _Configure <<"
+				"5LnkICFirstConfig"   ">> Link Integrity Checking 1st AP _Configure <<"
+				"6SaveCommit"         "Commit All Configure Save!"
+				"7SaveReboot"         "Save(commit) & ReBOOT....!"
+				"8JustREBOOT"         "==============>ReBOOT....!"'
 		else
 			menuinput "Status Overview" \
 				'"ReviewStatus"       "Review Status .... Enter!"
 				"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
 				"2LanConfig"          ">> LAN Network ____________________Configure <<"
-				"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
-				"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
+				"3FirstWiFiConfig"    ">> 1st Wireless Network (Unknown) _Configure <<"
+				"4SecondWiFiConfig"   ">> 2nd Wireless Network (Disable) _Configure <<"
 				"5SaveCommit"         "Commit All Configure Save!"
 				"6SaveReboot"         "Save(commit) & ReBOOT....!"
 				"7JustREBOOT"         "==============>ReBOOT....!"'
@@ -64,20 +78,30 @@ while : ; do
 				'"ReviewStatus"       "Review Status .... Enter!"
 				"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
 				"2LanConfig"          ">> LAN Network ____________________Configure <<"
-				"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
-				"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
+				"3FirstWiFiConfig"    ">> 1st Wireless Network (Disable) _Configure <<"
+				"4SecondWiFiConfig"   ">> 2nd Wireless Network (Station) _Configure <<"
 				"5ChRoamSecondConfig" ">> Channel Roaming 2nd Station ____Configure <<"
 				"6SaveCommit"         "Commit All Configure Save!"
 				"7SaveReboot"         "Save(commit) & ReBOOT....!"
 				"8JustREBOOT"         "==============>ReBOOT....!"'
-		# elif [ "$cWmode_1" = "ap" ]; then
+		elif [ "$cWmode_1" = "ap" ]; then
+			menuinput "Status Overview" \
+				'"ReviewStatus"       "Review Status .... Enter!"
+				"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
+				"2LanConfig"          ">> LAN Network ____________________Configure <<"
+				"3FirstWiFiConfig"    ">> 1st Wireless Network (Disable) _Configure <<"
+				"4SecondWiFiConfig"   ">> 2nd Wireless Network (AP) ______Configure <<"
+				"5LnkICSecondConfig"  ">> Link Integrity Checking 2nd AP _Configure <<"
+				"6SaveCommit"         "Commit All Configure Save!"
+				"7SaveReboot"         "Save(commit) & ReBOOT....!"
+				"8JustREBOOT"         "==============>ReBOOT....!"'
 		else
 			menuinput "Status Overview" \
 				'"ReviewStatus"       "Review Status .... Enter!"
 				"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
 				"2LanConfig"          ">> LAN Network ____________________Configure <<"
-				"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
-				"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
+				"3FirstWiFiConfig"    ">> 1st Wireless Network (Disable) _Configure <<"
+				"4SecondWiFiConfig"   ">> 2nd Wireless Network (Unknown) _Configure <<"
 				"5SaveCommit"         "Commit All Configure Save!"
 				"6SaveReboot"         "Save(commit) & ReBOOT....!"
 				"7JustREBOOT"         "==============>ReBOOT....!"'
@@ -89,22 +113,33 @@ while : ; do
 					'"ReviewStatus"       "Review Status .... Enter!"
 					"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
 					"2LanConfig"          ">> LAN Network ____________________Configure <<"
-					"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
-					"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
+					"3FirstWiFiConfig"    ">> 1st Wireless Network (Station) _Configure <<"
+					"4SecondWiFiConfig"   ">> 2nd Wireless Network (Station) _Configure <<"
 					"5ChRoamFirstConfig"  ">> Channel Roaming 1st Station ____Configure <<"
 					"6ChRoamSecondConfig" ">> Channel Roaming 2nd Station ____Configure <<"
 					"7DualStaRoamConfig"  ">> Dual-Station Roaming ___________Configure <<"
 					"8SaveCommit"         "Commit All Configure Save!"
 					"9SaveReboot"         "Save(commit) & ReBOOT....!"
 					"0JustREBOOT"         "==============>ReBOOT....!"'
-			#elif [ "$cWmode_1" = "ap" ]; then
+			elif [ "$cWmode_1" = "ap" ]; then
+				menuinput "Status Overview" \
+					'"ReviewStatus"       "Review Status .... Enter!"
+					"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
+					"2LanConfig"          ">> LAN Network ____________________Configure <<"
+					"3FirstWiFiConfig"    ">> 1st Wireless Network (Station) _Configure <<"
+					"4SecondWiFiConfig"   ">> 2nd Wireless Network (AP) ______Configure <<"
+					"5ChRoamFirstConfig"  ">> Channel Roaming 1st Station ____Configure <<"
+					"6LnkICSecondConfig"  ">> Link Integrity Checking 2nd AP _Configure <<"
+					"7SaveCommit"         "Commit All Configure Save!"
+					"8SaveReboot"         "Save(commit) & ReBOOT....!"
+					"9JustREBOOT"         "==============>ReBOOT....!"'
 			else
 				menuinput "Status Overview" \
 					'"ReviewStatus"       "Review Status .... Enter!"
 					"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
 					"2LanConfig"          ">> LAN Network ____________________Configure <<"
-					"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
-					"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
+					"3FirstWiFiConfig"    ">> 1st Wireless Network (Station) _Configure <<"
+					"4SecondWiFiConfig"   ">> 2nd Wireless Network (Unknown) _Configure <<"
 					"5ChRoamFirstConfig"  ">> Channel Roaming 1st Station ____Configure <<"
 					"6SaveCommit"         "Commit All Configure Save!"
 					"7SaveReboot"         "Save(commit) & ReBOOT....!"
@@ -116,20 +151,32 @@ while : ; do
 					'"ReviewStatus"       "Review Status .... Enter!"
 					"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
 					"2LanConfig"          ">> LAN Network ____________________Configure <<"
-					"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
-					"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
-					"5ChRoamSecondConfig" ">> Channel Roaming 2nd Station ____Configure <<"
-					"6SaveCommit"         "Commit All Configure Save!"
-					"7SaveReboot"         "Save(commit) & ReBOOT....!"
-					"8JustREBOOT"         "==============>ReBOOT....!"'
-			#elif [ "$cWmode_1" = "ap" ]; then
+					"3FirstWiFiConfig"    ">> 1st Wireless Network (AP) ______Configure <<"
+					"4SecondWiFiConfig"   ">> 2nd Wireless Network (Station) _Configure <<"
+					"5LnkICFirstConfig"   ">> Link Integrity Checking 1st AP _Configure <<"
+					"6ChRoamSecondConfig" ">> Channel Roaming 2nd Station ____Configure <<"
+					"7SaveCommit"         "Commit All Configure Save!"
+					"8SaveReboot"         "Save(commit) & ReBOOT....!"
+					"9JustREBOOT"         "==============>ReBOOT....!"'
+			elif [ "$cWmode_1" = "ap" ]; then
+				menuinput "Status Overview" \
+					'"ReviewStatus"       "Review Status .... Enter!"
+					"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
+					"2LanConfig"          ">> LAN Network ____________________Configure <<"
+					"3FirstWiFiConfig"    ">> 1st Wireless Network (AP) ______Configure <<"
+					"4SecondWiFiConfig"   ">> 2nd Wireless Network (AP) ______Configure <<"
+					"5LnkICFirstConfig"   ">> Link Integrity Checking 1st AP _Configure <<"
+					"6LnkICSecondConfig"  ">> Link Integrity Checking 2nd AP _Configure <<"
+					"7SaveCommit"         "Commit All Configure Save!"
+					"8SaveReboot"         "Save(commit) & ReBOOT....!"
+					"9JustREBOOT"         "==============>ReBOOT....!"'
 			else
 				menuinput "Status Overview" \
 					'"ReviewStatus"       "Review Status .... Enter!"
 					"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
 					"2LanConfig"          ">> LAN Network ____________________Configure <<"
-					"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
-					"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
+					"3FirstWiFiConfig"    ">> 1st Wireless Network (AP) ______Configure <<"
+					"4SecondWiFiConfig"   ">> 2nd Wireless Network (Unknown) _Configure <<"
 					"5SaveCommit"         "Commit All Configure Save!"
 					"6SaveReboot"         "Save(commit) & ReBOOT....!"
 					"7JustREBOOT"         "==============>ReBOOT....!"'
@@ -140,20 +187,30 @@ while : ; do
 					'"ReviewStatus"       "Review Status .... Enter!"
 					"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
 					"2LanConfig"          ">> LAN Network ____________________Configure <<"
-					"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
-					"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
+					"3FirstWiFiConfig"    ">> 1st Wireless Network (Unknown) _Configure <<"
+					"4SecondWiFiConfig"   ">> 2nd Wireless Network (Station) _Configure <<"
 					"5ChRoamSecondConfig" ">> Channel Roaming 2nd Station ____Configure <<"
 					"6SaveCommit"         "Commit All Configure Save!"
 					"7SaveReboot"         "Save(commit) & ReBOOT....!"
 					"8JustREBOOT"         "==============>ReBOOT....!"'
-			#elif [ "$cWmode_1" = "ap" ]; then
+			elif [ "$cWmode_1" = "ap" ]; then
+				menuinput "Status Overview" \
+					'"ReviewStatus"       "Review Status .... Enter!"
+					"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
+					"2LanConfig"          ">> LAN Network ____________________Configure <<"
+					"3FirstWiFiConfig"    ">> 1st Wireless Network (Unknown) _Configure <<"
+					"4SecondWiFiConfig"   ">> 2nd Wireless Network (AP) ______Configure <<"
+					"5LnkICSecondConfig"  ">> Link Integrity Checking 2nd AP _Configure <<"
+					"6SaveCommit"         "Commit All Configure Save!"
+					"7SaveReboot"         "Save(commit) & ReBOOT....!"
+					"8JustREBOOT"         "==============>ReBOOT....!"'
 			else
 				menuinput "Status Overview" \
 					'"ReviewStatus"       "Review Status .... Enter!"
 					"1SystemConfig"       ">> Host Name & Date time __________Configure <<"
 					"2LanConfig"          ">> LAN Network ____________________Configure <<"
-					"3FirstWiFiConfig"    ">> 1st Wireless Network ___________Configure <<"
-					"4SecondWiFiConfig"   ">> 2nd Wireless Network ___________Configure <<"
+					"3FirstWiFiConfig"    ">> 1st Wireless Network (Unknown) _Configure <<"
+					"4SecondWiFiConfig"   ">> 2nd Wireless Network (Unknown) _Configure <<"
 					"5SaveCommit"         "Commit All Configure Save!"
 					"6SaveReboot"         "Save(commit) & ReBOOT....!"
 					"7JustREBOOT"         "==============>ReBOOT....!"'
@@ -182,6 +239,14 @@ while : ; do
 		/etc/dwsb/net_wifi 1
 		;;
 
+	5LnkICFirstConfig)
+		/etc/dwsb/link_int_checking 0
+		;;
+
+	5LnkICSecondConfig | 6LnkICSecondConfig)
+		/etc/dwsb/link_int_checking 1
+		;;
+
 	5ChRoamFirstConfig)
 		/etc/dwsb/channel_roaming 0
 		;;
@@ -194,7 +259,7 @@ while : ; do
 		/etc/dwsb/dual_sta_roaming
 		;;
 
-	5SaveCommit | 6SaveCommit | 8SaveCommit)
+	5SaveCommit | 6SaveCommit | 7SaveCommit | 8SaveCommit)
 		textinput \
 			 "Commit All Configures & Save Now?? [Yes/No]\n\n"$(
 			)"Please Enter:\n"$(
@@ -205,12 +270,16 @@ while : ; do
 			/etc/init.d/dwsbDualStaRoaming stop 2>/dev/null
 			/etc/init.d/dwsbChRoaming_1 stop 2>/dev/null
 			/etc/init.d/dwsbChRoaming_0 stop 2>/dev/null
+			/etc/init.d/dwsbLnkIChecking_0 stop 2>/dev/null
+			/etc/init.d/dwsbLnkIChecking_1 stop 2>/dev/null
 
 			clear
 			echo ; echo "[$aHostname].... Commit All Configures Save Now!!"
 			[ -f $DUAL_STA_ROAMING_CONFIG_tmp ] && mv $DUAL_STA_ROAMING_CONFIG_tmp $DUAL_STA_ROAMING_CONFIG_org
 			[ -f $CH_ROAMING_0_CONFIG_tmp ] && mv $CH_ROAMING_0_CONFIG_tmp $CH_ROAMING_0_CONFIG_org
 			[ -f $CH_ROAMING_1_CONFIG_tmp ] && mv $CH_ROAMING_1_CONFIG_tmp $CH_ROAMING_1_CONFIG_org
+			[ -f $LNKI_CHECKING_0_CONFIG_tmp ] && mv $LNKI_CHECKING_0_CONFIG_tmp $LNKI_CHECKING_0_CONFIG_org
+			[ -f $LNKI_CHECKING_1_CONFIG_tmp ] && mv $LNKI_CHECKING_1_CONFIG_tmp $LNKI_CHECKING_1_CONFIG_org
 			apply_config_new_4_commit
 			clean_config_new
 			uci commit
@@ -220,6 +289,8 @@ while : ; do
 			/etc/init.d/network restart
 			sleep 5
 
+			/etc/init.d/dwsbLnkIChecking_0 start 2>/dev/null
+			/etc/init.d/dwsbLnkIChecking_1 start 2>/dev/null
 			/etc/init.d/dwsbChRoaming_0 start 2>/dev/null
 			/etc/init.d/dwsbChRoaming_1 start 2>/dev/null
 			/etc/init.d/dwsbDualStaRoaming start 2>/dev/null
@@ -228,7 +299,7 @@ while : ; do
 		fi
 		;;
 
-	6SaveReboot | 7SaveReboot | 9SaveReboot)
+	6SaveReboot | 7SaveReboot | 8SaveReboot | 9SaveReboot)
 		textinput \
 			 "Commit All Configures & ReBOOT Now?? [Yes/No]\n\n"$(
 			)"Please Enter:\n"$(
@@ -239,12 +310,16 @@ while : ; do
 			/etc/init.d/dwsbDualStaRoaming stop 2>/dev/null
 			/etc/init.d/dwsbChRoaming_1 stop 2>/dev/null
 			/etc/init.d/dwsbChRoaming_0 stop 2>/dev/null
+			/etc/init.d/dwsbLnkIChecking_0 stop 2>/dev/null
+			/etc/init.d/dwsbLnkIChecking_1 stop 2>/dev/null
 
 			clear
 			echo ; echo "[$aHostname].... Commit All Configures Now!!"
 			[ -f $DUAL_STA_ROAMING_CONFIG_tmp ] && mv $DUAL_STA_ROAMING_CONFIG_tmp $DUAL_STA_ROAMING_CONFIG_org
 			[ -f $CH_ROAMING_0_CONFIG_tmp ] && mv $CH_ROAMING_0_CONFIG_tmp $CH_ROAMING_0_CONFIG_org
 			[ -f $CH_ROAMING_1_CONFIG_tmp ] && mv $CH_ROAMING_1_CONFIG_tmp $CH_ROAMING_1_CONFIG_org
+			[ -f $LNKI_CHECKING_0_CONFIG_tmp ] && mv $LNKI_CHECKING_0_CONFIG_tmp $LNKI_CHECKING_0_CONFIG_org
+			[ -f $LNKI_CHECKING_1_CONFIG_tmp ] && mv $LNKI_CHECKING_1_CONFIG_tmp $LNKI_CHECKING_1_CONFIG_org
 			apply_config_new_4_commit
 			clean_config_new
 			uci commit
@@ -258,7 +333,7 @@ while : ; do
 		fi
 		;;
 
-	7JustREBOOT | 8JustREBOOT | 0JustREBOOT)
+	7JustREBOOT | 8JustREBOOT | 9JustREBOOT | 0JustREBOOT)
 		textinput \
 			 "===============> ReBOOT Now?? [Yes/No]\n\n"$(
 			)"Please Enter:\n"$(

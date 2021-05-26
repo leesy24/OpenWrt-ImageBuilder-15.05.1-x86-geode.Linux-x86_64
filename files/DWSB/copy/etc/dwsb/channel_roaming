@@ -238,9 +238,9 @@ while : ; do
 		errormsg=""
 		while :; do
 			textinput \
-				"Please enter Time Out to ping AP IP in milli-second(> 0)\n\n"$(
+				"Please enter Time Out to ping AP IP in milli-second(1 <= TO <= 4000)\n\n"$(
 				)"Examples:\n"$(
-				)" 1  7  10  20\n"$(
+				)" 1  10  100 1000 4000\n"$(
 				)"\n$errormsg\n" \
 				"$inputvar"
 			retval=$?
@@ -248,12 +248,12 @@ while : ; do
 			[ $retval -ne 0 ] && break
 			# Check changed
 			[ "$inputvar" = "$CUR_PingTO" ] && break
-			# Check greater than zero
-			[ $inputvar -gt 0 ] 2>/dev/null && {
+			# Check string is not null and greater equal than 1 and little equal than 4000
+			([ -n "$inputvar" ] && [ $inputvar -ge 1 ] && [ $inputvar -le 4000 ]) && {
 				save_value _PingTO $inputvar
 				break
 			}
-			errormsg="ERROR: Check input value is greater than 0!"
+			errormsg="ERROR: Check input value is greater equal than 1 and little equal than 4000!"
 		done
 		;;
 
@@ -262,8 +262,7 @@ while : ; do
 		errormsg=""
 		while :; do
 			textinput \
-				"Please enter Fail Count(0 < c <= 5) to ping AP IP\n"$(
-				)" Ping disabled when zero or empty\n\n"$(
+				"Please enter Fail Count(1 <= FC <= 5) to ping AP IP\n"$(
 				)"Examples:\n"$(
 				)" 1  2  3  4  5\n"$(
 				)"\n$errormsg\n" \
@@ -273,12 +272,12 @@ while : ; do
 			[ $retval -ne 0 ] && break
 			# Check changed
 			[ "$inputvar" = "$CUR_PingFC" ] && break
-			# Check string null or greater and equal than zero
-			([ -z "$inputvar" ] || [ $inputvar -ge 0 ] 2>/dev/null || [ $inputvar -le 5 ] 2>/dev/null) && {
+			# Check string is not null and greater equal than 1 and little equal 5
+			([ -n "$inputvar" ] && [ $inputvar -ge 1 ] && [ $inputvar -le 5 ]) && {
 				save_value _PingFC $inputvar
 				break
 			}
-			errormsg="ERROR: Check input value is empty or greater and equal than 0 and little equal 5 !"
+			errormsg="ERROR: Check input value is greater equal than 1 and little equal than 5!"
 		done
 		;;
 

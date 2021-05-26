@@ -119,6 +119,12 @@ eval $menucmd
 	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
 }
 
+# $1 = wlan index
+isWiFiDown() {
+	iwinfo wlan$1 info > /dev/null 2> /dev/null
+	echo $?
+}
+
 readActual_System() {
 	#aHostname=$(uci -q get system.@system[0].hostname)
 	aHostname=$(cat /proc/sys/kernel/hostname)
@@ -261,6 +267,7 @@ readActual_Wifi() {
 	fi
 
 	#-----------------------------#
+	local USE_DUALSTAROAM_MODE
 	### Load dual station roaming configurations from file
 	if [ -e /etc/dwsb/dual_sta_roaming.cfg ]; then
 		. /etc/dwsb/dual_sta_roaming.cfg
@@ -269,13 +276,31 @@ readActual_Wifi() {
 		USE_DUALSTAROAM_MODE="N"
 	fi
 
+	local USE_LINKINTEGRITYCHECK_MODE_0
+	### Load link integrity checking configurations for 1st AP from file
+	if [ -e /etc/dwsb/link_int_checking_0.cfg ]; then
+		. /etc/dwsb/link_int_checking_0.cfg
+		USE_LINKINTEGRITYCHECK_MODE_0=$_USE_LINKINTEGRITYCHECK_MODE
+	else
+		USE_LINKINTEGRITYCHECK_MODE_0="N"
+	fi
+
+	local USE_LINKINTEGRITYCHECK_MODE_1
+	### Load link integrity checking configurations for 1st AP from file
+	if [ -e /etc/dwsb/link_int_checking_1.cfg ]; then
+		. /etc/dwsb/link_int_checking_1.cfg
+		USE_LINKINTEGRITYCHECK_MODE_1=$_USE_LINKINTEGRITYCHECK_MODE
+	else
+		USE_LINKINTEGRITYCHECK_MODE_1="N"
+	fi
+
 	#-----------------------------#
 	## Set default first Network active
 	aFstActive=""
 	## Set default second Network active
 	aSndActive=""
 	## Check Dual Station mode
-	if ([ "$USE_DUALSTAROAM_MODE" = "Y" ] && [ "$mode_0" = "sta" ] && [ "$mode_1" = "sta" ]) ; then
+	if ([ "$USE_DUALSTAROAM_MODE" = "Y" ] && [ "$mode_0" = "sta" ] && [ "$mode_1" = "sta" ]); then
 		## Get active bridge network info
 		brctl show 2>/dev/null > /tmp/brctl_show
 		## Get first network active on bridge
@@ -286,6 +311,22 @@ readActual_Wifi() {
 		[ $(grep -c "wlan1" /tmp/brctl_show) -eq 1 ] && {
 			aSndActive="<--- Active"
 		}
+	fi
+
+	## Check Link Initegrity Checking mode for 1st AP
+	if ([ "$USE_LINKINTEGRITYCHECK_MODE_0" = "Y" ] && [ "$mode_0" = "ap" ]); then
+		# Check 1st WiFi is down
+		if [ $(isWiFiDown 0) -eq 1 ]; then
+			aFstActive="<--- Down!"
+		fi
+	fi
+
+	## Check Link Initegrity Checking mode for 2nd AP
+	if ([ "$USE_LINKINTEGRITYCHECK_MODE_1" = "Y" ] && [ "$mode_1" = "ap" ]); then
+		# Check 1st WiFi is down
+		if [ $(isWiFiDown 1) -eq 1 ]; then
+			aSndActive="<--- Down!"
+		fi
 	fi
 }
 

@@ -47,6 +47,12 @@ getFrequencyGHz() {
 		sed -e "s/\([0-9]\)\([0-9]*\)/\1\.\2/"
 }
 
+# $1 = wlan index
+isWiFiDown() {
+	iwinfo wlan$1 info > /dev/null 2> /dev/null
+	echo $?
+}
+
 readLines() {
 	#local host=$(uci -q get system.@system[0].hostname)
 	local host=$(cat /proc/sys/kernel/hostname)
@@ -174,7 +180,12 @@ readLines() {
 		line_2="$fstMode"
 	} || {
 		[ "$fstImode" = "ap" ] && {
-			line_2="$fstMode $fstSsid $fstFreq $fstSNR $fstCnt"
+			# Check 1st WiFi is down
+			if [ $(isWiFiDown $iface_index_1st) -eq 1 ] ; then
+				line_2="$fstMode $fstSsid $fstFreq Down!"
+			else
+				line_2="$fstMode $fstSsid $fstFreq $fstSNR $fstCnt"
+			fi
 		} || {
 			### in case STA
 			[ "$fstAP" = "NotAss" ] && {
@@ -198,7 +209,12 @@ readLines() {
 		line_3="$sndMode"
 	} || {
 		[ "$sndImode" = "ap" ] && {
-			line_3="$sndMode $sndSsid $sndFreq $sndSNR $sndCnt"
+			# Check 2nd WiFi is down
+			if [ $(isWiFiDown $iface_index_2nd) -eq 1 ] ; then
+				line_3="$sndMode $sndSsid $sndFreq Down!"
+			else
+				line_3="$sndMode $sndSsid $sndFreq $sndSNR $sndCnt"
+			fi
 		} || {
 			### in case STA
 			[ "$sndAP" = "NotAss" ] && {

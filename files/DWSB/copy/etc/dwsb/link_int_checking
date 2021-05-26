@@ -1,0 +1,223 @@
+#!/bin/sh
+# (C) 2021 DASAN Infonet Inc.,
+#           leesy@DSI
+##
+. common
+
+cStaIndex=$1
+if [ $cStaIndex -eq 0 ] ; then
+	cStaIndexStr="1st"
+elif [ $cStaIndex -eq 1 ] ; then
+	cStaIndexStr="2nd"
+else
+	# in case not [ $cStaIndex -eq 0 ] || [ $cStaIndex -eq 1 ]
+	exit 1
+	#cStaIndexStr="Unknown"
+fi
+
+CONFIG_org="/etc/dwsb/link_int_checking_$cStaIndex.cfg"
+CONFIG_tmp="/tmp/link_int_checking_$cStaIndex.cfg"
+
+# $1 = variable
+# $2 = value
+save_value() {
+	egrep -v '^$' $CONFIG_tmp | egrep -v "^"$1 > $CONFIG_tmp.new
+	echo $1"=\"$2\"" >> $CONFIG_tmp.new
+	echo >> $CONFIG_tmp.new
+	rm -f $CONFIG_tmp
+	mv $CONFIG_tmp.new $CONFIG_tmp
+}
+
+### start of script
+
+# make temp. config file for updating config file, if temp. config file is not exists.
+[ ! -f $CONFIG_tmp ] && cp $CONFIG_org $CONFIG_tmp
+
+while : ; do
+
+	CUR_USE_LINKINTEGRITYCHECK_MODE=$(grep "_USE_LINKINTEGRITYCHECK_MODE" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingIP=$(grep "_PingIP" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingCI=$(grep "_PingCI" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingTO=$(grep "_PingTO" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
+	CUR_PingFC=$(grep "_PingFC" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
+
+	#echo "($CUR_PingIP) ($CUR_PingCI) ($CUR_PingTO) ($CUR_PingFC)"
+
+	inputvar=""
+
+	if [ "$CUR_USE_LINKINTEGRITYCHECK_MODE" != "Y" ]; then
+		menuinput  "Link Integrity Checking $cStaIndexStr AP Configure" \
+			'"1_UseLnkIChk"  "Configure to use Link Integrity Checking mode ($CUR_USE_LINKINTEGRITYCHECK_MODE)"
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+	else
+		menuinput "Link Integrity Checking $cStaIndexStr AP Configure" \
+			'"1_UseLnkIChk"  "Configure to use Link Integrity Checking mode ($CUR_USE_LINKINTEGRITYCHECK_MODE)"
+			"2_PingIP"     "Configure Remote IP to ping ($CUR_PingIP)"
+			"3_PingCI"     "Configure Check Interval to ping remote IP ($CUR_PingCI sec)"
+			"4_PingTO"     "Configure Time Out to ping remote IP ($CUR_PingTO msec)"
+			"5_PingFC"     "Configure Fail Count to ping remote IP ($CUR_PingFC)"
+			"6_TestLnkErr" "Test Channel Roaming!"
+			"X_ExitCancel" "Exit or Cancel to upper Menu"'
+	fi
+
+	case $inputvar in
+
+	ReviewSTATs)
+		;;
+
+	1_UseLnkIChk)
+		inputvar=$CUR_USE_LINKINTEGRITYCHECK_MODE
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Y to use AP Link Integrity Checking mode otherwise enter N or empty\n"$(
+				)"Examples:\n"$(
+				)" Y  N\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_USE_LINKINTEGRITYCHECK_MODE" ] && break
+			# Check string is null
+			[ -z "$inputvar" ] && {
+				save_value _USE_LINKINTEGRITYCHECK_MODE "N"
+				break
+			}
+			# Check string is Y or N
+			([ "$inputvar" = "Y" ] || [ "$inputvar" = "N" ]) && {
+				save_value _USE_LINKINTEGRITYCHECK_MODE $inputvar
+				break
+			}
+			errormsg="ERROR: Check input value is Y or N or empty!"
+		done
+		;;
+
+	2_PingIP)
+		inputvar=$CUR_PingIP
+		errormsg=""
+		while :; do
+			textinput \
+				 "Please enter Remote IP to ping\n"$(
+				)" Ping disabled when empty\n\n"$(
+				)"Examples: can blank\n"$(
+				)" 192.168.0.127  10.1.1.127\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingIP" ] && break
+			# Check string null or valid IP v4
+			if [ -z "$inputvar" ] || isValidIPv4 "$inputvar"; then
+				save_value _PingIP $inputvar
+				break
+			fi
+			errormsg="ERROR: Check input value is IP v4 format!"
+		done
+		;;
+
+	3_PingCI)
+		inputvar=$CUR_PingCI
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Check Interval to ping Remote IP in sec(1 <= CI <= 60)\n\n"$(
+				)"Examples:\n"$(
+				)" 1  7  10  20 60\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingCI" ] && break
+			# Check string is not null and greater equal than 1 and little equal 60
+			([ -n "$inputvar" ] && [ $inputvar -ge 1 ] && [ $inputvar -le 60 ]) && {
+				save_value _PingCI $inputvar
+				break
+			}
+			errormsg="ERROR: Check input value is greater equal than 1 and little equal than 60!"
+		done
+		;;
+
+	4_PingTO)
+		inputvar=$CUR_PingTO
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Time Out to ping Remote IP in msec(1 <= TO <= 4000)\n\n"$(
+				)"Examples:\n"$(
+				)" 1  10  100 1000 4000\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingTO" ] && break
+			# Check string is not null and greater equal than 1 and little equal than 4000
+			([ -n "$inputvar" ] && [ $inputvar -ge 1 ] && [ $inputvar -le 4000 ]) && {
+				save_value _PingTO $inputvar
+				break
+			}
+			errormsg="ERROR: Check input value is greater equal than 1 and little equal than 4000!"
+		done
+		;;
+
+	5_PingFC)
+		inputvar=$CUR_PingFC
+		errormsg=""
+		while :; do
+			textinput \
+				"Please enter Fail Count(1 <= FC <= 5) to ping Remote IP\n"$(
+				)"Examples:\n"$(
+				)" 1  2  3  4  5\n"$(
+				)"\n$errormsg\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			# Check changed
+			[ "$inputvar" = "$CUR_PingFC" ] && break
+			# Check string is not null and greater equal than 1 and little equal 5
+			([ -n "$inputvar" ] && [ $inputvar -ge 1 ] && [ $inputvar -le 5 ]) && {
+				save_value _PingFC $inputvar
+				break
+			}
+			errormsg="ERROR: Check input value is greater equal than 1 and little equal than 5!"
+		done
+		;;
+
+	6_TestLnkErr)
+		inputvar="N"
+		textinput \
+			 "$cStaIndexStr AP Link Integriry error TEST... Now?? [Yes/No]\n\n"$(
+			)"Please Enter:\n"$(
+			)" [Y]=LinkError/[N]=Review\n" \
+			"N"
+		retval=$?
+		# Check return error
+		[ $retval -ne 0 ] && break
+		if [ "$inputvar" = "Y" ] ; then
+			clear
+			echo ; echo "[$aHostname]... Generate Link Integrity error for 10 seconds!"
+
+			touch /tmp/.force_LinkErr_$cStaIndexStr
+			sleep 10
+			rm -f /tmp/.force_LinkErr_$cStaIndexStr
+
+			echo ; echo "[$aHostname]... Finished Link Integrity error test."
+
+			sleep 3
+		fi
+		;;
+
+	X_ExitCancel | *)
+		rm $tempfile >/dev/null 2>/dev/null
+		exit 0
+		;;
+	esac
+done

@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+#####################################################################
+##
+## DWSB Link Integrity Checking for Chaos Calmer 15.05.1 @linux3.18
+##
+##                Copyright 2021, by Dasan InfoTek Co., 
+##
+##                         ...leesy...
+##
+#####################################################################
+
+. /etc/dwsb/dwsbLnkIChecking 0
