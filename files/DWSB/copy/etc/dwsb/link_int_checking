@@ -205,9 +205,9 @@ while : ; do
 			clear
 			echo ; echo "[$aHostname]... Generate Link Integrity error for 10 seconds!"
 
-			touch /tmp/.force_LinkErr_$cStaIndexStr
+			touch /tmp/.force_LinkErr_$cStaIndex
 			sleep 10
-			rm -f /tmp/.force_LinkErr_$cStaIndexStr
+			rm -f /tmp/.force_LinkErr_$cStaIndex
 
 			echo ; echo "[$aHostname]... Finished Link Integrity error test."
 
