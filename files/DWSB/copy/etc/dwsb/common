@@ -119,9 +119,11 @@ eval $menucmd
 	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
 }
 
-# $1 = wlan index
+# $1 = radio index
+# return = 1:WiFi is down, 0:WiFi is up
 isWiFiDown() {
-	iwinfo wlan$1 info > /dev/null 2> /dev/null
+	#iwinfo wlan$1 info > /dev/null 2> /dev/null
+	wifi status radio$1 2>/dev/null | grep up | grep -q true
 	echo $?
 }
 

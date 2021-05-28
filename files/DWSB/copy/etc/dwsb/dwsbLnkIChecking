@@ -44,8 +44,11 @@ get_curWiFiMode() {
 	echo $ret_mode
 }
 
+# $1 = radio index
+# return = 1:WiFi is down, 0:WiFi is up
 isWiFiDown() {
-	iwinfo wlan$iface_index info > /dev/null 2> /dev/null
+	#iwinfo wlan$1 info > /dev/null 2> /dev/null
+	wifi status radio$1 2>/dev/null | grep up | grep -q true
 	echo $?
 }
 
@@ -108,7 +111,7 @@ while : ; do
 	if [ -e /tmp/.force_LinkErr_$iface_index ] ; then
 		log "Forced Down WiFi radio$iface_index !"
 		# Get last Wifi up/down status
-		local Last_isWiFiDown=$(isWiFiDown)
+		local Last_isWiFiDown=$(isWiFiDown $iface_index)
 		# Check WiFi is not down
 		if [ $Last_isWiFiDown -eq 0 ] ; then
 			wifi down radio$iface_index > /dev/null 2> /dev/null
@@ -152,7 +155,7 @@ while : ; do
 					# fping returned success
 					#log "Ping success!($PingIP)"
 					# Check WiFi is down
-					if [ $(isWiFiDown) -eq 1 ] ; then
+					if [ $(isWiFiDown $iface_index) -eq 1 ] ; then
 						log "Ping success!($PingIP) ->"
 						log "Up WiFi radio$iface_index !"
 						wifi up radio$iface_index > /dev/null 2> /dev/null
@@ -170,7 +173,7 @@ while : ; do
 				if [ $curPingFC -ge $PingFC ] ; then
 					#log "Ping fail count is over!(($PingIP:$curPingFC)"
 					# Check WiFi is not down
-					if [ $(isWiFiDown) -eq 0 ] ; then
+					if [ $(isWiFiDown $iface_index) -eq 0 ] ; then
 						log "Ping failed!($PingIP:$curPingFC) ->"
 						log "Down WiFi radio$iface_index !"
 						wifi down radio$iface_index > /dev/null 2> /dev/null
