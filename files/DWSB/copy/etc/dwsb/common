@@ -58,6 +58,14 @@ get_config_new_changes_count() {
 	echo $count
 }
 
+infobox() {
+	$DIALOG \
+		--ascii-lines --colors\
+		--infobox "$1" 5 60
+
+	sleep $2
+}
+
 textinput() {
 	$DIALOG \
 		--ascii-lines --title "INPUT BOX" --clear \

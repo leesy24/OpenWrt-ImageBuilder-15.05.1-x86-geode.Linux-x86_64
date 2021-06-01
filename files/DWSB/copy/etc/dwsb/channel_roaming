@@ -282,38 +282,47 @@ while : ; do
 		;;
 
 	9_TestRoaming)
-		inputvar="N"
-		textinput \
-			"Channel Roaming $cStaIndexStr Station TEST... Now?? [Yes/No]\n\n"$(
-			)"Please Enter:\n"$(
-			)" [Y]=Run Roaming/[N]=Exit\n" \
-			"$inputvar"
-		retval=$?
-		# Check return error
-		[ $retval -ne 0 ] && break
-		[ "$inputvar" = "Y" ] && {
-			clear
-			echo ; echo "[$aHostname]... Roaming New Frequency Now!!"
-			touch /tmp/.force_Ch_Roaming_$cStaIndex
-			sleep 1 # sleep 1 second
-
-			local TestRoamingTimer=0
-			local TestRoamingTimeout=30 # 30secs
-			while [ -e /tmp/.force_Ch_Roaming_$cStaIndex ] ; do
+		local ACT_USE_CHANNELROAM_MODE=$(grep "_USE_CHANNELROAM_MODE" $CONFIG_org | sed 's/.*="\(.*\)"/\1/')
+		if [ "$ACT_USE_CHANNELROAM_MODE" != "Y" ]; then
+			infobox \
+				 "\Z1ERROR!\n"$(
+				)"\Z0 Channel Roaming is not yet committed.\n"$(
+				)" Please try again after COMMIT it." \
+				5
+		else
+			inputvar="N"
+			textinput \
+				"Channel Roaming $cStaIndexStr Station TEST... Now?? [Yes/No]\n\n"$(
+				)"Please Enter:\n"$(
+				)" [Y]=Run Roaming/[N]=Exit\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			[ "$inputvar" = "Y" ] && {
+				clear
+				echo ; echo "[$aHostname]... Roaming New Frequency Now!!"
+				touch /tmp/.force_Ch_Roaming_$cStaIndex
 				sleep 1 # sleep 1 second
-				TestRoamingTimer=$((TestRoamingTimer+1))
-				[ $TestRoamingTimer -ge $TestRoamingTimeout ] && break
-			done
 
-			if [ -e /tmp/.force_Ch_Roaming_$cStaIndex ] ; then
-				rm -f /tmp/.force_Ch_Roaming_$cStaIndex
-				echo ; echo "[$aHostname]... Error! Roaming New Frequency!"
-			else
-				echo ; echo "[$aHostname]... Success! Roaming New Frequency."
-			fi
+				local TestRoamingTimer=0
+				local TestRoamingTimeout=30 # 30secs
+				while [ -e /tmp/.force_Ch_Roaming_$cStaIndex ] ; do
+					sleep 1 # sleep 1 second
+					TestRoamingTimer=$((TestRoamingTimer+1))
+					[ $TestRoamingTimer -ge $TestRoamingTimeout ] && break
+				done
 
-			sleep 1 # sleep 1 second
-		}
+				if [ -e /tmp/.force_Ch_Roaming_$cStaIndex ] ; then
+					rm -f /tmp/.force_Ch_Roaming_$cStaIndex
+					echo ; echo "[$aHostname]... Error! Roaming New Frequency!"
+				else
+					echo ; echo "[$aHostname]... Success! Roaming New Frequency."
+				fi
+
+				sleep 1 # sleep 1 second
+			}
+		fi
 		;;
 
 	X_ExitCancel | *)

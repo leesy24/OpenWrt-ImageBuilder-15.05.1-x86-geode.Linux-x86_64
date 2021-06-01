@@ -228,38 +228,47 @@ while : ; do
 		;;
 
 	8_TestRoaming)
-		inputvar="N"
-		textinput \
-			"Dual-Station Roaming TEST... Now?? [Yes/No]\n\n"$(
-			)"Please Enter:\n"$(
-			)" [Y]=Run Roaming/[N]=Exit\n" \
-			"$inputvar"
-		retval=$?
-		# Check return error
-		[ $retval -ne 0 ] && break
-		[ "$inputvar" = "Y" ] && {
-			clear
-			echo ; echo "[$aHostname]... Roaming New Station Now!!"
-			touch /tmp/.force_Dual_Sta_Roaming
-			sleep 1 # sleep 1 second
-
-			local TestRoamingTimer=0
-			local TestRoamingTimeout=30 # 30secs
-			while [ -e /tmp/.force_Dual_Sta_Roaming ] ; do
+		local ACT_USE_DUALSTAROAM_MODE=$(grep "_USE_DUALSTAROAM_MODE" $CONFIG_org | sed 's/.*="\(.*\)"/\1/')
+		if [ "$ACT_USE_DUALSTAROAM_MODE" != "Y" ]; then
+			infobox \
+				 "\Z1ERROR!\n"$(
+				)"\Z0 Dual Station Roaming is not yet committed.\n"$(
+				)" Please try again after COMMIT it." \
+				5
+		else
+			inputvar="N"
+			textinput \
+				"Dual-Station Roaming TEST... Now?? [Yes/No]\n\n"$(
+				)"Please Enter:\n"$(
+				)" [Y]=Run Roaming/[N]=Exit\n" \
+				"$inputvar"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			[ "$inputvar" = "Y" ] && {
+				clear
+				echo ; echo "[$aHostname]... Roaming New Station Now!!"
+				touch /tmp/.force_Dual_Sta_Roaming
 				sleep 1 # sleep 1 second
-				TestRoamingTimer=$((TestRoamingTimer+1))
-				[ $TestRoamingTimer -ge $TestRoamingTimeout ] && break
-			done
 
-			if [ -e /tmp/.force_Dual_Sta_Roaming ] ; then
-				rm -f /tmp/.force_Dual_Sta_Roaming
-				echo ; echo "[$aHostname]... Error! Roaming New Station!"
-			else
-				echo ; echo "[$aHostname]... Success! Roaming New Station."
-			fi
+				local TestRoamingTimer=0
+				local TestRoamingTimeout=30 # 30secs
+				while [ -e /tmp/.force_Dual_Sta_Roaming ] ; do
+					sleep 1 # sleep 1 second
+					TestRoamingTimer=$((TestRoamingTimer+1))
+					[ $TestRoamingTimer -ge $TestRoamingTimeout ] && break
+				done
 
-			sleep 1 # sleep 1 second
-		}
+				if [ -e /tmp/.force_Dual_Sta_Roaming ] ; then
+					rm -f /tmp/.force_Dual_Sta_Roaming
+					echo ; echo "[$aHostname]... Error! Roaming New Station!"
+				else
+					echo ; echo "[$aHostname]... Success! Roaming New Station."
+				fi
+
+				sleep 1 # sleep 1 second
+			}
+		fi
 		;;
 
 	X_ExitCancel | *)

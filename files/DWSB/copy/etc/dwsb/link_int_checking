@@ -192,26 +192,35 @@ while : ; do
 		;;
 
 	6_TestLnkErr)
-		inputvar="N"
-		textinput \
-			 "$cStaIndexStr AP Link Integriry error TEST... Now?? [Yes/No]\n\n"$(
-			)"Please Enter:\n"$(
-			)" [Y]=LinkError/[N]=Review\n" \
-			"N"
-		retval=$?
-		# Check return error
-		[ $retval -ne 0 ] && break
-		if [ "$inputvar" = "Y" ] ; then
-			clear
-			echo ; echo "[$aHostname]... Generate Link Integrity error for 10 seconds!"
+		local ACT_USE_LINKINTEGRITYCHECK_MODE=$(grep "_USE_LINKINTEGRITYCHECK_MODE" $CONFIG_org | sed 's/.*="\(.*\)"/\1/')
+		if [ "$ACT_USE_LINKINTEGRITYCHECK_MODE" != "Y" ]; then
+			infobox \
+				 "\Z1ERROR!\n"$(
+				)"\Z0 Link Integrity Checking is not yet committed.\n"$(
+				)" Please try again after COMMIT it." \
+				5
+		else
+			inputvar="N"
+			textinput \
+				 "$cStaIndexStr AP Link Integriry error TEST... Now?? [Yes/No]\n\n"$(
+				)"Please Enter:\n"$(
+				)" [Y]=LinkError/[N]=Review\n" \
+				"N"
+			retval=$?
+			# Check return error
+			[ $retval -ne 0 ] && break
+			if [ "$inputvar" = "Y" ]; then
+				clear
+				echo ; echo "[$aHostname]... Generate Link Integrity error for 10 seconds!"
 
-			touch /tmp/.force_LinkErr_$cStaIndex
-			sleep 10
-			rm -f /tmp/.force_LinkErr_$cStaIndex
+				touch /tmp/.force_LinkErr_$cStaIndex
+				sleep 10
+				rm -f /tmp/.force_LinkErr_$cStaIndex
 
-			echo ; echo "[$aHostname]... Finished Link Integrity error test."
+				echo ; echo "[$aHostname]... Finished Link Integrity error test."
 
-			sleep 3
+				sleep 3
+			fi
 		fi
 		;;
 
