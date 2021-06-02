@@ -4,6 +4,9 @@
 ##
 . common
 
+local save_default_item=$default_item
+default_item=""
+
 while : ; do
 
 	readNewOrg_System
@@ -14,7 +17,10 @@ while : ; do
 	menuinput "LAN Configure" \
 		'"1eLAN_IPaddr" "LAN IP Address ________($cLip)"
 		"2eLAN_IPmask"  "LAN IP Subnet Mask ____($cLmask)"
-		"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+		"X_ExitCancel"  "Exit or Cancel to upper Menu"' \
+		"$default_item"
+
+	default_item=$inputvar
 
 	case $inputvar in
 
@@ -26,7 +32,7 @@ while : ; do
 				 "Please enter LAN IP Address ...\n\n"$(
 				)"Examples:\n"$(
 				)" 10.1.123.1  168.126.0.129\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -50,7 +56,7 @@ while : ; do
 				 "Please enter LAN IP Subnet Mask ...\n\n"$(
 				)"Examples:\n"$(
 				)" 255.255.255.0 255.255.255.128\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -71,6 +77,7 @@ while : ; do
 
 	X_ExitCancel | *)
 		rm $tempfile >/dev/null 2>/dev/null
+		default_item=$save_default_item
 		exit 0
 		;;
 

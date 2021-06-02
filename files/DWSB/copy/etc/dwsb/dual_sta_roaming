@@ -4,6 +4,9 @@
 ##
 . common
 
+local save_default_item=$default_item
+default_item=""
+
 CONFIG_org="/etc/dwsb/dual_sta_roaming.cfg"
 CONFIG_tmp="/tmp/dual_sta_roaming.cfg"
 
@@ -39,7 +42,8 @@ while : ; do
 	if [ "$CUR_USE_DUALSTAROAM_MODE" != "Y" ] ; then
 		menuinput  "Dual-Station Roaming Configure" \
 			'"1_UseDualSta" "Configure to use Dual-Station Roaming mode ($CUR_USE_DUALSTAROAM_MODE)"
-			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"' \
+			"$default_item"
 	else
 		menuinput  "Dual-Station Roaming Configure" \
 			'"1_UseDualSta" "Configure to use Dual-Station Roaming mode ($CUR_USE_DUALSTAROAM_MODE)"
@@ -50,8 +54,11 @@ while : ; do
 			"6_PingTO"      "Configure Time Out to ping AP IP ($CUR_PingTO)"
 			"7_PingFC"      "Configure Fail Count to ping AP IP ($CUR_PingFC)"
 			"8_TestRoaming" "Test Dual-Station Roaming!"
-			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"' \
+			"$default_item"
 	fi
+
+	default_item=$inputvar
 
 	case $inputvar in
 
@@ -63,7 +70,7 @@ while : ; do
 				"Please enter Y to use Dual-Station Roaming mode otherwise enter N or empty\n"$(
 				)"Examples:\n"$(
 				)" Y  N\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -90,7 +97,7 @@ while : ; do
 		while :; do
 			textinput \
 				"Please enter minimum SNR for roaming in NN dBm(0 < NN < 70)\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -112,7 +119,7 @@ while : ; do
 		while :; do
 			textinput \
 				"Please enter delta SNR for roaming in NN dBm(0 <= NN <= 35)\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -137,7 +144,7 @@ while : ; do
 				)" Ping disabled when empty\n\n"$(
 				)"Examples: can blank\n"$(
 				)" 192.168.0.127  10.1.1.127\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -162,7 +169,7 @@ while : ; do
 				)" Ping disabled when empty\n\n"$(
 				)"Examples: can blank\n"$(
 				)" 192.168.0.127  10.1.1.127\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -186,7 +193,7 @@ while : ; do
 				"Please enter ping Time Out in milli-second(0 < TO <= 1000)\n\n"$(
 				)"Examples:\n"$(
 				)" 1  7  10  20\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -211,7 +218,7 @@ while : ; do
 				)" Ping disabled when zero or empty\n\n"$(
 				)"Examples:\n"$(
 				)" 1  2  3  4  5\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -273,6 +280,7 @@ while : ; do
 
 	X_ExitCancel | *)
 		rm $tempfile >/dev/null 2>/dev/null
+		default_item=$save_default_item
 		exit 0
 		;;
 	esac

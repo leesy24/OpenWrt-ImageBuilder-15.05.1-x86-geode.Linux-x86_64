@@ -4,6 +4,9 @@
 ##
 . common
 
+local save_default_item=$default_item
+default_item=""
+
 cStaIndex=$1
 if [ $cStaIndex -eq 0 ] ; then
 	cStaIndexStr="1st"
@@ -61,7 +64,8 @@ while : ; do
 	if [ "$CUR_USE_CHANNELROAM_MODE" != "Y" ] ; then
 		menuinput  "Channel Roaming $cStaIndexStr Station Configure" \
 			'"1_UseChRoam"  "Configure to use Channel Roaming mode ($CUR_USE_CHANNELROAM_MODE)"
-			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"' \
+			"$default_item"
 	else
 		menuinput  "Channel Roaming $cStaIndexStr Station Configure" \
 			'"1_UseChRoam"  "Configure to use Channel Roaming mode ($CUR_USE_CHANNELROAM_MODE)"
@@ -73,8 +77,11 @@ while : ; do
 			"7_PingTO"      "Configure Time Out to ping AP IP ($CUR_PingTO)"
 			"8_PingFC"      "Configure Fail Count to ping AP IP ($CUR_PingFC)"
 			"9_TestRoaming" "Test Channel Roaming!"
-			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"' \
+			"$default_item"
 	fi
+
+	default_item=$inputvar
 
 	case $inputvar in
 
@@ -86,7 +93,7 @@ while : ; do
 				"Please enter Y to use Station Channel Roaming mode otherwise enter N or empty\n"$(
 				)"Examples:\n"$(
 				)" Y  N\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -116,7 +123,7 @@ while : ; do
 				 "Please enter Running-Frequency #1... with N.NNN GHz\n\n"$(
 				)"Examples:\n"$(
 				)"$FreqTBL\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -143,7 +150,7 @@ while : ; do
 				 "Please enter Running-Frequency #2... with N.NNN GHz\n\n"$(
 				)"Examples:\n"$(
 				)"$FreqTBL\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -167,7 +174,7 @@ while : ; do
 		while :; do
 			textinput \
 				"Please enter minimum SNR for roaming in NN dBm(0 < NN < 70)\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -192,7 +199,7 @@ while : ; do
 				)" Ping disabled when empty\n\n"$(
 				)"Examples: can blank\n"$(
 				)" 192.168.0.127  10.1.1.127\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -217,7 +224,7 @@ while : ; do
 				)" Ping disabled when empty\n\n"$(
 				)"Examples: can blank\n"$(
 				)" 192.168.0.127  10.1.1.127\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -241,7 +248,7 @@ while : ; do
 				"Please enter Time Out to ping AP IP in milli-second(1 <= TO <= 4000)\n\n"$(
 				)"Examples:\n"$(
 				)" 1  10  100 1000 4000\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -265,7 +272,7 @@ while : ; do
 				"Please enter Fail Count(1 <= FC <= 5) to ping AP IP\n"$(
 				)"Examples:\n"$(
 				)" 1  2  3  4  5\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -327,6 +334,7 @@ while : ; do
 
 	X_ExitCancel | *)
 		rm $tempfile >/dev/null 2>/dev/null
+		default_item=$save_default_item
 		exit 0
 		;;
 	esac

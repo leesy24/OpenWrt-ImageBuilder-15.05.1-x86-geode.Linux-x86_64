@@ -58,6 +58,8 @@ get_config_new_changes_count() {
 	echo $count
 }
 
+# $1=information messages
+# $2=wait time
 infobox() {
 	$DIALOG \
 		--ascii-lines --colors\
@@ -66,9 +68,13 @@ infobox() {
 	sleep $2
 }
 
+# $1=input box messages
+# $2=default input string
+# return code=0:ok, 1:cancled, 255:ESC keyed
 textinput() {
 	$DIALOG \
-		--ascii-lines --title "INPUT BOX" --clear \
+		--ascii-lines --clear --colors \
+		--title "INPUT BOX" \
 		--inputbox "$1" 20 76 "$2" 2> $tempfile
 
 	retval=$?
@@ -77,17 +83,20 @@ textinput() {
 	0)
 		inputvar=$(cat $tempfile)
 		;;
-	1)
-		inputvar=$2
-		;;
-	255)
-		inputvar=$2
-		;;
+	#1) # Pressed <Cancle> button
+	#	inputvar=$2
+	#	;;
+	#255) # Pressed ESC key
+	#	inputvar=$2
+	#	;;
 	esac
 
-	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
+	return $retval
 }
 
+# $1=title string
+# $2=tag and item list
+# $3=default tag
 menuinput() {
 
 	readActual_System
@@ -95,9 +104,10 @@ menuinput() {
 	readActual_Wifi
 
 	menucmd=$(cat <<END    
-$DIALOG --ascii-lines --clear --cr-wrap --timeout 60 \
+$DIALOG --ascii-lines --clear --cr-wrap --colors --timeout 60 \
 	--title "[ $MODEL $NAME@$YEAR - $1 ]" \
-	--menu "$3\
+	--default-item "$3"
+	--menu "\
 	Hostname:$aHostname IP:$aLip/$aLmask\n\
 	$aFstStat [ SSID:$aFstSSID Freq:$aFstFreq SNR:$aFstSNR $aFstPeer ] $aFstActive\n\
 	$aSndStat [ SSID:$aSndSSID Freq:$aSndFreq SNR:$aSndSNR $aSndPeer ] $aSndActive\n\
@@ -115,15 +125,16 @@ eval $menucmd
 	0)
 		inputvar=$(cat $tempfile)
 		;;
-	1)
+	1) # Pressed <Cancle> button
 		inputvar=$4
 		;;
-	255)
+	255) # Pressed ESC key or timed out
 		inputvar=$(tail -1 $tempfile)
 		[ "$inputvar" != "timeout" ] && inputvar=$4
 		;;
 	esac
 
+	# Whis is this "--" for?
 	if [ "$inputvar" = "--" ] ; then inputvar="" ; fi
 }
 

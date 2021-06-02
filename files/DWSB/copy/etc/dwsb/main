@@ -17,6 +17,8 @@ LNKI_CHECKING_1_CONFIG_tmp="/tmp/link_int_checking_1.cfg"
 
 init_config_org
 
+default_item=""
+
 while : ; do
 
 	inputvar=""
@@ -37,7 +39,8 @@ while : ; do
 			"4SecondWiFiConfig"   ">> 2nd Wireless Network (Disable) _Configure <<"
 			"5SaveCommit"         "Commit All Configure Save!"
 			"6SaveReboot"         "Save(commit) & ReBOOT....!"
-			"7ustREBOOT"         "==============>ReBOOT....!"'
+			"7ustREBOOT"         "==============>ReBOOT....!"' \
+			"$default_item"
 	elif ([ "$cWstat_0" != "Disable" ] && [ "$cWstat_1" = "Disable" ]); then
 		if [ "$cWmode_0" = "sta" ]; then
 			menuinput "Status Overview" \
@@ -49,7 +52,8 @@ while : ; do
 				"5ChRoamFirstConfig"  ">> Channel Roaming 1st Station ____Configure <<"
 				"6SaveCommit"         "Commit All Configure Save!"
 				"7SaveReboot"         "Save(commit) & ReBOOT....!"
-				"8JustREBOOT"         "==============>ReBOOT....!"'
+				"8JustREBOOT"         "==============>ReBOOT....!"' \
+				"$default_item"
 		elif [ "$cWmode_0" = "ap" ]; then
 			menuinput "Status Overview" \
 				'"ReviewStatus"       "Review Status .... Enter!"
@@ -60,7 +64,8 @@ while : ; do
 				"5LnkICFirstConfig"   ">> Link Integrity Checking 1st AP _Configure <<"
 				"6SaveCommit"         "Commit All Configure Save!"
 				"7SaveReboot"         "Save(commit) & ReBOOT....!"
-				"8JustREBOOT"         "==============>ReBOOT....!"'
+				"8JustREBOOT"         "==============>ReBOOT....!"' \
+				"$default_item"
 		else
 			menuinput "Status Overview" \
 				'"ReviewStatus"       "Review Status .... Enter!"
@@ -70,7 +75,8 @@ while : ; do
 				"4SecondWiFiConfig"   ">> 2nd Wireless Network (Disable) _Configure <<"
 				"5SaveCommit"         "Commit All Configure Save!"
 				"6SaveReboot"         "Save(commit) & ReBOOT....!"
-				"7JustREBOOT"         "==============>ReBOOT....!"'
+				"7JustREBOOT"         "==============>ReBOOT....!"' \
+				"$default_item"
 		fi
 	elif ([ "$cWstat_0" = "Disable" ] && [ "$cWstat_1" != "Disable" ]); then
 		if [ "$cWmode_1" = "sta" ]; then
@@ -83,7 +89,8 @@ while : ; do
 				"5ChRoamSecondConfig" ">> Channel Roaming 2nd Station ____Configure <<"
 				"6SaveCommit"         "Commit All Configure Save!"
 				"7SaveReboot"         "Save(commit) & ReBOOT....!"
-				"8JustREBOOT"         "==============>ReBOOT....!"'
+				"8JustREBOOT"         "==============>ReBOOT....!"' \
+				"$default_item"
 		elif [ "$cWmode_1" = "ap" ]; then
 			menuinput "Status Overview" \
 				'"ReviewStatus"       "Review Status .... Enter!"
@@ -94,7 +101,8 @@ while : ; do
 				"5LnkICSecondConfig"  ">> Link Integrity Checking 2nd AP _Configure <<"
 				"6SaveCommit"         "Commit All Configure Save!"
 				"7SaveReboot"         "Save(commit) & ReBOOT....!"
-				"8JustREBOOT"         "==============>ReBOOT....!"'
+				"8JustREBOOT"         "==============>ReBOOT....!"' \
+				"$default_item"
 		else
 			menuinput "Status Overview" \
 				'"ReviewStatus"       "Review Status .... Enter!"
@@ -104,7 +112,8 @@ while : ; do
 				"4SecondWiFiConfig"   ">> 2nd Wireless Network (Unknown) _Configure <<"
 				"5SaveCommit"         "Commit All Configure Save!"
 				"6SaveReboot"         "Save(commit) & ReBOOT....!"
-				"7JustREBOOT"         "==============>ReBOOT....!"'
+				"7JustREBOOT"         "==============>ReBOOT....!"' \
+				"$default_item"
 		fi
 	elif ([ "$cWstat_0" != "Disable" ] && [ "$cWstat_1" != "Disable" ]); then
 		if [ "$cWmode_0" = "sta" ]; then
@@ -120,7 +129,8 @@ while : ; do
 					"7DualStaRoamConfig"  ">> Dual-Station Roaming ___________Configure <<"
 					"8SaveCommit"         "Commit All Configure Save!"
 					"9SaveReboot"         "Save(commit) & ReBOOT....!"
-					"0JustREBOOT"         "==============>ReBOOT....!"'
+					"0JustREBOOT"         "==============>ReBOOT....!"' \
+					"$default_item"
 			elif [ "$cWmode_1" = "ap" ]; then
 				menuinput "Status Overview" \
 					'"ReviewStatus"       "Review Status .... Enter!"
@@ -132,7 +142,8 @@ while : ; do
 					"6LnkICSecondConfig"  ">> Link Integrity Checking 2nd AP _Configure <<"
 					"7SaveCommit"         "Commit All Configure Save!"
 					"8SaveReboot"         "Save(commit) & ReBOOT....!"
-					"9JustREBOOT"         "==============>ReBOOT....!"'
+					"9JustREBOOT"         "==============>ReBOOT....!"' \
+					"$default_item"
 			else
 				menuinput "Status Overview" \
 					'"ReviewStatus"       "Review Status .... Enter!"
@@ -143,7 +154,8 @@ while : ; do
 					"5ChRoamFirstConfig"  ">> Channel Roaming 1st Station ____Configure <<"
 					"6SaveCommit"         "Commit All Configure Save!"
 					"7SaveReboot"         "Save(commit) & ReBOOT....!"
-					"8JustREBOOT"         "==============>ReBOOT....!"'
+					"8JustREBOOT"         "==============>ReBOOT....!"' \
+					"$default_item"
 			fi
 		elif [ "$cWmode_0" = "ap" ]; then
 			if [ "$cWmode_1" = "sta" ]; then
@@ -157,7 +169,8 @@ while : ; do
 					"6ChRoamSecondConfig" ">> Channel Roaming 2nd Station ____Configure <<"
 					"7SaveCommit"         "Commit All Configure Save!"
 					"8SaveReboot"         "Save(commit) & ReBOOT....!"
-					"9JustREBOOT"         "==============>ReBOOT....!"'
+					"9JustREBOOT"         "==============>ReBOOT....!"' \
+					"$default_item"
 			elif [ "$cWmode_1" = "ap" ]; then
 				menuinput "Status Overview" \
 					'"ReviewStatus"       "Review Status .... Enter!"
@@ -169,7 +182,8 @@ while : ; do
 					"6LnkICSecondConfig"  ">> Link Integrity Checking 2nd AP _Configure <<"
 					"7SaveCommit"         "Commit All Configure Save!"
 					"8SaveReboot"         "Save(commit) & ReBOOT....!"
-					"9JustREBOOT"         "==============>ReBOOT....!"'
+					"9JustREBOOT"         "==============>ReBOOT....!"' \
+					"$default_item"
 			else
 				menuinput "Status Overview" \
 					'"ReviewStatus"       "Review Status .... Enter!"
@@ -179,7 +193,8 @@ while : ; do
 					"4SecondWiFiConfig"   ">> 2nd Wireless Network (Unknown) _Configure <<"
 					"5SaveCommit"         "Commit All Configure Save!"
 					"6SaveReboot"         "Save(commit) & ReBOOT....!"
-					"7JustREBOOT"         "==============>ReBOOT....!"'
+					"7JustREBOOT"         "==============>ReBOOT....!"' \
+					"$default_item"
 			fi
 		else
 			if [ "$cWmode_1" = "sta" ]; then
@@ -192,7 +207,8 @@ while : ; do
 					"5ChRoamSecondConfig" ">> Channel Roaming 2nd Station ____Configure <<"
 					"6SaveCommit"         "Commit All Configure Save!"
 					"7SaveReboot"         "Save(commit) & ReBOOT....!"
-					"8JustREBOOT"         "==============>ReBOOT....!"'
+					"8JustREBOOT"         "==============>ReBOOT....!"' \
+					"$default_item"
 			elif [ "$cWmode_1" = "ap" ]; then
 				menuinput "Status Overview" \
 					'"ReviewStatus"       "Review Status .... Enter!"
@@ -203,7 +219,8 @@ while : ; do
 					"5LnkICSecondConfig"  ">> Link Integrity Checking 2nd AP _Configure <<"
 					"6SaveCommit"         "Commit All Configure Save!"
 					"7SaveReboot"         "Save(commit) & ReBOOT....!"
-					"8JustREBOOT"         "==============>ReBOOT....!"'
+					"8JustREBOOT"         "==============>ReBOOT....!"' \
+					"$default_item"
 			else
 				menuinput "Status Overview" \
 					'"ReviewStatus"       "Review Status .... Enter!"
@@ -213,10 +230,13 @@ while : ; do
 					"4SecondWiFiConfig"   ">> 2nd Wireless Network (Unknown) _Configure <<"
 					"5SaveCommit"         "Commit All Configure Save!"
 					"6SaveReboot"         "Save(commit) & ReBOOT....!"
-					"7JustREBOOT"         "==============>ReBOOT....!"'
+					"7JustREBOOT"         "==============>ReBOOT....!"' \
+					"$default_item"
 			fi
 		fi
 	fi
+
+	default_item=$inputvar
 
 	case $inputvar in
 

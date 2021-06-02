@@ -4,6 +4,9 @@
 ##
 . common
 
+local save_default_item=$default_item
+default_item=""
+
 cStaIndex=$1
 if [ $cStaIndex -eq 0 ] ; then
 	cStaIndexStr="1st"
@@ -48,7 +51,8 @@ while : ; do
 	if [ "$CUR_USE_LINKINTEGRITYCHECK_MODE" != "Y" ]; then
 		menuinput  "Link Integrity Checking $cStaIndexStr AP Configure" \
 			'"1_UseLnkIChk"  "Configure to use Link Integrity Checking mode ($CUR_USE_LINKINTEGRITYCHECK_MODE)"
-			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"' \
+			"$default_item"
 	else
 		menuinput "Link Integrity Checking $cStaIndexStr AP Configure" \
 			'"1_UseLnkIChk"  "Configure to use Link Integrity Checking mode ($CUR_USE_LINKINTEGRITYCHECK_MODE)"
@@ -57,8 +61,11 @@ while : ; do
 			"4_PingTO"     "Configure Time Out to ping remote IP ($CUR_PingTO msec)"
 			"5_PingFC"     "Configure Fail Count to ping remote IP ($CUR_PingFC)"
 			"6_TestLnkErr" "Test Channel Roaming!"
-			"X_ExitCancel" "Exit or Cancel to upper Menu"'
+			"X_ExitCancel" "Exit or Cancel to upper Menu"' \
+			"$default_item"
 	fi
+
+	default_item=$inputvar
 
 	case $inputvar in
 
@@ -73,7 +80,7 @@ while : ; do
 				"Please enter Y to use AP Link Integrity Checking mode otherwise enter N or empty\n"$(
 				)"Examples:\n"$(
 				)" Y  N\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -103,7 +110,7 @@ while : ; do
 				)" Ping disabled when empty\n\n"$(
 				)"Examples: can blank\n"$(
 				)" 192.168.0.127  10.1.1.127\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -127,7 +134,7 @@ while : ; do
 				"Please enter Check Interval to ping Remote IP in sec(1 <= CI <= 60)\n\n"$(
 				)"Examples:\n"$(
 				)" 1  7  10  20 60\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -151,7 +158,7 @@ while : ; do
 				"Please enter Time Out to ping Remote IP in msec(1 <= TO <= 4000)\n\n"$(
 				)"Examples:\n"$(
 				)" 1  10  100 1000 4000\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -175,7 +182,7 @@ while : ; do
 				"Please enter Fail Count(1 <= FC <= 5) to ping Remote IP\n"$(
 				)"Examples:\n"$(
 				)" 1  2  3  4  5\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -226,6 +233,7 @@ while : ; do
 
 	X_ExitCancel | *)
 		rm $tempfile >/dev/null 2>/dev/null
+		default_item=$save_default_item
 		exit 0
 		;;
 	esac

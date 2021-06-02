@@ -4,6 +4,9 @@
 ##
 . common
 
+local save_default_item=$default_item
+default_item=""
+
 cWiFiIndex=$1
 if [ "$cWiFiIndex" = "0" ]; then
 	cWiFiIndexStr="First"
@@ -34,7 +37,8 @@ while : ; do
 	if [ "$cWdisabled" = "1" ]; then
 		menuinput "$cWiFiIndexStr WiFi Configure" \
 			'"1WiFi_Mode"   "WiFi disable/AP/ST/WDS __________($cWstat)"
-			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"' \
+			"$default_item"
 	elif [ "$cWencr" = "none" ]; then
 		menuinput "$cWiFiIndexStr WiFi Configure" \
 			'"1WiFi_Mode"   "WiFi disable/AP/ST/WDS __________($cWstat)"
@@ -43,7 +47,8 @@ while : ; do
 			"4WiFi_eSSID"   "WiFi eSSID/Wireless-Name ________($cWssid)"
 			"5WiFi_InLimit" "WiFi Station inactivity limit ___($cWinlimit sec(s))"
 			"6WiFi_EncUSE"  "WiFi Encription [none/wep/psk2] _($cWencr)"
-			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"' \
+			"$default_item"
 	else
 		menuinput "$cWiFiIndexStr WiFi Configure" \
 			'"1WiFi_Mode"   "WiFi disable/AP/ST/WDS __________($cWstat)"
@@ -53,8 +58,11 @@ while : ; do
 			"5WiFi_InLimit" "WiFi Station inactivity limit ___($cWinlimit sec(s))"
 			"6WiFi_EncUSE"  "WiFi Encription [none/wep/psk2] _($cWencr)"
 			"7WiFi_EncKEY"  "WiFi Encription [Key Code] ______($cWkey)"
-			"X_ExitCancel"  "Exit or Cancel to upper Menu"'
+			"X_ExitCancel"  "Exit or Cancel to upper Menu"' \
+			"$default_item"
 	fi
+
+	default_item=$inputvar
 
 	case $inputvar in
 
@@ -67,7 +75,7 @@ while : ; do
 				)"Examples:\n"$(
 	 			)" ex1)Disable  ex2)AP  ex3)APW - AP with WDS\n"$(
 	 			)" ex4)ST  ex5)STW - Station with WDS\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -111,7 +119,7 @@ while : ; do
 				 "Please enter WiFi Band [2.4/5]GHz\n\n"$(
 				)"Examples:\n"$(
 	 			)" ex1)2.4  ex2)5\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -141,7 +149,7 @@ while : ; do
 				 "Please enter Running-Frequency... with N.NNN GHz\n\n"$(
 				)"Examples:\n"$(
 				)"$FreqTBL\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -173,7 +181,7 @@ while : ; do
 				 "Please enter AP SSID/Name ...\n\n"$(
 				)"Examples: must input less and equal than 4 chars\n"$(
 	 			)" ex1)AP01  ex2)APnn\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -197,7 +205,7 @@ while : ; do
 				"Please enter Station inactivity limit in seconds(> 0)\n\n"$(
 				)"Examples:\n"$(
 				)" 10  20  30  40  50\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -221,7 +229,7 @@ while : ; do
 				 "Please enter WiFi Encription Type [none/wep/psk2]\n\n"$(
 				)"Examples:\n"$(
 	 			)" ex1)none  ex2)wep-open  ex3)psk2+ccmp\n"$(
-				)"\n$errormsg\n" \
+				)"\n\Z1$errormsg\Z0\n" \
 				"$inputvar"
 			retval=$?
 			# Check return error
@@ -252,7 +260,7 @@ while : ; do
 					 "Please enter Wireless LAN Encription-Key-Code...\n\n"$(
 					)"Examples: must input greater or equal than 8 chars\n"$(
 	 				)" ex1)12345678  ex2)1234567890  ex2)1234567890123\n"$(
-					)"\n$errormsg\n" \
+					)"\n\Z1$errormsg\Z0\n" \
 					"$inputvar"
 				retval=$?
 				# Check return error
@@ -270,7 +278,7 @@ while : ; do
 					 "Please enter Wireless LAN Encription-Key-Code...\n\n"$(
 					)"Examples: must input 5 chars or 13 chars\n"$(
 	 				)" ex1)12345 ex2)1234567890123 ex3)string13chars\n"$(
-					)"\n$errormsg\n" \
+					)"\n\Z1$errormsg\Z0\n" \
 					"$inputvar"
 				retval=$?
 				# Check return error
@@ -293,6 +301,7 @@ while : ; do
 
 	X_ExitCancel | *)
 		rm $tempfile >/dev/null 2>/dev/null
+		default_item=$save_default_item
 		exit 0
 		;;
 
