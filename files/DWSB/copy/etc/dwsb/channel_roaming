@@ -31,11 +31,9 @@ save_value() {
 	mv $CONFIG_tmp.new $CONFIG_tmp
 }
 
-Freq24TBL="\
+FreqTBL="\
 2.4G = 2.412(1) 2.417(2) 2.422(3) 2.427(4) 2.432(5) 2.437(6) 2.442(7)\n\
-       2.447(8) 2.452(9) 2.457(10) 2.462(11) 2.467(12) 2.472(13)\n"
-
-Freq5TBL="\
+       2.447(8) 2.452(9) 2.457(10) 2.462(11) 2.467(12) 2.472(13)\n\
 5.xG = 5.180(36) 5.200(40) 5.220(44) 5.240(48)\n\
        5.745(149) 5.765(153) 5.785(157) 5.805(161)"
 
@@ -45,8 +43,6 @@ Freq5TBL="\
 [ ! -f $CONFIG_tmp ] && cp $CONFIG_org $CONFIG_tmp
 
 while : ; do
-
-	readNewOrg_Wifi $cStaIndex
 
 	CUR_USE_CHANNELROAM_MODE=$(grep "_USE_CHANNELROAM_MODE" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
 	CUR_RunFreq1=$(grep "_RunFreq1" $CONFIG_tmp | sed 's/.*="\(.*\)"/\1/')
@@ -115,7 +111,6 @@ while : ; do
 		;;
 
 	2_RunFreq1)
-		[ "$cWband" = "2.4" ] && FreqTBL=$Freq24TBL || FreqTBL=$Freq5TBL
 		inputvar=$CUR_RunFreq1
 		errormsg=""
 		while :; do
@@ -142,7 +137,6 @@ while : ; do
 		;;
 
 	3_RunFreq2)
-		[ "$cWband" = "2.4" ] && FreqTBL=$Freq24TBL || FreqTBL=$Freq5TBL
 		inputvar=$CUR_RunFreq2
 		errormsg=""
 		while :; do
