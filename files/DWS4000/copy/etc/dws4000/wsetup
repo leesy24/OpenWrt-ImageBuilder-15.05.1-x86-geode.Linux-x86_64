@@ -37,7 +37,7 @@ textinput() {
 menuinput() {
 
 	menucmd=$(cat <<END    
-$DIALOG --ascii-lines --clear --cr-wrap --title "[ $ModelName V4.35 Configurations 2021@DSi ]" \
+$DIALOG --ascii-lines --clear --cr-wrap --title "[ $ModelName V4.36 Configurations 2021@DSi ]" \
 	--menu "$3\nWLAN=[ $rHWMODE ESSID:$rSSID ]\nStat=[ SNR:$rSNR Freq:$rFreq AP=$rAP ] \
 	\n$rDATE >> Please select menu: \n" 22 76 11 \
 	$1 \
